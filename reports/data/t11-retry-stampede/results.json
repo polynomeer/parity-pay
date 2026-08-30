@@ -1,0 +1,347 @@
+[
+ {
+  "variant": "no-retry",
+  "run": 1,
+  "since": "2026-09-28T13:26:12.650543+00:00",
+  "clients": 150,
+  "pgHangMs": 8000,
+  "env": {
+   "EXPERIMENT_RETRY": "false"
+  },
+  "firedAt": 1790601973.671842,
+  "pgRequestsSeen": 150,
+  "pgApprovals": 0,
+  "multiplier": 1.0,
+  "peakPer100ms": 150,
+  "peakPer1s": 150,
+  "retryPeakPer100ms": 0,
+  "retryPeakPer1s": 0,
+  "retryWindowRequests": 0,
+  "histogram100ms": {
+   "2": 109,
+   "3": 41
+  },
+  "clientElapsedP50Ms": 3194.2,
+  "clientElapsedMaxMs": 3261.5,
+  "outcomes": {
+   "202_UNKNOWN": 150
+  },
+  "valid": true
+ },
+ {
+  "variant": "retry-3-exponential",
+  "run": 1,
+  "since": "2026-09-28T13:27:16.590720+00:00",
+  "clients": 150,
+  "pgHangMs": 8000,
+  "env": {
+   "EXPERIMENT_RETRY": "true",
+   "EXPERIMENT_RETRY_ATTEMPTS": "3",
+   "EXPERIMENT_RETRY_BACKOFF": "EXPONENTIAL"
+  },
+  "firedAt": 1790602037.609036,
+  "pgRequestsSeen": 450,
+  "pgApprovals": 0,
+  "multiplier": 3.0,
+  "peakPer100ms": 150,
+  "peakPer1s": 150,
+  "retryPeakPer100ms": 141,
+  "retryPeakPer1s": 150,
+  "retryWindowRequests": 300,
+  "histogram100ms": {
+   "2": 150,
+   "36": 100,
+   "37": 50,
+   "76": 100,
+   "77": 50
+  },
+  "clientElapsedP50Ms": 10751.6,
+  "clientElapsedMaxMs": 10786.4,
+  "outcomes": {
+   "202_UNKNOWN": 150
+  },
+  "valid": true
+ },
+ {
+  "variant": "retry-3-jitter",
+  "run": 1,
+  "since": "2026-09-28T13:28:28.096236+00:00",
+  "clients": 150,
+  "pgHangMs": 8000,
+  "env": {
+   "EXPERIMENT_RETRY": "true",
+   "EXPERIMENT_RETRY_ATTEMPTS": "3",
+   "EXPERIMENT_RETRY_BACKOFF": "EXPONENTIAL_JITTER"
+  },
+  "firedAt": 1790602109.1235971,
+  "pgRequestsSeen": 450,
+  "pgApprovals": 0,
+  "multiplier": 3.0,
+  "peakPer100ms": 150,
+  "peakPer1s": 150,
+  "retryPeakPer100ms": 39,
+  "retryPeakPer1s": 150,
+  "retryWindowRequests": 300,
+  "histogram100ms": {
+   "2": 61,
+   "3": 89,
+   "31": 6,
+   "32": 21,
+   "33": 28,
+   "34": 31,
+   "35": 23,
+   "36": 27,
+   "37": 14,
+   "63": 4,
+   "64": 7,
+   "65": 8,
+   "66": 11,
+   "67": 8,
+   "68": 16,
+   "69": 20,
+   "70": 20,
+   "71": 11,
+   "72": 13,
+   "73": 12,
+   "74": 6,
+   "75": 7,
+   "76": 5,
+   "77": 2
+  },
+  "clientElapsedP50Ms": 10004.1,
+  "clientElapsedMaxMs": 10767.8,
+  "outcomes": {
+   "202_UNKNOWN": 150
+  },
+  "valid": true
+ },
+ {
+  "variant": "no-retry",
+  "run": 2,
+  "since": "2026-09-28T13:29:40.228041+00:00",
+  "clients": 150,
+  "pgHangMs": 8000,
+  "env": {
+   "EXPERIMENT_RETRY": "false"
+  },
+  "firedAt": 1790602181.244637,
+  "pgRequestsSeen": 150,
+  "pgApprovals": 0,
+  "multiplier": 1.0,
+  "peakPer100ms": 150,
+  "peakPer1s": 150,
+  "retryPeakPer100ms": 0,
+  "retryPeakPer1s": 0,
+  "retryWindowRequests": 0,
+  "histogram100ms": {
+   "2": 58,
+   "3": 92
+  },
+  "clientElapsedP50Ms": 3185.0,
+  "clientElapsedMaxMs": 3264.9,
+  "outcomes": {
+   "202_UNKNOWN": 150
+  },
+  "valid": true
+ },
+ {
+  "variant": "retry-3-exponential",
+  "run": 2,
+  "since": "2026-09-28T13:30:44.618607+00:00",
+  "clients": 150,
+  "pgHangMs": 8000,
+  "env": {
+   "EXPERIMENT_RETRY": "true",
+   "EXPERIMENT_RETRY_ATTEMPTS": "3",
+   "EXPERIMENT_RETRY_BACKOFF": "EXPONENTIAL"
+  },
+  "firedAt": 1790602245.6331542,
+  "pgRequestsSeen": 450,
+  "pgApprovals": 0,
+  "multiplier": 3.0,
+  "peakPer100ms": 150,
+  "peakPer1s": 150,
+  "retryPeakPer100ms": 150,
+  "retryPeakPer1s": 150,
+  "retryWindowRequests": 300,
+  "histogram100ms": {
+   "2": 150,
+   "36": 120,
+   "37": 30,
+   "76": 108,
+   "77": 42
+  },
+  "clientElapsedP50Ms": 10727.8,
+  "clientElapsedMaxMs": 10763.6,
+  "outcomes": {
+   "202_UNKNOWN": 150
+  },
+  "valid": true
+ },
+ {
+  "variant": "retry-3-jitter",
+  "run": 2,
+  "since": "2026-09-28T13:31:55.945106+00:00",
+  "clients": 150,
+  "pgHangMs": 8000,
+  "env": {
+   "EXPERIMENT_RETRY": "true",
+   "EXPERIMENT_RETRY_ATTEMPTS": "3",
+   "EXPERIMENT_RETRY_BACKOFF": "EXPONENTIAL_JITTER"
+  },
+  "firedAt": 1790602316.9575958,
+  "pgRequestsSeen": 450,
+  "pgApprovals": 0,
+  "multiplier": 3.0,
+  "peakPer100ms": 150,
+  "peakPer1s": 150,
+  "retryPeakPer100ms": 36,
+  "retryPeakPer1s": 150,
+  "retryWindowRequests": 300,
+  "histogram100ms": {
+   "2": 150,
+   "31": 8,
+   "32": 24,
+   "33": 30,
+   "34": 29,
+   "35": 31,
+   "36": 20,
+   "37": 8,
+   "63": 7,
+   "64": 5,
+   "65": 14,
+   "66": 12,
+   "67": 17,
+   "68": 15,
+   "69": 12,
+   "70": 15,
+   "71": 17,
+   "72": 12,
+   "73": 9,
+   "74": 9,
+   "75": 5,
+   "76": 1
+  },
+  "clientElapsedP50Ms": 9932.4,
+  "clientElapsedMaxMs": 10599.4,
+  "outcomes": {
+   "202_UNKNOWN": 150
+  },
+  "valid": true
+ },
+ {
+  "variant": "no-retry",
+  "run": 3,
+  "since": "2026-09-28T13:33:07.373712+00:00",
+  "clients": 150,
+  "pgHangMs": 8000,
+  "env": {
+   "EXPERIMENT_RETRY": "false"
+  },
+  "firedAt": 1790602388.386914,
+  "pgRequestsSeen": 150,
+  "pgApprovals": 0,
+  "multiplier": 1.0,
+  "peakPer100ms": 150,
+  "peakPer1s": 150,
+  "retryPeakPer100ms": 0,
+  "retryPeakPer1s": 0,
+  "retryWindowRequests": 0,
+  "histogram100ms": {
+   "2": 150
+  },
+  "clientElapsedP50Ms": 3204.6,
+  "clientElapsedMaxMs": 3279.6,
+  "outcomes": {
+   "202_UNKNOWN": 150
+  },
+  "valid": true
+ },
+ {
+  "variant": "retry-3-exponential",
+  "run": 3,
+  "since": "2026-09-28T13:34:11.635489+00:00",
+  "clients": 150,
+  "pgHangMs": 8000,
+  "env": {
+   "EXPERIMENT_RETRY": "true",
+   "EXPERIMENT_RETRY_ATTEMPTS": "3",
+   "EXPERIMENT_RETRY_BACKOFF": "EXPONENTIAL"
+  },
+  "firedAt": 1790602452.653183,
+  "pgRequestsSeen": 450,
+  "pgApprovals": 0,
+  "multiplier": 3.0,
+  "peakPer100ms": 150,
+  "peakPer1s": 150,
+  "retryPeakPer100ms": 121,
+  "retryPeakPer1s": 150,
+  "retryWindowRequests": 300,
+  "histogram100ms": {
+   "2": 150,
+   "36": 99,
+   "37": 51,
+   "76": 80,
+   "77": 70
+  },
+  "clientElapsedP50Ms": 10776.3,
+  "clientElapsedMaxMs": 10807.1,
+  "outcomes": {
+   "202_UNKNOWN": 150
+  },
+  "valid": true
+ },
+ {
+  "variant": "retry-3-jitter",
+  "run": 3,
+  "since": "2026-09-28T13:35:23.305074+00:00",
+  "clients": 150,
+  "pgHangMs": 8000,
+  "env": {
+   "EXPERIMENT_RETRY": "true",
+   "EXPERIMENT_RETRY_ATTEMPTS": "3",
+   "EXPERIMENT_RETRY_BACKOFF": "EXPONENTIAL_JITTER"
+  },
+  "firedAt": 1790602524.32595,
+  "pgRequestsSeen": 450,
+  "pgApprovals": 0,
+  "multiplier": 3.0,
+  "peakPer100ms": 150,
+  "peakPer1s": 150,
+  "retryPeakPer100ms": 38,
+  "retryPeakPer1s": 150,
+  "retryWindowRequests": 300,
+  "histogram100ms": {
+   "2": 150,
+   "31": 6,
+   "32": 30,
+   "33": 29,
+   "34": 29,
+   "35": 30,
+   "36": 23,
+   "37": 3,
+   "61": 1,
+   "62": 3,
+   "63": 9,
+   "64": 7,
+   "65": 6,
+   "66": 22,
+   "67": 17,
+   "68": 11,
+   "69": 14,
+   "70": 16,
+   "71": 10,
+   "72": 11,
+   "73": 13,
+   "74": 3,
+   "75": 5,
+   "76": 2
+  },
+  "clientElapsedP50Ms": 9893.1,
+  "clientElapsedMaxMs": 10664.7,
+  "outcomes": {
+   "202_UNKNOWN": 150
+  },
+  "valid": true
+ }
+]

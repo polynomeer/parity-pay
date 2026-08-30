@@ -175,11 +175,28 @@ def pg_request_timestamps(broker_container, since_iso):
     stamps = []
     for line in out.stdout.splitlines() + out.stderr.splitlines():
         if "approving" in line:
-            try:
-                stamps.append(datetime.fromisoformat(line[:23]).timestamp())
-            except ValueError:
-                pass
+            stamp = _parse_log_epoch(line)
+            if stamp is not None:
+                stamps.append(stamp)
     return stamps
+
+
+def _parse_log_epoch(line):
+    """컨테이너 로그의 앞머리를 epoch로 바꿉니다.
+
+    컨테이너는 UTC로 찍고 끝에 Z를 답니다(``2026-09-28T13:09:53.258Z``). 앞의 23자만 잘라 쓰면 그 Z가
+    떨어져 나가 naive datetime이 되고, ``.timestamp()``가 그것을 호스트 지역시로 읽습니다 — KST에서는
+    9시간이 틀어집니다. ``max_in_window``처럼 도착 시각끼리만 비교하는 값은 이 오차가 상쇄되어 멀쩡했고,
+    그래서 M-020의 봉우리 수치는 영향을 받지 않습니다. 폭주 시각과 견주는 T11에서야 드러났습니다.
+    """
+    head = line.split(" ", 1)[0]
+    try:
+        parsed = datetime.fromisoformat(head)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.timestamp()
 
 
 def pg_approval_timestamps(db_container, since_iso):
