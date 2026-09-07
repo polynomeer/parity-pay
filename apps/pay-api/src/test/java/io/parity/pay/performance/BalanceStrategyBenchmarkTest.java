@@ -25,16 +25,17 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -62,6 +63,7 @@ class BalanceStrategyBenchmarkTest extends AbstractIntegrationTest {
     private static final int WARMUP_ROUNDS = 1;
     /** 실행 순서에 따른 편차를 상쇄하기 위해 전략을 번갈아 여러 번 돌립니다. */
     private static final int MEASURED_ROUNDS = 3;
+
     private static final long PAYMENT_AMOUNT = 1_000L;
     /** 절반만 승인될 수 있는 잔액을 넣어 경쟁과 거절을 동시에 만듭니다. */
     private static final long INITIAL_BALANCE = THREADS * PAYMENTS_PER_THREAD * PAYMENT_AMOUNT / 2;
@@ -90,8 +92,7 @@ class BalanceStrategyBenchmarkTest extends AbstractIntegrationTest {
     @DisplayName("ADR-004: 세 구현 모두 잔액을 초과 승인하지 않으며, 같은 조건에서 시간을 비교한다")
     void compareBalanceStrategies() throws Exception {
         List<Strategy> strategies =
-                List.of(Strategy.CONDITIONAL_UPDATE, Strategy.PESSIMISTIC_LOCK,
-                        Strategy.CONDITIONAL_UPDATE_JPA);
+                List.of(Strategy.CONDITIONAL_UPDATE, Strategy.PESSIMISTIC_LOCK, Strategy.CONDITIONAL_UPDATE_JPA);
 
         // 예열 결과는 버립니다. 근거: docs/10-test-strategy.md §7 (warm-up과 측정 구간 분리)
         for (int round = 0; round < WARMUP_ROUNDS; round++) {
@@ -147,16 +148,15 @@ class BalanceStrategyBenchmarkTest extends AbstractIntegrationTest {
             results.forEach(result -> {
                 assertThat(result.approved() * PAYMENT_AMOUNT).isEqualTo(INITIAL_BALANCE);
                 assertThat(result.finalBalance()).isZero();
-                assertThat(result.approved() + result.rejected())
-                        .isEqualTo(THREADS * PAYMENTS_PER_THREAD);
+                assertThat(result.approved() + result.rejected()).isEqualTo(THREADS * PAYMENTS_PER_THREAD);
             });
         });
 
         double spread = measurements.values().stream()
-                .flatMap(List::stream)
-                .mapToLong(result -> result.elapsed().toMillis())
-                .max()
-                .orElse(0)
+                        .flatMap(List::stream)
+                        .mapToLong(result -> result.elapsed().toMillis())
+                        .max()
+                        .orElse(0)
                 / (double) Math.max(
                         1,
                         measurements.values().stream()
@@ -188,7 +188,7 @@ class BalanceStrategyBenchmarkTest extends AbstractIntegrationTest {
     private Result runScenario(Strategy strategy) throws Exception {
         strategySelector.use(strategy);
         Fixture fixture = freshWallet(
-                strategy.name().toLowerCase().replace('_', '-') + "-" + SCENARIO_SEQUENCE.incrementAndGet());
+                strategy.name().toLowerCase(Locale.ROOT).replace('_', '-') + "-" + SCENARIO_SEQUENCE.incrementAndGet());
 
         AtomicInteger approved = new AtomicInteger();
         AtomicInteger rejected = new AtomicInteger();
@@ -242,8 +242,8 @@ class BalanceStrategyBenchmarkTest extends AbstractIntegrationTest {
                 onboardingService.registerMember("bench-" + prefix + "@example.com", "password1234");
         MemberId memberId = registered.memberId();
         WalletId walletId = WalletId.of(registered.walletId());
-        BankAccountId bankAccountId = onboardingService.linkBankAccount(
-                memberId, "004", "110-" + prefix, Money.krw(INITIAL_BALANCE * 2));
+        BankAccountId bankAccountId =
+                onboardingService.linkBankAccount(memberId, "004", "110-" + prefix, Money.krw(INITIAL_BALANCE * 2));
         requestTopUp.requestTopUp(new TopUpCommand(
                 memberId,
                 walletId,
@@ -253,14 +253,7 @@ class BalanceStrategyBenchmarkTest extends AbstractIntegrationTest {
         return new Fixture(memberId, walletId, MerchantId.generate(), prefix);
     }
 
-    private record Fixture(
-            MemberId memberId, WalletId walletId, MerchantId merchantId, String prefix) {}
+    private record Fixture(MemberId memberId, WalletId walletId, MerchantId merchantId, String prefix) {}
 
-    private record Result(Duration elapsed, int approved, int rejected, long finalBalance) {
-
-        double throughputPerSecond() {
-            double seconds = elapsed.toNanos() / 1_000_000_000.0d;
-            return seconds == 0 ? 0 : (approved + rejected) / seconds;
-        }
-    }
+    private record Result(Duration elapsed, int approved, int rejected, long finalBalance) {}
 }

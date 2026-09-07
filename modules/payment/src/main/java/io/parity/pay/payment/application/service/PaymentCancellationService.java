@@ -88,9 +88,8 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
                     "the same Idempotency-Key was used with a different request body");
         }
 
-        Optional<PaymentCancellation> existing = record.businessReference()
-                .map(CancellationId::of)
-                .flatMap(cancellationRepository::findById);
+        Optional<PaymentCancellation> existing =
+                record.businessReference().map(CancellationId::of).flatMap(cancellationRepository::findById);
         if (existing.isPresent()) {
             return CancellationView.of(existing.get(), canceledAmountOf(command.paymentId()));
         }
@@ -101,31 +100,30 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
 
         // 1. 취소 가능액 예약. 여러 요청이 동시에 와도 합계가 승인액을 넘지 않습니다 (INV-005).
         if (paymentRepository.reserveCancellation(payment.id(), command.amount()) != 1) {
-            throw cancellationRejected(payment, command.amount());
+            throw cancellationRejected(payment);
         }
 
         PaymentCancellation cancellation = PaymentCancellation.request(
-                        payment.id(),
-                        command.amount(),
-                        command.reason(),
-                        command.idempotencyKey(),
-                        clock.instant())
+                        payment.id(), command.amount(), command.reason(), command.idempotencyKey(), clock.instant())
                 .begin();
         cancellationRepository.save(cancellation);
 
         // 2. 예약을 확정 취소액으로 옮깁니다. 누적액이 승인액과 같아지면 결제는 CANCELED가 됩니다.
         if (paymentRepository.completeCancellation(payment.id(), command.amount()) != 1) {
-            throw new BusinessException(
-                    ErrorCode.INTERNAL_ERROR, "reserved cancellation amount disappeared");
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "reserved cancellation amount disappeared");
         }
 
         // 3. 사용자에게 금액을 되돌리고 상쇄 분개를 만듭니다.
         walletFunds.credit(payment.walletId(), command.amount());
 
         LedgerAccount userPayMoney = resolveLedgerAccount.resolve(
-                AccountCode.USER_PAY_MONEY, payment.walletId().value(), command.amount().currency());
+                AccountCode.USER_PAY_MONEY,
+                payment.walletId().value(),
+                command.amount().currency());
         LedgerAccount merchantPayable = resolveLedgerAccount.resolve(
-                AccountCode.MERCHANT_PAYABLE, payment.merchantId().value(), command.amount().currency());
+                AccountCode.MERCHANT_PAYABLE,
+                payment.merchantId().value(),
+                command.amount().currency());
         LedgerAccount merchantReceivable = resolveLedgerAccount.resolve(
                 AccountCode.MERCHANT_RECEIVABLE,
                 payment.merchantId().value(),
@@ -135,9 +133,7 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
         // 계정의 정상 잔액 방향을 어기지 않으면서 회수해야 할 채권을 드러냅니다.
         // 근거: docs/07-ledger-journal-catalog.md JE-009, docs/04-payment-policy.md §6
         Money payableBalance = ledgerBalanceQuery.balanceOf(merchantPayable.id());
-        Money fromPayable = payableBalance.isGreaterThanOrEqualTo(command.amount())
-                ? command.amount()
-                : payableBalance;
+        Money fromPayable = payableBalance.isGreaterThanOrEqualTo(command.amount()) ? command.amount() : payableBalance;
         Money fromReceivable = command.amount().minus(fromPayable);
 
         PaymentCancellation completed = cancellation.complete(clock.instant());
@@ -168,23 +164,20 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
      * 예약이 실패한 이유를 구분합니다. 상태 때문인지 금액 때문인지에 따라 사용자가 할 수 있는 행동이
      * 다릅니다. 근거: docs/04-payment-policy.md §10
      */
-    private BusinessException cancellationRejected(Payment payment, Money requested) {
+    private BusinessException cancellationRejected(Payment payment) {
         Payment current = loadPayment(payment.id());
         if (!current.status().isCancellable()) {
             return new BusinessException(
-                    ErrorCode.INVALID_STATE_TRANSITION,
-                    "payment cannot be canceled in status " + current.status());
+                    ErrorCode.INVALID_STATE_TRANSITION, "payment cannot be canceled in status " + current.status());
         }
         return new BusinessException(
-                ErrorCode.CANCELLATION_AMOUNT_EXCEEDED,
-                "cancellation amount exceeds the remaining cancellable amount");
+                ErrorCode.CANCELLATION_AMOUNT_EXCEEDED, "cancellation amount exceeds the remaining cancellable amount");
     }
 
     private Payment loadPayment(PaymentId paymentId) {
         return paymentRepository
                 .findById(paymentId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
     }
 
     private Money canceledAmountOf(PaymentId paymentId) {

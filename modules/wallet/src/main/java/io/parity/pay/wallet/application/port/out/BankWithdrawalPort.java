@@ -13,11 +13,12 @@ import io.parity.pay.shared.money.Money;
 public interface BankWithdrawalPort {
 
     /**
+     * 외부 은행에 출금을 요청합니다.
+     *
      * @param externalIdempotencyKey 외부기관에 전달하는 비즈니스 멱등 키입니다. 같은 키로 재요청해도
      *     외부에서 중복 출금이 일어나지 않아야 합니다.
      */
-    BankWithdrawalResult withdraw(
-            BankAccountId bankAccountId, Money amount, TopUpId externalIdempotencyKey);
+    BankWithdrawalResult withdraw(BankAccountId bankAccountId, Money amount, TopUpId externalIdempotencyKey);
 
     /**
      * 외부기관에 남은 요청 결과를 조회합니다.

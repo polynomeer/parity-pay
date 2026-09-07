@@ -111,9 +111,11 @@ class EventCatalogTest {
         Set<String> implemented = new LinkedHashSet<>();
         Set<String> notImplemented = new LinkedHashSet<>();
         for (String line : lines) {
-            String[] cells = line.split("\\|");
+            // limit -1: 빈 칸이 조용히 사라지지 않게 합니다. 표의 앞뒤 구분자 때문에 셀은
+            // 양끝의 빈 문자열을 포함해 7개입니다.
+            String[] cells = line.split("\\|", -1);
             // | 이벤트 | 파티션 키 | 주요 payload | 소비자 | 상태 |
-            if (cells.length != 6) {
+            if (cells.length != 7) {
                 continue;
             }
             String event = cells[1].trim().replace(' ', '-');

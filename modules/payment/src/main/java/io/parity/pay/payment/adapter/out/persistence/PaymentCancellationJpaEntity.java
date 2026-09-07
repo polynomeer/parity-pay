@@ -9,6 +9,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "payment_cancellation")
+// Hibernate가 리플렉션으로 읽고 쓰는 필드가 있습니다(감사 시각, @Version 낙관적 잠금).
+// 코드에서 직접 읽지 않는다고 지우면 매핑이 깨집니다.
+@SuppressWarnings("UnusedVariable")
 class PaymentCancellationJpaEntity {
 
     @Id
@@ -76,8 +79,7 @@ class PaymentCancellationJpaEntity {
         this.version = 0L;
     }
 
-    void applyTransition(
-            String status, long completedAmount, String externalReferenceId, Instant completedAt) {
+    void applyTransition(String status, long completedAmount, String externalReferenceId, Instant completedAt) {
         this.status = status;
         this.completedAmount = completedAmount;
         this.externalReferenceId = externalReferenceId;
