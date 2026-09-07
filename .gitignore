@@ -27,6 +27,9 @@ Thumbs.db
 *.log
 logs/
 
+# jqwik이 실패 반례를 기억하려고 만드는 로컬 파일입니다.
+.jqwik-database
+
 # Secrets / local config
 .env
 .env.*
