@@ -36,7 +36,14 @@ public class OutboxPublisher {
             return;
         }
         try {
-            publishBatch();
+            // 적체가 있으면 다음 폴링을 기다리지 않고 이어서 비웁니다. 배치가 가득 차서 돌아온
+            // 동안만 계속하므로, 큐가 비면 곧바로 멈춥니다. 배치마다 트랜잭션이 따로 끝나므로
+            // 오래 걸리는 하나의 트랜잭션이 생기지 않습니다.
+            for (int round = 0; round < properties.maxRoundsPerPoll(); round++) {
+                if (publishBatch() < properties.batchSize()) {
+                    return;
+                }
+            }
         } catch (RuntimeException e) {
             log.error("outbox publishing round failed", e);
         }

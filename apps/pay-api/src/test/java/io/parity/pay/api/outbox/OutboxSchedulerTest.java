@@ -1,9 +1,11 @@
 package io.parity.pay.api.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import io.parity.pay.api.onboarding.OnboardingService;
 import io.parity.pay.support.AbstractIntegrationTest;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,13 +56,20 @@ class OutboxSchedulerTest extends AbstractIntegrationTest {
     @DisplayName("스케줄 실행이 실제로 이벤트를 발행한다")
     void scheduledRoundPublishesEvents() {
         onboardingService.registerMember("scheduler@example.com", "password1234");
-        assertThat(pendingCount()).isEqualTo(1L);
+        // 배경 스케줄러가 이미 집어갔을 수 있으므로 상태가 아니라 이벤트가 쌓였다는 것만 봅니다.
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM outbox_event", Long.class))
+                .isEqualTo(1L);
 
         // 운영에서 도는 것과 같은 경로입니다.
         outboxPublisher.publishScheduled();
 
-        assertThat(pendingCount()).isZero();
-        assertThat(publishedCount()).isEqualTo(1L);
+        // 이 컨텍스트에서는 배경 스케줄러도 같은 메서드를 돌립니다. 둘 중 어느 라운드가 이 이벤트를
+        // 집어가든 경로는 같고, 발행 확인은 브로커 ACK를 기다린 뒤에 이뤄지므로 즉시 단정하지 않고
+        // 결과가 확정되기를 기다립니다. 자기 호출 버그가 있으면 어느 라운드도 발행하지 못합니다.
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            assertThat(pendingCount()).isZero();
+            assertThat(publishedCount()).isEqualTo(1L);
+        });
     }
 
     private long pendingCount() {

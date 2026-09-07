@@ -1,14 +1,16 @@
 package io.parity.pay.api.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.BDDMockito.given;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.parity.pay.api.onboarding.OnboardingService;
 import io.parity.pay.support.AbstractIntegrationTest;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,9 +55,14 @@ class OutboxRetryTest extends AbstractIntegrationTest {
                          mock_bank_withdrawal, mock_bank_account,
                          wallet_balance, bank_account, wallet, member CASCADE
                 """);
-        willThrow(new IllegalStateException("broker is unavailable"))
-                .given(messageBroker)
-                .send(anyString(), any(), anyString());
+        given(messageBroker.sendAll(anyString(), anyList())).willAnswer(invocation -> {
+            List<MessageBroker.OutboxMessage> messages = invocation.getArgument(1);
+            List<MessageBroker.SendOutcome> outcomes = new ArrayList<>();
+            for (MessageBroker.OutboxMessage message : messages) {
+                outcomes.add(MessageBroker.SendOutcome.failed(message.eventId(), "broker is unavailable"));
+            }
+            return outcomes;
+        });
     }
 
     @Test
@@ -113,6 +120,40 @@ class OutboxRetryTest extends AbstractIntegrationTest {
         assertThat(meterRegistry.get("paritypay.outbox.pending").gauge().value()).isEqualTo(1.0d);
         assertThat(meterRegistry.get("paritypay.outbox.oldest_pending_age_seconds").gauge().value())
                 .isGreaterThanOrEqualTo(0.0d);
+    }
+
+    @Test
+    @DisplayName("배치 일부만 실패하면 확인된 이벤트만 발행되고 실패한 것만 재시도로 남는다")
+    void partialBatchFailureOnlyRetriesTheFailedEvent() {
+        onboardingService.registerMember("partial1@example.com", "password1234");
+        onboardingService.registerMember("partial2@example.com", "password1234");
+        // 첫 건만 브로커가 받았다고 답합니다.
+        given(messageBroker.sendAll(anyString(), anyList())).willAnswer(invocation -> {
+            List<MessageBroker.OutboxMessage> messages = invocation.getArgument(1);
+            List<MessageBroker.SendOutcome> outcomes = new ArrayList<>();
+            for (int i = 0; i < messages.size(); i++) {
+                outcomes.add(
+                        i == 0
+                                ? MessageBroker.SendOutcome.acknowledged(messages.get(i).eventId())
+                                : MessageBroker.SendOutcome.failed(messages.get(i).eventId(), "not acked"));
+            }
+            return outcomes;
+        });
+
+        int published = outboxPublisher.publishBatch();
+
+        assertThat(published).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                        "SELECT count(*) FROM outbox_event WHERE status = 'PUBLISHED'", Long.class))
+                .isEqualTo(1L);
+        Map<String, Object> pending = jdbcTemplate.queryForMap(
+                """
+                SELECT status, attempt_count, last_error
+                  FROM outbox_event
+                 WHERE status = 'PENDING'
+                """);
+        assertThat(pending.get("last_error")).isEqualTo("not acked");
+        assertThat((Integer) pending.get("attempt_count")).isEqualTo(1);
     }
 
     private Map<String, Object> outboxRow() {

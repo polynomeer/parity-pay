@@ -32,6 +32,13 @@ spring:
       acks: all
       properties:
         enable.idempotence: true
+        # 멱등 프로듀서는 in-flight 5건까지 파티션 내 순서를 보장합니다. 파티션 키가 Aggregate ID이므로
+        # 배치로 보내도 한 Aggregate의 이벤트 순서는 유지됩니다.
+        max.in.flight.requests.per.connection: 5
+        # 발행기가 배치를 통째로 넘기므로 레코드를 모아 보낼 수 있습니다. 확인은 여전히 기다립니다.
+        linger.ms: 5
+      batch-size: 65536
+      compression-type: lz4
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
     consumer:
@@ -47,6 +54,8 @@ paritypay:
     publisher-enabled: true
     poll-interval-ms: 500
     batch-size: 100
+    # 한 번 깨어났을 때 이어서 비울 배치 수입니다. 100 × 20 = 폴링 한 번에 최대 2,000건입니다.
+    max-rounds-per-poll: 20
     max-attempts: 10
     base-backoff: 1s
     max-backoff: 5m

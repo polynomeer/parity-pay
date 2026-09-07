@@ -1,5 +1,6 @@
 package io.parity.pay.api.outbox;
 
+import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -96,19 +97,32 @@ class OutboxRepository {
                 batchSize);
     }
 
+    /**
+     * 확인된 이벤트를 한 번의 UPDATE로 발행 완료 처리합니다.
+     *
+     * <p>건별 UPDATE는 배치 크기만큼 왕복을 만듭니다. 상태를 바꾸는 조건은 동일하므로 한 문장으로
+     * 묶습니다. 여기 들어오는 것은 브로커가 받았다고 답한 이벤트뿐입니다.
+     */
     @Transactional(propagation = Propagation.MANDATORY)
-    void markPublished(UUID eventId, Instant now) {
+    void markPublished(List<UUID> eventIds, Instant now) {
+        if (eventIds.isEmpty()) {
+            return;
+        }
         jdbcTemplate.update(
-                """
-                UPDATE outbox_event
-                   SET status = 'PUBLISHED',
-                       attempt_count = attempt_count + 1,
-                       published_at = ?,
-                       last_error = NULL
-                 WHERE event_id = ?
-                """,
-                Timestamp.from(now),
-                eventId);
+                connection -> {
+                    PreparedStatement statement = connection.prepareStatement(
+                            """
+                            UPDATE outbox_event
+                               SET status = 'PUBLISHED',
+                                   attempt_count = attempt_count + 1,
+                                   published_at = ?,
+                                   last_error = NULL
+                             WHERE event_id = ANY (?)
+                            """);
+                    statement.setTimestamp(1, Timestamp.from(now));
+                    statement.setArray(2, connection.createArrayOf("uuid", eventIds.toArray()));
+                    return statement;
+                });
     }
 
     /** 발행에 실패했지만 재시도할 수 있는 상태입니다. */
