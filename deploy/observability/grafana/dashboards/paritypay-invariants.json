@@ -1,0 +1,103 @@
+{
+  "title": "ParityPay — 불변조건과 운영 상태",
+  "uid": "paritypay-invariants",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "INV-001 원장 불균형 (0이어야 함)",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "paritypay_invariant_unbalanced_ledger_transactions" }],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "INV-003 음수 잔액 (0이어야 함)",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "paritypay_invariant_negative_wallet_balances" }],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "INV-010 스냅샷·원장 불일치 (0이어야 함)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "paritypay_invariant_balance_snapshot_drift" }]
+    },
+    {
+      "type": "stat",
+      "title": "INV-005 초과 취소 (0이어야 함)",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "expr": "paritypay_invariant_over_cancelled_payments" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Outbox 적체 (미발행 건수 / 가장 오래된 이벤트 나이)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        { "expr": "paritypay_outbox_pending", "legendFormat": "pending" },
+        { "expr": "paritypay_outbox_failed", "legendFormat": "failed" },
+        { "expr": "paritypay_outbox_oldest_pending_age_seconds", "legendFormat": "oldest age (s)" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "미확정 거래와 사람 확인 대기",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "expr": "paritypay_topup_unknown", "legendFormat": "unknown top-ups" },
+        { "expr": "paritypay_recovery_manual_review", "legendFormat": "manual review" },
+        { "expr": "paritypay_settlement_unsettled_payouts", "legendFormat": "unsettled payouts" },
+        { "expr": "paritypay_reconciliation_open_mismatches", "legendFormat": "open mismatches" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "API 거절 사유",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        { "expr": "sum by (code) (rate(paritypay_api_rejections_total[1m]))", "legendFormat": "{{code}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP 지연 (p50 / p95 / p99)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, uri) (rate(http_server_requests_seconds_bucket[1m])))",
+          "legendFormat": "p50 {{uri}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, uri) (rate(http_server_requests_seconds_bucket[1m])))",
+          "legendFormat": "p95 {{uri}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, uri) (rate(http_server_requests_seconds_bucket[1m])))",
+          "legendFormat": "p99 {{uri}}"
+        }
+      ]
+    }
+  ]
+}

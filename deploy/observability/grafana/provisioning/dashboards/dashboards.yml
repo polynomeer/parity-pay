@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: ParityPay
+    folder: ParityPay
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards
