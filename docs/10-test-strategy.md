@@ -166,6 +166,8 @@ Testcontainers로 실제 PostgreSQL과 Kafka/Redpanda를 실행합니다.
 | OpenAPI 명세와 구현 일치 | `OpenApiSnapshotTest` (`docs/api/openapi.json` 스냅샷 비교) |
 | 이벤트 스키마 계약 | 테스트 프로필에서 모든 이벤트를 JSON Schema로 검사 + `EventSchemaContractTest` |
 | 이벤트 카탈로그 일치 (코드·스키마·명세서) | `EventCatalogTest` |
+| 코드 포맷 | Spotless + palantir-java-format (`./gradlew spotlessCheck`) |
+| 버그 패턴 린트 | Error Prone (컴파일 중 실행, 아래 검사는 경고가 아니라 오류) |
 | 커밋된 비밀값 | gitleaks |
 | 의존성 갱신 | Dependabot (Gradle·Actions·Docker) |
 
@@ -173,10 +175,30 @@ Testcontainers로 실제 PostgreSQL과 Kafka/Redpanda를 실행합니다.
 
 | 게이트 | 이유 |
 |---|---|
-| 정적 분석(포매터·린터) | 도구를 도입하지 않았습니다. 전체 코드 포매팅 변경이 따라오므로 별도 작업으로 다룹니다. |
 | 이전 버전 DB 업그레이드 | 릴리스된 버전이 없어 비교 대상이 없습니다. |
 | 성능 회귀 검사 | 기준선을 측정하지 않았습니다. 벤치마크는 주간 실행으로 결과만 남깁니다. |
 | 컨테이너 이미지 취약점 | 이미지를 아직 빌드·배포하지 않습니다. |
+
+### 정적 분석
+
+포맷은 Spotless + palantir-java-format입니다. google-java-format 대신 palantir를 쓰는 이유는
+Javadoc입니다. 이 저장소의 주석은 한국어 산문인데 google-java-format은 Javadoc 문단을 한 줄로
+이어 붙이고, 한글 폭을 1로 세므로 140자짜리 줄이 됩니다. palantir는 Javadoc을 건드리지 않습니다.
+
+린터는 Error Prone이며 다음 검사를 **오류**로 올렸습니다. 경고로 두면 로그에만 쌓입니다.
+
+| 검사 | 막는 것 |
+|---|---|
+| `UnusedVariable`, `UnusedMethod` | 지우다 만 필드·메서드·매개변수 |
+| `StringSplitter` | 뒤쪽 빈 칸을 조용히 버리는 `String.split(String)` |
+| `StringCaseLocaleUsage` | 기본 로케일에 따라 결과가 달라지는 대소문자 변환 |
+| `IntLongMath` | int로 계산해 long에 담는 코드 (금액에서 조용히 넘칩니다) |
+| `MissingOverride` | `@Override` 없는 재정의 |
+| `ReturnValueIgnored` | 버리면 안 되는 반환값 |
+| `MissingSummary` | 공개 API Javadoc에 요약문이 없는 경우 |
+
+JPA 엔티티에는 `@SuppressWarnings("UnusedVariable")`이 붙어 있습니다. 감사 시각과 `@Version`
+필드는 Hibernate가 리플렉션으로만 읽으므로 "쓰지 않는 필드"로 보입니다.
 
 ### 벤치마크
 

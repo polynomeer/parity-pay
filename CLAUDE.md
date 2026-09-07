@@ -118,6 +118,8 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)   # Gradle 8.14.2는 Java 21에
 ./gradlew :modules:ledger:test       # 모듈 단위 테스트
 ./gradlew test --tests "*TopUpIntegrationTest"
 ./gradlew :apps:pay-api:bootRun      # 로컬 실행
+./gradlew spotlessApply              # 포맷 정리 (커밋 전)
+./gradlew spotlessCheck              # 포맷 검사만
 docker compose up -d                 # PostgreSQL, Redpanda, Redis
 ```
 
@@ -126,6 +128,8 @@ docker compose up -d                 # PostgreSQL, Redpanda, Redis
 - 테스트 결과가 캐시(`FROM-CACHE`)로 표시되면 실제로 실행된 것이 아닙니다. 결과를 보고하기 전에
   `--rerun-tasks --no-build-cache`로 다시 실행합니다.
 - 변경 후 최소한 `./gradlew test`를 실행하고 결과를 있는 그대로 보고합니다.
+- 코드를 고쳤으면 커밋 전에 `./gradlew spotlessApply`를 돌립니다. 포맷은 Spotless가 정하며 손으로
+  맞추지 않습니다. 린터(Error Prone)는 컴파일 중에 돌고 위반은 경고가 아니라 오류입니다.
 - 데이터 초기화는 `local` 프로필에서만 수행합니다.
 
 ### 현재 모듈 구조

@@ -32,6 +32,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # 포맷은 컨테이너를 띄우기 전에 봅니다. 가장 흔하고 가장 빨리 판정되는 실패입니다.
+      # 린터(Error Prone)는 컴파일 중에 돌므로 아래 build 단계에 포함됩니다.
+      - name: Check formatting
+        run: ./gradlew spotlessCheck --no-daemon
+
       # 통합 테스트는 Testcontainers로 PostgreSQL과 Redpanda를 직접 띄웁니다.
       # 인메모리 대체가 없으므로 러너에 Docker가 필요합니다(ubuntu-latest에 기본 포함).
       - name: Build and test

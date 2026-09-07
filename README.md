@@ -113,6 +113,16 @@ SPRING_PROFILES_ACTIVE=local ./gradlew :apps:pay-api:bootRun
 
 테스트는 Testcontainers로 PostgreSQL과 Redpanda를 직접 띄우므로 `docker compose` 없이도 실행됩니다.
 
+### 코드 스타일
+
+포맷은 Spotless + palantir-java-format이 정합니다. 손으로 맞추지 않고 도구를 돌립니다. 린터는
+Error Prone이며 컴파일 중에 돌고, 승격한 검사의 위반은 경고가 아니라 빌드 실패입니다.
+
+```bash
+./gradlew spotlessApply   # 포맷 정리
+./gradlew build           # 포맷 검사 + 린트 + 테스트
+```
+
 ### API 명세
 
 명세는 손으로 쓰지 않고 구현에서 생성합니다. 저장소의 [docs/api/openapi.json](docs/api/openapi.json)이
