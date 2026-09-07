@@ -1,42 +1,143 @@
-# parity-pay
+# CLAUDE.md — ParityPay
 
-> Claude Code가 이 저장소에서 작업할 때 따르는 규칙입니다.
-> 아직 코드가 없는 초기 상태이므로, 구조가 잡히는 대로 "프로젝트 개요"와 "아키텍처" 섹션을 채워 주세요.
+이 저장소에서 Claude Code가 따르는 작업 지침입니다. 상세 설계는 `docs/`에 있고, 이 파일은 **매 작업마다 지켜야 하는 규칙**과 **어떤 문서를 언제 읽어야 하는지**만 담습니다.
 
-## 프로젝트 개요
+## 1. 프로젝트
 
-- **이름**: parity-pay
-- **스택**: Java / Spring Boot (Gradle)
-- **설명**: _(TODO: 무엇을 하는 서비스인지 한두 문장으로)_
+ParityPay는 플랫폼 내장형 페이머니 결제·원장 백엔드입니다. Java 21 / Spring Boot 3.x / PostgreSQL 기반 모듈러 모놀리스이며, 충전·결제·취소·정산·대사를 이중부기 원장 위에서 처리합니다.
 
-## 개발 명령어
+이 프로젝트의 목표는 "정상 결제가 되는 것"이 아니라 **중복 요청, 동시 잔액 차감, 외부 승인 후 응답 유실, 이벤트 중복 전달, 프로세스 재시작 상황에서도 금융 불변조건이 깨지지 않는 것**입니다. 모든 구현 판단은 이 기준으로 합니다.
 
-```bash
-./gradlew build           # 컴파일 + 테스트 + 패키징
-./gradlew test            # 전체 테스트
-./gradlew test --tests "*SomeTest"   # 단일 테스트 클래스
-./gradlew bootRun         # 로컬 실행
-./gradlew clean build     # 클린 빌드
+현재 상태: **구현 전 설계 기준선**. 코드는 아직 없고 문서만 있습니다.
+
+## 2. 절대 규칙 (INV) — 어떤 코드도 이것을 깰 수 없습니다
+
+| ID | 불변조건 |
+|---|---|
+| INV-001 | POSTED 원장 거래의 차변 합계 = 대변 합계 |
+| INV-002 | 원장 항목 금액 > 0 (음수 금액으로 방향을 표현하지 않음) |
+| INV-003 | 지갑 가용 잔액 >= 0 |
+| INV-004 | 동일 업무 참조의 금융 효과는 정확히 1회 |
+| INV-005 | 취소 완료액 + 처리중 취소액 <= 승인액 |
+| INV-006 | 확정(POSTED) 원장 항목은 UPDATE·DELETE 금지 |
+| INV-007 | 하나의 원장 거래는 하나의 통화만 사용 |
+| INV-008 | 정산 항목 순액 합계 = 정산 헤더 순액 |
+| INV-009 | 지급 완료 정산은 외부 지급 참조를 가짐 |
+| INV-010 | 잔액 스냅샷 = 동일 컷오프의 원장 계산값 |
+
+불변조건을 깨는 변경이 필요해 보이면 구현하지 말고 사용자에게 보고합니다.
+
+## 3. 절대 금지
+
+- **타임아웃을 실패로 단정하지 않습니다.** 외부 호출 타임아웃은 `UNKNOWN`이며, 상태 조회로 확정합니다.
+- **확정 원장 행을 UPDATE·DELETE하지 않습니다.** 취소는 역분개, 오류는 보정 분개입니다.
+- **멱등성 없이 외부 승인·취소·지급을 재시도하지 않습니다.** 재전송보다 상태 조회가 우선입니다.
+- **잔액을 SQL로 직접 수정하지 않습니다.** 원장 전기를 통해서만 변경합니다.
+- **메시지가 정확히 한 번 전달된다고 가정하지 않습니다.** 전달은 at-least-once입니다.
+- **원장 불균형을 조정 계정으로 은폐하지 않습니다.**
+- **DB 트랜잭션 안에서 외부 네트워크 호출을 하지 않습니다.**
+- **금액에 `float`·`double`을 쓰지 않습니다.** KRW 원 단위 `long` / `BIGINT`입니다.
+- **로그·이벤트 payload에 비밀번호, 토큰, 전체 계좌번호, 민감 개인정보를 남기지 않습니다.**
+- **측정하지 않은 성능 수치나 테스트 통과 결과를 문서에 쓰지 않습니다.** 미측정 항목은 `TBD`입니다.
+
+## 4. 작업별로 읽을 문서
+
+먼저 관련 문서를 읽고 구현합니다. 문서와 코드가 어긋나면 문서를 고칠지 코드를 고칠지 사용자에게 확인합니다.
+
+| 작업 | 먼저 읽을 문서 |
+|---|---|
+| 무엇을 만들지 판단 | [docs/03-mvp-scope.md](docs/03-mvp-scope.md), [docs/02-prd.md](docs/02-prd.md) |
+| 금액·한도·취소·오류 규칙 | [docs/04-payment-policy.md](docs/04-payment-policy.md) |
+| 모듈 배치·계층·트랜잭션 경계 | [docs/05-technical-design.md](docs/05-technical-design.md) |
+| 상태 전이·Aggregate·도메인 이벤트 | [docs/06-domain-state-design.md](docs/06-domain-state-design.md) |
+| 분개 생성·계정 선택 | [docs/07-ledger-journal-catalog.md](docs/07-ledger-journal-catalog.md) |
+| 테이블·API·이벤트 계약 | [docs/08-db-api-event-spec.md](docs/08-db-api-event-spec.md) |
+| 멱등성·동시성·Outbox·복구 | [docs/09-consistency-recovery.md](docs/09-consistency-recovery.md) |
+| 테스트 작성 | [docs/10-test-strategy.md](docs/10-test-strategy.md) |
+| 다음에 할 일 | [docs/13-implementation-checklist.md](docs/13-implementation-checklist.md) |
+| 왜 이렇게 결정했는지 | [docs/adr/README.md](docs/adr/README.md) |
+
+전체 문서 관계는 [docs/00-document-map.md](docs/00-document-map.md)에 있습니다.
+
+## 5. 구현 규칙
+
+### 계층과 모듈
+
+```text
+domain/          순수 도메인 모델, 상태 전이, 정책 (Spring·JPA 의존 최소화)
+application/     유스케이스, 트랜잭션 경계, 포트
+adapter/in/      REST, 이벤트 소비, 배치 진입점
+adapter/out/     DB, 메시지, Mock 기관 클라이언트
 ```
 
-- 빌드 도구 명령은 항상 `./gradlew` 래퍼를 사용합니다. 시스템에 설치된 `gradle`을 직접 호출하지 않습니다.
-- 변경을 마치면 최소한 `./gradlew test`를 돌려 통과를 확인하고, 결과를 있는 그대로 보고합니다.
+- 트랜잭션 경계는 **애플리케이션 서비스**가 소유합니다. 컨트롤러와 도메인에 `@Transactional`을 두지 않습니다.
+- 모듈 간 쓰기 테이블 공유를 금지합니다. 공개 포트 또는 이벤트만 사용합니다.
+- `ledger` 모듈은 다른 업무 모듈을 참조하지 않고 `referenceType` + `referenceId`만 저장합니다.
+- 엔티티를 API 응답으로 직접 노출하지 않습니다.
+- 모듈 의존 규칙은 ArchUnit으로 강제합니다.
 
-## 아키텍처
+### 돈과 시간
 
-_(TODO: 패키지 구조, 모듈 경계, 외부 연동(PG/은행/원장 등)을 여기에 기록)_
+- 금액: KRW 원 단위 양의 정수 (`long` / `BIGINT`). 방향은 `DEBIT`/`CREDIT`으로 표현합니다.
+- 시각: 서버는 UTC(`TIMESTAMPTZ`)로 저장하고, 시간 의존 로직에는 `Clock`을 주입합니다.
+- 외부 노출 ID: UUIDv7 또는 동등한 추측 불가 식별자.
 
-## 코드 규칙
+### 쓰기 요청
 
-- 새 코드는 주변 코드의 네이밍·주석 밀도·관용구를 따릅니다.
-- 도메인 로직은 프레임워크 어노테이션에 의존하지 않는 순수 자바로 유지하는 것을 선호합니다.
-- 금액은 `double`/`float`를 쓰지 않습니다. `BigDecimal` 또는 최소 화폐 단위의 정수형(`long`)을 사용하고, 통화 정보를 함께 다룹니다.
-- 외부 결제 연동은 재시도 시 중복 청구가 없도록 멱등키(idempotency key)를 전제로 설계합니다.
-- 로그·예외 메시지에 카드번호, 계좌번호, 개인식별정보를 남기지 않습니다.
+모든 금융 쓰기 API는 다음을 갖춥니다.
 
-## 커밋 규칙 (Conventional Commits)
+1. `Idempotency-Key` 헤더 처리 — 키 범위는 `principalId + operation + key`
+2. 같은 키·같은 본문 해시 → 저장된 결과 반환 / 같은 키·다른 해시 → `409 IDEMPOTENCY_KEY_REUSED`
+3. 업무 유니크 제약을 두 번째 방어선으로 사용 (멱등 레코드만 믿지 않음)
+4. 업무 상태 + 원장 + 잔액 스냅샷 + Outbox를 **하나의 로컬 트랜잭션**에 기록
 
-형식:
+### 새 금융 유스케이스를 추가할 때 체크리스트
+
+- [ ] `04-payment-policy.md`에 해당 업무 규칙(BR)이 있는가
+- [ ] `06-domain-state-design.md`의 상태 전이표에 명령이 정의됐는가
+- [ ] `07-ledger-journal-catalog.md`에 분개(JE)가 있는가, 차변=대변인가
+- [ ] 멱등 키 범위와 업무 유니크 제약을 정했는가
+- [ ] 실패·타임아웃 시 `UNKNOWN` 처리와 복구 작업이 있는가
+- [ ] Outbox 이벤트와 소비자 멱등성을 정의했는가
+- [ ] 불변조건 테스트(INV-xxx)와 동시성 테스트를 추가했는가
+
+## 6. 테스트
+
+- 테스트 이름 또는 메타데이터에 요구사항 ID(`FR-`, `INV-`, `T-`, `F-`)를 연결합니다.
+- 통합 테스트는 Testcontainers로 실제 PostgreSQL·Kafka를 사용합니다. 인메모리 DB로 대체하지 않습니다.
+- 커버리지 수치보다 **금융 분기와 상태 전이의 전수 검증**을 우선합니다.
+- 랜덤·속성 기반 테스트는 seed를 출력하고, 실패 반례는 회귀 테스트로 승격합니다.
+- 실패한 테스트를 `@Disabled`나 skip으로 덮지 않습니다. 원인을 고치거나 사용자에게 보고합니다.
+
+## 7. 개발 명령어
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)   # Gradle 8.14.2는 Java 21에서 실행됩니다
+./gradlew build                      # 컴파일 + 테스트
+./gradlew test                       # 전체 테스트
+./gradlew :modules:ledger:test       # 모듈 단위 테스트
+./gradlew test --tests "*TopUpIntegrationTest"
+./gradlew :apps:pay-api:bootRun      # 로컬 실행
+docker compose up -d                 # PostgreSQL, Redpanda, Redis
+```
+
+- 항상 `./gradlew` 래퍼를 사용합니다. 기본 `JAVA_HOME`이 Java 21이 아니면 위처럼 지정합니다.
+- 통합 테스트는 Testcontainers가 PostgreSQL을 직접 띄우므로 `docker compose` 없이도 실행됩니다.
+- 테스트 결과가 캐시(`FROM-CACHE`)로 표시되면 실제로 실행된 것이 아닙니다. 결과를 보고하기 전에
+  `--rerun-tasks --no-build-cache`로 다시 실행합니다.
+- 변경 후 최소한 `./gradlew test`를 실행하고 결과를 있는 그대로 보고합니다.
+- 데이터 초기화는 `local` 프로필에서만 수행합니다.
+
+### 현재 모듈 구조
+
+```text
+modules/shared-kernel   Money, 타입 ID, 오류 코드, 멱등성 포트 (순수 자바)
+modules/ledger          이중부기 원장: 도메인·전기 서비스·JPA 어댑터
+modules/wallet          지갑·잔액 스냅샷·충전
+apps/pay-api            조립 지점: 마이그레이션, 멱등성 저장소, Mock Bank, 가입 API
+```
+
+## 8. 커밋 규칙 (Conventional Commits)
 
 ```
 <type>(<scope>): <subject>
@@ -46,73 +147,64 @@ _(TODO: 패키지 구조, 모듈 경계, 외부 연동(PG/은행/원장 등)을 
 <footer>
 ```
 
-**type** (필수, 소문자)
+**type**
 
 | type | 용도 |
 | --- | --- |
 | `feat` | 새로운 기능 |
 | `fix` | 버그 수정 |
 | `docs` | 문서만 변경 |
-| `style` | 포매팅, 세미콜론 등 동작에 영향 없는 변경 |
-| `refactor` | 기능 변화 없는 코드 구조 개선 |
+| `style` | 동작에 영향 없는 포매팅 |
+| `refactor` | 기능 변화 없는 구조 개선 |
 | `perf` | 성능 개선 |
-| `test` | 테스트 추가/수정 |
-| `build` | 빌드 시스템, 의존성 변경 (Gradle 등) |
+| `test` | 테스트 추가·수정 |
+| `build` | 빌드·의존성 변경 (Gradle 등) |
 | `ci` | CI 설정 변경 |
-| `chore` | 그 외 잡무 (설정 파일, .gitignore 등) |
+| `chore` | 그 외 잡무 |
 | `revert` | 이전 커밋 되돌리기 |
 
-**scope** (선택): 영향 범위를 소문자로. 예) `payment`, `ledger`, `api`, `auth`, `deps`
+**scope**: `wallet`, `payment`, `ledger`, `settlement`, `reconciliation`, `risk`, `operations`, `outbox`, `api`, `docs`, `deps`
 
-**subject** (필수)
+**subject**: 영문 소문자, 명령형 현재시제, 마침표 없음, 50자 이내 (헤더 전체 72자 이하)
 
-- 영문 소문자, 명령형 현재시제 ("add", "added"/"adds" 아님)
-- 마침표로 끝내지 않음
-- 50자 이내 권장, 헤더 전체 72자 초과 금지
+**body**: *무엇을*보다 *왜*. 헤더와 빈 줄로 구분.
 
-**body** (선택): 헤더와 빈 줄로 구분. *무엇을* 보다 *왜*를 씁니다. 한 줄 72자 정도에서 줄바꿈.
-
-**footer** (선택)
-
-- 이슈 연결: `Closes #123`, `Refs #45`
-- 파괴적 변경: 헤더 type 뒤에 `!`를 붙이고(`feat(api)!: ...`) 푸터에 `BREAKING CHANGE: <설명>`
+**footer**: `Closes #123` / 파괴적 변경은 `feat(api)!:` + `BREAKING CHANGE: <설명>`
 
 예시:
 
 ```
-feat(payment): add idempotency key to charge request
+feat(payment): reserve cancellation amount on request
 
-Retried requests previously created duplicate charges when the PG
-timed out. The key is stored with the charge and reused on retry.
+Concurrent partial cancellations could exceed the approved amount
+because capacity was checked without reserving. The request now
+increments processingCancellationAmount in the same transaction.
 
 Closes #142
+Refs INV-005
 ```
 
 ```
-fix(ledger): prevent negative balance on concurrent withdrawal
-```
-
-```
-refactor!: replace double with BigDecimal in Money
-
-BREAKING CHANGE: Money.of(double) is removed; use Money.of(String).
+fix(ledger): reject journal with mixed currencies (INV-007)
 ```
 
 **규칙**
 
-- 커밋 하나는 논리적으로 하나의 변경만 담습니다. 무관한 변경은 나눠서 커밋합니다.
-- 커밋 전 빌드/테스트가 통과해야 합니다.
+- 커밋 하나에 논리적 변경 하나. 무관한 변경은 나눕니다.
+- 커밋 전 빌드·테스트가 통과해야 합니다.
+- 요구사항 ID(`FR-`, `INV-`, `ADR-`)와 관련된 변경은 footer에 남깁니다.
 - Claude가 만드는 커밋에는 `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>` 트레일러를 붙입니다.
 
-## 브랜치 규칙
+## 9. 브랜치와 PR
 
-- `main`은 항상 배포 가능한 상태를 유지합니다.
+- `main`은 항상 배포 가능한 상태를 유지하며 직접 커밋하지 않습니다.
 - 작업 브랜치: `<type>/<간단한-설명>` — 예) `feat/idempotent-charge`, `fix/ledger-race`
-- `main`에 직접 커밋하지 않습니다. Claude는 커밋/푸시를 사용자가 요청할 때만 수행하며, `main`에 있으면 먼저 브랜치를 만듭니다.
+- Claude는 커밋·푸시·PR 생성을 **사용자가 요청할 때만** 수행합니다. `main`에 있으면 먼저 브랜치를 만듭니다.
+- `git push --force`를 쓰지 않습니다. 필요하면 `--force-with-lease`를 사용자 승인 후에 사용합니다.
 
-## 하지 말 것
+## 10. 문서 갱신 규칙
 
-- `git push --force` (필요하면 `--force-with-lease`를, 그것도 사용자 승인 후에)
-- 요청 없이 커밋·푸시·PR 생성
-- 실패한 테스트를 `@Disabled`나 skip으로 덮는 것 — 원인을 고치거나 사용자에게 보고합니다
-- 시크릿(API 키, PG 자격증명)을 저장소에 커밋하는 것 — 환경변수나 로컬 설정 파일을 사용합니다
+- 요구사항을 바꾸면 영향받는 정책·상태·DB·API·이벤트·테스트·ADR을 함께 검토합니다.
+- ADR은 구현·실험으로 확인한 뒤에만 `Proposed` → `Accepted`로 바꿉니다.
+- 성능·장애 결과는 [reports/11-performance-failure-report-template.md](reports/11-performance-failure-report-template.md)에 환경·커밋 SHA·원본 결과 경로와 함께 기록합니다.
+- 구현이 설계와 달라지면 문서를 사실로 교체합니다. 문서를 이상적인 상태로 남겨두지 않습니다.

@@ -1,0 +1,232 @@
+# ParityPay 기술 설계서 (DOC-05)
+
+> **에이전트 지침**
+> - **읽는 시점**: 새 클래스·패키지를 만들 때, 트랜잭션 경계를 정할 때, 의존성을 추가할 때.
+> - **이 문서가 정하는 것**: 기술 스택, 모듈 구조와 허용 의존성, 계층 규칙, 트랜잭션 경계, 동시성 제어, 관측성.
+> - **강제 규칙**: §5 의존성 표에 없는 모듈 간 참조를 만들지 않습니다. §6 계층 규칙을 위반하는 코드를 작성하지 않습니다. 스택 변경(§2)은 ADR 없이 하지 않습니다.
+
+## 1. 설계 목표
+
+ParityPay의 기술 구조는 금융 불변조건 보호, 실패 격리, 추적 가능성과 단계적 확장을 우선합니다. 초기에는 모듈러 모놀리스로 핵심 트랜잭션을 단순하게 유지하고, 외부 연동과 후속 업무만 명확한 포트와 이벤트 경계를 통해 분리합니다.
+
+## 2. 기술 스택 기준안
+
+| 영역 | 선택 | 목적 |
+|---|---|---|
+| Language | Java 21 | 장기지원 버전과 현대적 언어 기능 |
+| Framework | Spring Boot 3.x | 트랜잭션, 보안, 관측성 생태계 |
+| Persistence | Spring Data JPA + 선택적 jOOQ/JDBC | 도메인 쓰기와 복잡 조회 분리 |
+| Database | PostgreSQL | ACID, 제약조건, 잠금과 운영 도구 |
+| Migration | Flyway | 재현 가능한 스키마 버전 관리 |
+| Broker | Kafka 또는 Redpanda | at-least-once 이벤트 전달 실험 |
+| Cache | Redis | 속도 제한·TTL 캐시·임시 인증 데이터 |
+| Test | JUnit 5, Testcontainers, jqwik | 단위·통합·속성 기반 테스트 |
+| Observability | Micrometer, Prometheus, Grafana, OpenTelemetry | 메트릭·로그·트레이스 연결 |
+| Load | k6 또는 Gatling | 재현 가능한 부하 시나리오 |
+| Runtime | Docker Compose | 로컬 실행과 장애 실험 |
+
+**Redis는 잔액이나 원장의 진실을 저장하지 않습니다.**
+
+## 3. 논리 아키텍처
+
+```mermaid
+flowchart TD
+    CL[Web / API Client] --> API[ParityPay API]
+    API --> AUTH[Auth / Member]
+    API --> WAL[Wallet / TopUp]
+    API --> PAY[Payment / Cancellation]
+    WAL --> LED[Ledger]
+    PAY --> LED
+    WAL --> EXT[Mock Bank / PG]
+    PAY --> EXT
+    WAL --> OUT[Outbox]
+    PAY --> OUT
+    OUT --> MQ[Kafka / Redpanda]
+    MQ --> SET[Settlement Worker]
+    MQ --> REC[Reconciliation Worker]
+    MQ --> NOTI[Notification Projection]
+```
+
+## 4. 모듈 구조
+
+```text
+parity-pay/
+├── apps/
+│   ├── pay-api/
+│   ├── settlement-worker/
+│   ├── reconciliation-worker/
+│   ├── mock-bank/
+│   └── mock-pg/
+├── modules/
+│   ├── member/
+│   ├── wallet/
+│   ├── payment/
+│   ├── ledger/
+│   ├── settlement/
+│   ├── reconciliation/
+│   ├── risk/
+│   ├── operations/
+│   └── shared-kernel/
+├── deploy/
+├── docs/
+├── reports/
+└── load-tests/
+```
+
+초기 MVP에서는 `pay-api` 안에 도메인 모듈을 함께 배포할 수 있습니다. 워커는 독립 프로세스 또는 동일 코드베이스의 별도 실행 프로필로 시작합니다.
+
+## 5. 모듈 책임과 의존성
+
+| 모듈 | 책임 | 허용 의존성 |
+|---|---|---|
+| member | 사용자, 인증 주체, 권한 | shared-kernel |
+| wallet | 지갑, 충전·출금, 잔액 스냅샷 | member, ledger port |
+| payment | 결제·취소 상태와 정책 | wallet port, ledger port, order port |
+| ledger | 계정·거래·항목과 불변조건 | shared-kernel만 |
+| settlement | 지급 대상·수수료·정산 | payment read port, ledger port |
+| reconciliation | 내부·외부 기록 비교 | 각 모듈 read port |
+| risk | 한도·빈도·위험 결정 | 읽기 포트만 |
+| operations | 통합 타임라인·재처리·감사 | 각 모듈 operation port |
+
+`ledger`는 다른 업무 모듈을 직접 참조하지 않고 `referenceType`과 `referenceId`만 저장합니다. 업무 모듈이 원장 포트를 호출합니다.
+
+이 표는 ArchUnit 테스트로 강제합니다. 규칙을 어겨야 한다면 코드가 아니라 이 표를 먼저 고칩니다.
+
+## 6. 계층과 패키지 규칙
+
+각 모듈은 다음 계층을 사용합니다.
+
+```text
+domain/          순수 도메인 모델, 상태 전이, 정책
+application/     유스케이스, 트랜잭션 경계, 포트
+adapter/in/      REST, 이벤트 소비, 배치 진입점
+adapter/out/     DB, 메시지, Mock 기관 클라이언트
+```
+
+- 도메인은 Spring과 JPA에 가능한 한 의존하지 않습니다.
+- 애플리케이션 서비스가 트랜잭션 경계를 소유합니다.
+- 컨트롤러는 인증·입력 변환 후 유스케이스를 호출합니다.
+- 엔티티를 API 응답으로 직접 노출하지 않습니다.
+- 모듈 간 쓰기 테이블 공유를 금지하고 공개 포트 또는 이벤트를 사용합니다.
+
+## 7. 핵심 트랜잭션 경계
+
+### 페이머니 결제 승인
+
+하나의 PostgreSQL 트랜잭션에서 다음을 수행합니다.
+
+1. 멱등성 레코드를 획득합니다.
+2. 결제 Aggregate를 생성하거나 상태를 전이합니다.
+3. 조건부 잔액 차감 또는 지갑 잠금을 수행합니다.
+4. 균형 잡힌 원장 거래와 항목을 저장합니다.
+5. 잔액 스냅샷을 갱신합니다.
+6. `PaymentApproved` Outbox 행을 저장합니다.
+7. 멱등성 응답을 저장하고 커밋합니다.
+
+어느 단계든 실패하면 모두 롤백합니다. **이 트랜잭션 안에서 외부 네트워크를 호출하지 않습니다.**
+
+### 외부 PG 승인
+
+외부 호출과 DB를 하나의 트랜잭션으로 묶지 않습니다.
+
+1. 내부 결제 시도를 `PROCESSING`으로 커밋합니다.
+2. 외부기관에 비즈니스 멱등 키로 요청합니다.
+3. 명시적 성공·실패는 새 로컬 트랜잭션에서 확정합니다.
+4. 타임아웃은 `UNKNOWN`으로 전환하고 복구 작업을 예약합니다.
+
+## 8. 동시성 제어
+
+MVP 기본안은 지갑별 조건부 원자 업데이트입니다.
+
+```sql
+UPDATE wallet_balance
+SET available_amount = available_amount - :amount,
+    version = version + 1,
+    updated_at = now()
+WHERE wallet_id = :walletId
+  AND available_amount >= :amount
+  AND version = :expectedVersion;
+```
+
+갱신 행이 0개이면 버전 충돌과 잔액 부족을 최신 조회로 구분합니다. 제한된 횟수만 재시도합니다. 비관적 잠금과 비교 실험 후 [ADR-004](adr/004-atomic-balance-update.md)를 Accepted로 확정합니다.
+
+## 9. 이벤트 전달
+
+- 업무 변경과 Outbox 저장을 같은 DB 트랜잭션에서 처리합니다.
+- 발행기는 `FOR UPDATE SKIP LOCKED`로 배치를 선점할 수 있습니다.
+- 브로커 전달은 at-least-once로 가정합니다.
+- 소비자는 `consumed_event`의 `eventId` 유니크 제약과 업무 유니크 제약으로 중복 효과를 막습니다.
+- 파티션 키는 순서가 필요한 Aggregate ID를 사용합니다.
+- 이벤트는 과거 사실을 나타내며 명령처럼 이름 짓지 않습니다 (`PaymentApproved` O, `ApprovePayment` X).
+
+## 10. 외부기관 어댑터
+
+Mock Bank와 Mock PG는 다음 기능을 제공합니다. 장애 테스트가 이 기능에 의존하므로 함께 구현합니다.
+
+- 정상 성공과 명시적 실패
+- 처리 전 타임아웃과 처리 후 타임아웃
+- 응답 지연
+- 중복 웹훅과 순서가 뒤바뀐 웹훅
+- 상태 조회 API 일시 장애
+- 취소·지급 성공 후 응답 유실
+- 내부 요청과 다른 금액의 외부 기록
+
+외부 요청마다 내부 ID, 외부 멱등 키, 요청 시각, 응답 코드, 마스킹된 요약과 마지막 조회 결과를 기록합니다.
+
+**현재 구현 상태**: Mock Bank는 `apps/pay-api` 안의 대역(`io.parity.pay.api.mockbank`)으로 동작하며 자체
+계좌·출금 테이블과 멱등 키를 가집니다. 성공·명시적 실패·처리 전 타임아웃·처리 후 타임아웃을 주입할 수
+있지만, 실제 네트워크 지연과 연결 끊김은 재현하지 못합니다. `apps/mock-bank`로 분리하는 작업은 Phase 4에
+서 수행합니다.
+
+## 11. 보안 설계
+
+- 비밀번호와 결제 PIN을 Argon2id 또는 bcrypt로 해시합니다.
+- 액세스 토큰과 리프레시 토큰의 수명과 철회 정책을 분리합니다.
+- Mock 결제수단 토큰만 저장하고 인증정보 원문을 저장하지 않습니다.
+- 고객·판매자·운영자 API를 역할과 리소스 소유권으로 보호합니다.
+- 금액 변경 운영 작업은 필요 시 요청자·승인자를 분리합니다.
+- 전체 계좌번호, 비밀번호, 토큰과 민감 개인정보를 로그에서 제외합니다.
+- API 속도 제한, 로그인 실패 제한과 재생 공격 방지를 적용합니다.
+
+## 12. 관측성
+
+### 로그 필드
+
+`traceId`, `spanId`, `memberId`, `walletId`, `orderId`, `paymentId`, `ledgerTransactionId`, `idempotencyKeyHash`, `eventId`, `externalReferenceId`
+
+멱등 키는 원문이 아니라 해시로 남깁니다.
+
+### 메트릭
+
+- 승인·충전·취소 성공률과 실패 사유
+- `UNKNOWN` 건수와 체류시간
+- 멱등 중복 차단과 키 충돌 건수
+- 잔액 조건부 갱신 충돌률
+- Outbox 미발행 수, 최고 지연과 재시도
+- 소비 지연과 중복 차단
+- 정산 실패·대사 불일치 건수·금액
+- DB 잠금 대기, 커넥션 풀과 쿼리 지연
+
+### 경보
+
+원장 불균형과 음수 잔액은 한 건이라도 즉시 경보합니다. 성공률, 지연과 적체 임계치는 기준선 측정 후 확정합니다.
+
+## 13. 배포와 환경
+
+- `local`, `test`, `stage` 프로필을 분리합니다.
+- Flyway가 애플리케이션보다 먼저 또는 시작 시 단일 주체로 실행됩니다.
+- 롤링 배포 중 구·신 이벤트 소비자가 공존할 수 있도록 이벤트 호환성을 유지합니다.
+- 스키마 변경은 expand-migrate-contract 순서를 따릅니다.
+- 구성과 비밀값은 이미지 밖에서 주입합니다.
+- 데이터 초기화는 로컬 전용 프로필에서만 허용합니다.
+
+## 14. 확장 기준
+
+다음 조건 중 하나가 **측정되면** 모듈 분리를 검토합니다. 측정 없이 분리하지 않습니다.
+
+- 정산·대사의 배포 주기와 장애 영향이 API와 명확히 다릅니다.
+- 원장 쓰기 처리량이 다른 업무보다 독립 확장이 필요합니다.
+- 팀 소유권이 분리되고 계약 기반 개발 비용보다 이점이 큽니다.
+- 단일 DB 잠금·커넥션 경합이 측정 가능한 병목입니다.
+
+분리 시에도 원장 소유권과 업무 멱등 키를 유지하며 분산 트랜잭션을 가장하지 않습니다.

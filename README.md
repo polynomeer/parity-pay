@@ -1,0 +1,200 @@
+# ParityPay
+
+> 장애가 발생해도 금융 불변조건을 지키는 결제·원장 백엔드 시스템
+
+ParityPay는 플랫폼 내장형 페이머니 서비스를 구현하는 백엔드 포트폴리오 프로젝트입니다. 사용자는 Mock Bank 계좌에서 페이머니를 충전하고 주문을 결제하며, 결제 취소와 거래내역 조회를 수행합니다. 확장 단계에서는 부분 취소, 송금, 판매자 정산, 대사와 이상거래 탐지를 지원합니다.
+
+이 프로젝트의 목표는 단순한 결제 API 연동이 아닙니다. 중복 요청, 동시 잔액 차감, 외부기관 승인 후 응답 유실, 이벤트 중복 전달과 프로세스 재시작 상황에서도 다음 불변조건을 유지하는 시스템을 구현하고 검증합니다.
+
+- 모든 확정 원장 거래의 차변 합계와 대변 합계가 같습니다.
+- 사용 가능 잔액은 음수가 되지 않습니다.
+- 같은 업무 요청은 여러 번 도착해도 한 번만 금액에 영향을 줍니다.
+- 누적 취소 완료액과 처리 중 금액은 승인액을 초과하지 않습니다.
+- 확정 원장은 수정·삭제하지 않고 역분개 또는 보정 분개로 처리합니다.
+- 결과가 불명확한 거래는 `UNKNOWN`으로 보존하고 최종 상태로 수렴시킵니다.
+
+## 목표 아키텍처
+
+초기 구현은 Java 21, Spring Boot, PostgreSQL 기반 모듈러 모놀리스입니다. 결제·지갑·원장은 동일 DB 트랜잭션으로 핵심 불변조건을 보호하고, 후속 처리는 Transactional Outbox와 Kafka/Redpanda를 통해 비동기로 연결합니다.
+
+```mermaid
+flowchart TD
+    C[Client] --> API[ParityPay API]
+    API --> PAY[Payment]
+    API --> WAL[Wallet]
+    PAY --> LED[Ledger]
+    WAL --> LED
+    PAY --> EXT[Mock Bank / PG]
+    PAY --> OUT[Outbox]
+    OUT --> MQ[Kafka / Redpanda]
+    MQ --> OPS[Settlement / Reconciliation]
+```
+
+## 구현 단계
+
+1. 지갑·충전·이중부기 원장
+2. 결제·전액 취소·멱등성·동시성 제어
+3. Outbox·멱등 소비자·운영 조회
+4. Mock PG 장애 시나리오·`UNKNOWN` 복구
+5. 부분 취소·정산·대사
+6. 관측성·부하 테스트·장애 테스트·포트폴리오 보고서
+
+## 문서
+
+AI 에이전트(Claude Code)로 이 저장소에서 작업한다면 [CLAUDE.md](CLAUDE.md)를 먼저 읽습니다. 전체 문서와 구현 시점은 [문서 지도](docs/00-document-map.md)에서 확인합니다.
+
+- [제품 기획서](docs/01-product-plan.md)
+- [PRD](docs/02-prd.md)
+- [MVP 범위 정의서](docs/03-mvp-scope.md)
+- [결제 정책서](docs/04-payment-policy.md)
+- [기술 설계서](docs/05-technical-design.md)
+- [도메인·상태 전이 설계서](docs/06-domain-state-design.md)
+- [원장 설계서·분개 카탈로그](docs/07-ledger-journal-catalog.md)
+- [DB·API·이벤트 명세서](docs/08-db-api-event-spec.md)
+- [거래 정합성·장애 복구 설계서](docs/09-consistency-recovery.md)
+- [테스트 전략서](docs/10-test-strategy.md)
+- [구현 체크리스트](docs/13-implementation-checklist.md)
+- [ADR](docs/adr/README.md)
+- [성능·장애 테스트 보고서 템플릿](reports/11-performance-failure-report-template.md)
+- [포트폴리오 기술 보고서 초안](reports/12-portfolio-technical-report-draft.md)
+
+## 현재 상태
+
+Phase 0~6이 모두 구현되었습니다. 기능은 동작하고 불변조건은 자동화 테스트와 DB 제약으로 검증되지만,
+HTTP 부하 실험은 아직 실행하지 않아 성능 수치는 비어 있습니다.
+
+**검증 현황** (2026-09-07): 167개 테스트, 실패 0건, 실행 39초
+(`./gradlew build --rerun-tasks --no-build-cache`).
+
+| 영역 | 상태 |
+|---|---|
+| Gradle 멀티모듈, Docker Compose, Flyway, Testcontainers, ArchUnit | 동작 |
+| 이중부기 원장 전기·잔액 재생 (INV-001·002·004·006·007을 DB 제약과 트리거로 강제) | 동작 |
+| 회원 가입·지갑 생성·Mock Bank 계좌 연결 | 동작 |
+| 충전(멱등성, 동시 요청, 외부 응답 유실 → `UNKNOWN` 보존) | 동작 |
+| 페이머니 결제 승인, 전액·부분 취소 (동시 취소 초과 차단) | 동작 |
+| Transactional Outbox 발행기 (재시도·백오프·적체 메트릭) | 동작 |
+| 멱등 이벤트 소비와 거래내역 프로젝션 (커서 조회) | 동작 |
+| `UNKNOWN`·`PROCESSING` 거래의 자동 복구 (조회 → 확정, 백오프, 수동 검토 전환) | 동작 |
+| 운영자 미확정 거래 조회·재조회와 감사 로그 | 동작 |
+| 구매확정 → 정산 계산 → 판매자 지급 (수수료·취소·조정, 지급 응답 유실 복구) | 동작 |
+| 내부·외부 대사 (6종 불일치 분류, 운영자 해결, 이중 승인 보정 분개) | 동작 |
+| 통합 거래 타임라인, 불변조건 상시 지표, Prometheus·Grafana·Jaeger | 동작 |
+| 인증·인가 (JWT, 역할 6종, 이중 승인, 로그인 잠금) | 동작 |
+| HTTP 부하 실험 | 미실행 — 스크립트만 준비 (`load-tests/`) |
+
+
+
+성능 수치와 장애 복구 결과는 아직 측정하지 않았으며 문서에 성공한 것처럼 기재하지 않습니다.
+자세한 진행 상황은 [구현 체크리스트](docs/13-implementation-checklist.md)에 있습니다.
+
+## 실행 방법
+
+**필요 도구**: JDK 21, Docker.
+
+`./gradlew`는 Gradle 8.14.2를 사용하므로 `JAVA_HOME`이 Java 21을 가리켜야 합니다. 다른 버전이 기본값이면
+아래처럼 지정합니다.
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+```
+
+```bash
+docker compose up -d
+./gradlew test
+
+# 로컬 실행에는 local 프로필이 필요합니다. 서명 키가 없으면 애플리케이션이 뜨지 않습니다.
+SPRING_PROFILES_ACTIVE=local ./gradlew :apps:pay-api:bootRun
+```
+
+운영 환경에서는 `PARITYPAY_JWT_SECRET`을 주입하고 `paritypay.security.bootstrap-operators`를 비웁니다.
+
+테스트는 Testcontainers로 PostgreSQL과 Redpanda를 직접 띄우므로 `docker compose` 없이도 실행됩니다.
+
+### 관측
+
+`docker compose up -d`에 관측성 스택이 포함되어 있습니다.
+
+| 도구 | 주소 | 용도 |
+|---|---|---|
+| Grafana | http://localhost:3000 | 불변조건·적체 대시보드 (익명 조회 허용) |
+| Prometheus | http://localhost:9090 | 지표와 경보 규칙 |
+| Jaeger | http://localhost:16686 | 분산 트레이스 |
+
+핵심 지표는 `paritypay_invariant_*`입니다. **평소에 전부 0이어야 하고, 0이 아니면 시스템이 스스로
+규칙을 어긴 것이므로 한 건이라도 즉시 경보합니다.**
+
+### 부하 테스트
+
+```bash
+k6 run load-tests/payment-baseline.js                  # P-001 서로 다른 지갑
+k6 run -e SAME_WALLET=true load-tests/payment-baseline.js  # P-002 동일 지갑 경합
+```
+
+결과 기록 규칙은 [load-tests/README.md](load-tests/README.md)에 있습니다.
+
+### 데모 요청
+
+```bash
+# 1. 가입 (공개)
+MEMBER=$(curl -s -X POST localhost:8080/api/v1/members \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"buyer@example.com","password":"password1234"}')
+WALLET_ID=$(echo "$MEMBER" | jq -r .walletId)
+
+# 2. 로그인해서 토큰을 받습니다. 이후 모든 호출에 필요합니다.
+TOKEN=$(curl -s -X POST localhost:8080/api/v1/auth/tokens \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"buyer@example.com","password":"password1234"}' | jq -r .accessToken)
+AUTH="Authorization: Bearer $TOKEN"
+
+# 3. 계좌 연결과 충전
+BANK_ID=$(curl -s -X POST localhost:8080/api/v1/bank-accounts \
+  -H "$AUTH" -H 'Content-Type: application/json' \
+  -d '{"bankCode":"004","accountNumber":"110-1234-5678","initialBalance":1000000}' | jq -r .bankAccountId)
+
+curl -s -X POST localhost:8080/api/v1/top-ups \
+  -H "$AUTH" -H 'Idempotency-Key: demo-top-up-0001' -H 'Content-Type: application/json' \
+  -d "{\"walletId\":\"$WALLET_ID\",\"bankAccountId\":\"$BANK_ID\",\"amount\":100000,\"currency\":\"KRW\"}"
+
+# 4. 결제 후 부분 취소
+PAYMENT_ID=$(curl -s -X POST localhost:8080/api/v1/payments \
+  -H "$AUTH" -H 'Idempotency-Key: demo-payment-0001' -H 'Content-Type: application/json' \
+  -d "{\"orderId\":\"order-1\",\"walletId\":\"$WALLET_ID\",\"merchantId\":\"$(uuidgen)\",\"amount\":30000,\"currency\":\"KRW\",\"method\":\"PAY_MONEY\"}" | jq -r .paymentId)
+
+curl -s -X POST "localhost:8080/api/v1/payments/$PAYMENT_ID/cancellations" \
+  -H "$AUTH" -H 'Idempotency-Key: demo-cancel-0001' -H 'Content-Type: application/json' \
+  -d '{"amount":10000,"currency":"KRW","reason":"PARTIAL_RETURN"}'
+
+# 5. 잔액·거래내역·원장 검증
+curl -s "localhost:8080/api/v1/wallets/$WALLET_ID" -H "$AUTH"
+curl -s "localhost:8080/api/v1/wallets/$WALLET_ID/transactions?limit=10" -H "$AUTH"
+curl -s "localhost:8080/api/v1/wallets/$WALLET_ID/ledger-verification" -H "$AUTH"
+
+# 6. 운영자로 로그인하면 타임라인과 미확정 거래를 볼 수 있습니다.
+OPS=$(curl -s -X POST localhost:8080/api/v1/auth/tokens \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"ops-operator@paritypay.local","password":"local-ops-password"}' | jq -r .accessToken)
+curl -s "localhost:8080/api/v1/admin/transactions/$PAYMENT_ID/timeline" -H "Authorization: Bearer $OPS"
+```
+
+외부 승인 후 응답 유실을 재현하고 복구되는 과정을 볼 수 있습니다.
+
+```bash
+# 1. 외부는 출금을 처리하지만 응답이 유실되도록 설정
+curl -s -X POST localhost:8080/api/v1/admin/mock-bank/mode \
+  -H 'Content-Type: application/json' -d '{"mode":"TIMEOUT_AFTER_WITHDRAWAL"}'
+
+# 2. 충전 요청 → 실패가 아니라 202 UNKNOWN으로 응답합니다
+# 3. 미확정 목록에서 확인
+curl -s "localhost:8080/api/v1/admin/top-ups?status=UNKNOWN"
+
+# 4. 외부를 정상으로 되돌리면 복구 작업이 조회로 확정합니다 (기본 5초 주기)
+curl -s -X POST localhost:8080/api/v1/admin/mock-bank/mode \
+  -H 'Content-Type: application/json' -d '{"mode":"NORMAL"}'
+
+# 즉시 확정을 요청할 수도 있습니다. 사유가 필수이며 감사 로그로 남습니다.
+curl -s -X POST "localhost:8080/api/v1/admin/top-ups/$TOP_UP_ID/resolve" \
+  -H 'X-Operator-Id: ops-1' -H 'Content-Type: application/json' \
+  -d '{"reason":"고객 문의"}'
+```
