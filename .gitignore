@@ -15,7 +15,9 @@ target/
 .settings/
 .classpath
 .project
-out/
+# IntelliJ 출력 디렉터리입니다. 프로젝트 루트로 한정합니다.
+# out/ 로 두면 adapter/out, port/out 같은 소스 디렉터리가 통째로 무시됩니다.
+/out/
 
 # OS
 .DS_Store
