@@ -1,0 +1,62 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+paritypay:
+  security:
+    jwt-secret: test-only-secret-key-that-is-long-enough-1234
+    access-token-ttl: 5m
+    max-login-failures: 3
+    login-lock-duration: 1m
+    bootstrap-operators:
+      - email: ops-viewer@test.local
+        password: test-ops-password
+        roles: [OPS_VIEWER]
+      - email: ops-operator@test.local
+        password: test-ops-password
+        roles: [OPS_VIEWER, OPS_OPERATOR]
+      - email: ops-approver@test.local
+        password: test-ops-password
+        roles: [OPS_VIEWER, OPS_APPROVER]
+  reconciliation:
+    enabled: false
+    # 테스트는 방금 만든 기록을 즉시 대사합니다.
+    delay-tolerance: 0s
+    window: 365d
+  settlement:
+    recovery-enabled: false
+    recovery-lease: 5s
+    recovery-base-backoff: 1ms
+    recovery-max-backoff: 10ms
+    recovery-max-attempts: 3
+    recovery-not-found-confirm-threshold: 2
+  recovery:
+    top-up:
+      # 복구 시점도 테스트가 직접 통제합니다. 배경 스케줄러가 돌면 UNKNOWN 상태를 관찰할 수 없습니다.
+      enabled: false
+      grace: 0s
+      lease: 5s
+      base-backoff: 1ms
+      max-backoff: 10ms
+      max-attempts: 3
+      not-found-confirm-threshold: 2
+  events:
+    # 테스트는 발행 시점을 직접 통제합니다. 스케줄러가 배경에서 돌면 "커밋 후 발행 전" 같은
+    # 중간 상태를 관찰할 수 없습니다. 필요한 테스트는 OutboxPublisher를 직접 호출합니다.
+    publisher-enabled: false
+    poll-interval-ms: 100
+
+management:
+  tracing:
+    sampling:
+      # 테스트에서는 트레이스를 내보내지 않습니다.
+      probability: 0.0
+
+logging:
+  level:
+    org.hibernate.SQL: warn
+    org.apache.kafka: warn
+    org.springframework.kafka: warn

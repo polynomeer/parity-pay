@@ -1,0 +1,151 @@
+spring:
+  application:
+    name: parity-pay
+  datasource:
+    url: ${PARITYPAY_DB_URL:jdbc:postgresql://localhost:5432/paritypay}
+    username: ${PARITYPAY_DB_USERNAME:paritypay}
+    password: ${PARITYPAY_DB_PASSWORD:paritypay}
+    hikari:
+      pool-name: paritypay-pool
+      maximum-pool-size: 20
+  jpa:
+    open-in-view: false
+    hibernate:
+      # 스키마는 Flyway만 변경합니다. 애플리케이션이 테이블을 만들지 않습니다.
+      # 근거: docs/05-technical-design.md §13
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  threads:
+    virtual:
+      enabled: true
+  kafka:
+    bootstrap-servers: ${PARITYPAY_KAFKA_SERVERS:localhost:9092}
+    producer:
+      # 유실 없이 전달되었는지 확인한 뒤에만 PUBLISHED로 표시합니다.
+      acks: all
+      properties:
+        enable.idempotence: true
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: paritypay-wallet-projection
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+paritypay:
+  events:
+    topic: paritypay.events
+    consumer-group: paritypay-wallet-projection
+    publisher-enabled: true
+    poll-interval-ms: 500
+    batch-size: 100
+    max-attempts: 10
+    base-backoff: 1s
+    max-backoff: 5m
+  wallet:
+    # ADR-004의 기본안입니다. 비교 측정 결과는 reports/11에 기록합니다.
+    balance-strategy: CONDITIONAL_UPDATE
+  reconciliation:
+    enabled: true
+    # 매일 새벽 4시에 대사를 돌립니다.
+    cron: "0 0 4 * * *"
+    # 외부 기록이 늦게 도착하는 것을 정상으로 보는 시간입니다.
+    delay-tolerance: 30m
+    window: 7d
+  settlement:
+    # 플랫폼 수수료율입니다. basis point(만분율) 정수로 관리해 비율 계산에서 부동소수점을 없앱니다.
+    fee-basis-points: 1000
+    consumer-group: paritypay-settlement
+    recovery-enabled: true
+    recovery-interval-ms: 5000
+    recovery-lease: 30s
+    recovery-base-backoff: 2s
+    recovery-max-backoff: 10m
+    recovery-max-attempts: 8
+    recovery-not-found-confirm-threshold: 3
+  recovery:
+    top-up:
+      enabled: true
+      interval-ms: 5000
+      # 정상 처리 중인 요청을 복구 작업이 가로채지 않도록 두는 여유 시간입니다.
+      grace: 30s
+      lease: 30s
+      base-backoff: 2s
+      max-backoff: 10m
+      max-attempts: 8
+      # 외부에 기록이 "없음"으로 연속 확인되어야 하는 횟수입니다.
+      not-found-confirm-threshold: 3
+      batch-size: 50
+
+server:
+  port: ${PARITYPAY_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never
+  # 모든 지표·관측에 애플리케이션 이름을 붙입니다.
+  observations:
+    key-values:
+      application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        # 명시적으로 켭니다. 지표 수집은 이 시스템의 운영 요구사항이지 선택 기능이 아닙니다.
+        enabled: true
+  tracing:
+    sampling:
+      # 로컬·실험 환경에서는 전량 샘플링합니다. 운영에서는 비용을 보고 낮춥니다.
+      probability: ${PARITYPAY_TRACE_SAMPLING:1.0}
+  otlp:
+    tracing:
+      endpoint: ${PARITYPAY_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+
+logging:
+  pattern:
+    # traceId를 모든 로그에 남깁니다. 근거: docs/05-technical-design.md §12
+    level: "%5p [${spring.application.name},%X{traceId:-},%X{spanId:-}]"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+
+paritypay:
+  security:
+    # 로컬 전용 값입니다. 운영에서는 반드시 PARITYPAY_JWT_SECRET으로 주입합니다.
+    jwt-secret: local-development-only-secret-key-do-not-use-in-production
+    bootstrap-operators:
+      - email: ops-viewer@paritypay.local
+        password: local-ops-password
+        roles: [OPS_VIEWER]
+      - email: ops-operator@paritypay.local
+        password: local-ops-password
+        roles: [OPS_VIEWER, OPS_OPERATOR]
+      - email: ops-approver@paritypay.local
+        password: local-ops-password
+        roles: [OPS_VIEWER, OPS_APPROVER]
+
+logging:
+  level:
+    io.parity.pay: DEBUG
