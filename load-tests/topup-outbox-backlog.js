@@ -1,12 +1,13 @@
 // P-003 Outbox 적체와 해소
 // 충전을 몰아넣어 이벤트를 쌓은 뒤, 발행기가 적체를 얼마나 빨리 해소하는지 봅니다.
-// 적체 지표는 /actuator/prometheus 의 paritypay_outbox_* 로 관찰합니다.
+// 적체는 /actuator/prometheus 의 paritypay_outbox_* 로 관찰합니다.
 // 근거: docs/10-test-strategy.md §7, reports/11 P-003
 import http from 'k6/http';
 import { check } from 'k6';
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+const PASSWORD = 'load-test-password';
 
 export const options = {
   scenarios: {
@@ -21,23 +22,44 @@ export const options = {
   },
 };
 
+/** 계좌번호는 길이 제한이 있습니다. uuid를 그대로 쓰면 400입니다. */
+function accountNumber() {
+  return `110${Math.floor(Math.random() * 1e12)
+    .toString()
+    .padStart(12, '0')}`;
+}
+
+const json = (token) => {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 export function setup() {
   const email = `outbox-${uuidv4()}@example.com`;
   const member = http
-    .post(`${BASE_URL}/api/v1/members`, JSON.stringify({ email, password: 'password1234' }), {
-      headers: { 'Content-Type': 'application/json' },
+    .post(`${BASE_URL}/api/v1/members`, JSON.stringify({ email, password: PASSWORD }), {
+      headers: json(),
     })
     .json();
 
-  const bankAccount = http
+  const token = http
+    .post(`${BASE_URL}/api/v1/auth/tokens`, JSON.stringify({ email, password: PASSWORD }), {
+      headers: json(),
+    })
+    .json('accessToken');
+
+  const bankAccountId = http
     .post(
       `${BASE_URL}/api/v1/bank-accounts`,
-      JSON.stringify({ bankCode: '004', accountNumber: uuidv4(), initialBalance: 1000000000 }),
-      { headers: { 'Content-Type': 'application/json', 'X-Member-Id': member.memberId } },
+      JSON.stringify({ bankCode: '004', accountNumber: accountNumber(), initialBalance: 1000000000 }),
+      { headers: json(token) },
     )
-    .json();
+    .json('bankAccountId');
 
-  return { ...member, bankAccountId: bankAccount.bankAccountId };
+  return { ...member, bankAccountId, token };
 }
 
 export default function (data) {
@@ -50,11 +72,7 @@ export default function (data) {
       currency: 'KRW',
     }),
     {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Member-Id': data.memberId,
-        'Idempotency-Key': `outbox-load-${uuidv4()}`,
-      },
+      headers: { ...json(data.token), 'Idempotency-Key': `outbox-load-${uuidv4()}` },
     },
   );
 

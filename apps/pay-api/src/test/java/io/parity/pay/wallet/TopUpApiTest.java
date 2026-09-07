@@ -157,6 +157,50 @@ class TopUpApiTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("긴 계좌번호는 400으로 거절한다 (500이 아니라)")
+    void overlongAccountNumberIsRejectedAsBadRequest() {
+        // 마스킹된 값이 저장 컬럼을 넘겨 500으로 실패하던 경로입니다.
+        // 입력 문제는 저장 단계가 아니라 입력에서 막아야 합니다.
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/v1/bank-accounts",
+                HttpMethod.POST,
+                new HttpEntity<>(
+                        Map.of(
+                                "bankCode", "004",
+                                "accountNumber", "1".repeat(64),
+                                "initialBalance", 1_000),
+                        ApiAuth.bearer(accessToken)),
+                Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().get("code")).isEqualTo("INVALID_REQUEST");
+    }
+
+    @Test
+    @DisplayName("허용 길이 안의 계좌번호는 마스킹되어 저장된다")
+    void accountNumberIsStoredMasked() {
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/v1/bank-accounts",
+                HttpMethod.POST,
+                new HttpEntity<>(
+                        Map.of(
+                                "bankCode", "004",
+                                "accountNumber", "9876543210987654321234",
+                                "initialBalance", 1_000),
+                        ApiAuth.bearer(accessToken)),
+                Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        String masked = jdbcTemplate.queryForObject(
+                "SELECT account_number_masked FROM bank_account WHERE bank_account_id = ?::uuid",
+                String.class,
+                response.getBody().get("bankAccountId"));
+        // 원문이 남지 않고, 뒤 4자리만 보입니다.
+        assertThat(masked).endsWith("1234").doesNotContain("987654321098");
+        assertThat(masked.length()).isLessThanOrEqualTo(30);
+    }
+
+    @Test
     @DisplayName("0원 이하 금액은 400으로 거절한다")
     void nonPositiveAmountIsRejected() {
         ResponseEntity<Map> response = requestTopUp("api-key-000004", 0);

@@ -36,6 +36,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OnboardingService {
 
+    /** 마스킹된 계좌번호에서 가릴 앞자리의 최대 길이입니다. 컬럼은 VARCHAR(30)입니다. */
+    private static final int MAX_MASKED_PREFIX = 20;
+
     private final JdbcTemplate jdbcTemplate;
     private final WalletRepository walletRepository;
     private final WalletBalanceRepository walletBalanceRepository;
@@ -132,10 +135,17 @@ public class OnboardingService {
         }
     }
 
+    /**
+     * 마스킹된 계좌번호.
+     *
+     * <p>길이를 입력에 비례시키지 않습니다. 원문 길이를 그대로 드러내면 마스킹의 의미가 줄어들고,
+     * 저장 컬럼 길이를 넘겨 요청이 500으로 실패합니다. 뒤 4자리만 남기고 앞은 고정 길이로 가립니다.
+     */
     private static String mask(String accountNumber) {
         int visible = Math.min(4, accountNumber.length());
-        return "*".repeat(accountNumber.length() - visible)
-                + accountNumber.substring(accountNumber.length() - visible);
+        String tail = accountNumber.substring(accountNumber.length() - visible);
+        int hidden = Math.min(accountNumber.length() - visible, MAX_MASKED_PREFIX);
+        return "*".repeat(hidden) + tail;
     }
 
     public record RegisteredMember(MemberId memberId, java.util.UUID walletId) {}

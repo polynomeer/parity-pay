@@ -9,9 +9,11 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 // true이면 모든 VU가 하나의 지갑을 공유해 잔액 행 경합을 만듭니다(P-002).
 const SAME_WALLET = (__ENV.SAME_WALLET || 'false') === 'true';
 const PAYMENT_AMOUNT = Number(__ENV.PAYMENT_AMOUNT || 1000);
+const PASSWORD = 'load-test-password';
 
 const approved = new Counter('paritypay_payments_approved');
 const insufficient = new Counter('paritypay_payments_insufficient');
+// 승인 요청만 따로 재는 지표입니다. 셋업 요청이 섞이면 지연 분포가 왜곡됩니다.
 const approveDuration = new Trend('paritypay_payment_duration', true);
 
 export const options = {
@@ -24,11 +26,11 @@ export const options = {
     },
     measured: {
       executor: 'ramping-vus',
-      startTime: '20s',
+      startTime: '25s',
       startVUs: 5,
       stages: [
-        { duration: '30s', target: 20 },
-        { duration: '60s', target: 20 },
+        { duration: '20s', target: 20 },
+        { duration: '40s', target: 20 },
         { duration: '10s', target: 0 },
       ],
       tags: { phase: 'measured' },
@@ -40,48 +42,78 @@ export const options = {
   },
 };
 
-function register() {
-  const email = `load-${uuidv4()}@example.com`;
-  const member = http.post(
-    `${BASE_URL}/api/v1/members`,
-    JSON.stringify({ email, password: 'password1234' }),
-    { headers: { 'Content-Type': 'application/json' } },
-  );
-  const body = member.json();
+/** 계좌번호는 길이 제한이 있습니다. uuid를 그대로 쓰면 400입니다. */
+function accountNumber() {
+  return `110${Math.floor(Math.random() * 1e12)
+    .toString()
+    .padStart(12, '0')}`;
+}
 
-  const bankAccount = http.post(
-    `${BASE_URL}/api/v1/bank-accounts`,
-    JSON.stringify({ bankCode: '004', accountNumber: uuidv4(), initialBalance: 100000000 }),
-    { headers: { 'Content-Type': 'application/json', 'X-Member-Id': body.memberId } },
-  );
+const json = (token) => {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+};
+
+/** 회원을 만들고 로그인해 토큰을 받은 뒤, 계좌를 연결하고 충전까지 마칩니다. */
+function provisionAccount() {
+  const email = `load-${uuidv4()}@example.com`;
+  const member = http
+    .post(`${BASE_URL}/api/v1/members`, JSON.stringify({ email, password: PASSWORD }), {
+      headers: json(),
+      tags: { setup: 'true' },
+    })
+    .json();
+
+  const token = http
+    .post(`${BASE_URL}/api/v1/auth/tokens`, JSON.stringify({ email, password: PASSWORD }), {
+      headers: json(),
+      tags: { setup: 'true' },
+    })
+    .json('accessToken');
+
+  const bankAccountId = http
+    .post(
+      `${BASE_URL}/api/v1/bank-accounts`,
+      JSON.stringify({ bankCode: '004', accountNumber: accountNumber(), initialBalance: 100000000 }),
+      { headers: json(token), tags: { setup: 'true' } },
+    )
+    .json('bankAccountId');
 
   http.post(
     `${BASE_URL}/api/v1/top-ups`,
     JSON.stringify({
-      walletId: body.walletId,
-      bankAccountId: bankAccount.json().bankAccountId,
+      walletId: member.walletId,
+      bankAccountId,
       amount: 50000000,
       currency: 'KRW',
     }),
     {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Member-Id': body.memberId,
-        'Idempotency-Key': `load-topup-${uuidv4()}`,
-      },
+      headers: { ...json(token), 'Idempotency-Key': `load-topup-${uuidv4()}` },
+      tags: { setup: 'true' },
     },
   );
 
-  return { memberId: body.memberId, walletId: body.walletId };
+  return { memberId: member.memberId, walletId: member.walletId, token };
 }
+
+// k6는 VU마다 모듈을 따로 초기화하므로, 모듈 스코프 변수가 곧 VU 로컬 상태입니다.
+// 선언 없이 전역에 대입하면 매 반복이 ReferenceError로 끝나고 요청이 하나도 나가지 않습니다.
+let vuAccount = null;
 
 export function setup() {
   // 동일 지갑 시나리오에서는 모든 VU가 이 지갑을 씁니다.
-  return { shared: register(), merchantId: uuidv4() };
+  return { shared: provisionAccount(), merchantId: uuidv4() };
 }
 
 export default function (data) {
-  const account = SAME_WALLET ? data.shared : (__VU_ACCOUNT = __VU_ACCOUNT || register());
+  // VU마다 계정을 한 번만 만들고 재사용합니다. 매 반복마다 가입하면 셋업이 부하의 대부분이 됩니다.
+  if (!SAME_WALLET && vuAccount === null) {
+    vuAccount = provisionAccount();
+  }
+  const account = SAME_WALLET ? data.shared : vuAccount;
 
   group('approve payment', () => {
     const idempotencyKey = `load-pay-${uuidv4()}`;
@@ -96,11 +128,8 @@ export default function (data) {
         method: 'PAY_MONEY',
       }),
       {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Member-Id': account.memberId,
-          'Idempotency-Key': idempotencyKey,
-        },
+        headers: { ...json(account.token), 'Idempotency-Key': idempotencyKey },
+        tags: { operation: 'approve_payment' },
       },
     );
 

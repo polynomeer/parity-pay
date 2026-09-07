@@ -77,7 +77,10 @@ class OnboardingController {
     record RegisterMemberResponse(UUID memberId, UUID walletId) {}
 
     record LinkBankAccountRequest(
-            @NotBlank String bankCode, @NotBlank String accountNumber, @Positive long initialBalance) {}
+            @NotBlank @Size(max = 10) String bankCode,
+            // 길이를 제한하지 않으면 저장 단계에서 500으로 실패합니다. 입력 문제는 입력에서 막습니다.
+            @NotBlank @Size(min = 8, max = 30) String accountNumber,
+            @Positive long initialBalance) {}
 
     record LinkBankAccountResponse(UUID bankAccountId) {}
 

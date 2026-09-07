@@ -105,11 +105,13 @@
         "LinkBankAccountRequest" : {
           "properties" : {
             "accountNumber" : {
-              "minLength" : 1,
+              "maxLength" : 30,
+              "minLength" : 8,
               "type" : "string"
             },
             "bankCode" : {
-              "minLength" : 1,
+              "maxLength" : 10,
+              "minLength" : 0,
               "type" : "string"
             },
             "initialBalance" : {

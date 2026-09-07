@@ -83,7 +83,7 @@ HTTP 부하 실험은 아직 실행하지 않아 성능 수치는 비어 있습�
 | 내부·외부 대사 (6종 불일치 분류, 운영자 해결, 이중 승인 보정 분개) | 동작 |
 | 통합 거래 타임라인, 불변조건 상시 지표, Prometheus·Grafana·Jaeger | 동작 |
 | 인증·인가 (JWT, 역할 6종, 이중 승인, 로그인 잠금) | 동작 |
-| HTTP 부하 실험 | 미실행 — 스크립트만 준비 (`load-tests/`) |
+| HTTP 부하 실험 | 실측 완료 — 기준선은 [reports/11](reports/11-performance-failure-report-template.md) |
 
 
 

@@ -10,7 +10,8 @@ services:
       POSTGRES_PASSWORD: paritypay
       TZ: UTC
     ports:
-      - "5432:5432"
+      # 다른 프로젝트가 5432를 쓰고 있으면 PARITYPAY_DB_PORT로 바꿉니다.
+      - "${PARITYPAY_DB_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -32,7 +33,7 @@ services:
       - --kafka-addr=PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
       - --advertise-kafka-addr=PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
     ports:
-      - "9092:9092"
+      - "${PARITYPAY_KAFKA_PORT:-9092}:9092"
     healthcheck:
       test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
       interval: 10s
@@ -44,7 +45,7 @@ services:
     container_name: paritypay-redis
     command: ["redis-server", "--appendonly", "no"]
     ports:
-      - "6379:6379"
+      - "${PARITYPAY_REDIS_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
