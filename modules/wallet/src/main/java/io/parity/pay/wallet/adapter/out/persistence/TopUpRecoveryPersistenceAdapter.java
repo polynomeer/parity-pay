@@ -35,8 +35,7 @@ class TopUpRecoveryPersistenceAdapter implements TopUpRecoveryRepository {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public List<PendingRecovery> claimDue(
-            Instant now, Instant graceCutoff, Instant leaseUntil, int limit) {
+    public List<PendingRecovery> claimDue(Instant now, Instant graceCutoff, Instant leaseUntil, int limit) {
         // UNKNOWN뿐 아니라 오래된 PROCESSING도 대상입니다. 외부 호출 직전·도중에 프로세스가 죽으면
         // 거래는 PROCESSING인 채로 남고, 아무도 건드리지 않으면 영원히 미확정입니다.
         List<PendingRecovery> claimed = jdbcTemplate.query(
@@ -63,14 +62,7 @@ class TopUpRecoveryPersistenceAdapter implements TopUpRecoveryRepository {
 
         for (PendingRecovery pending : claimed) {
             // 조회하는 동안 다른 인스턴스가 같은 건을 집어가지 않도록 리스를 겁니다.
-            upsert(
-                    pending.topUpId(),
-                    pending.attemptCount(),
-                    pending.notFoundCount(),
-                    leaseUntil,
-                    false,
-                    null,
-                    null);
+            upsert(pending.topUpId(), pending.attemptCount(), pending.notFoundCount(), leaseUntil, false, null, null);
         }
         return claimed;
     }
@@ -89,17 +81,9 @@ class TopUpRecoveryPersistenceAdapter implements TopUpRecoveryRepository {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public void markManualReview(
-            TopUpId topUpId, int attemptCount, String lastError, Instant checkedAt) {
+    public void markManualReview(TopUpId topUpId, int attemptCount, String lastError, Instant checkedAt) {
         // 다시 자동으로 집어가지 않도록 아주 먼 미래로 미루고 수동 검토 표시를 남깁니다.
-        upsert(
-                topUpId,
-                attemptCount,
-                0,
-                checkedAt.plusSeconds(365L * 24 * 60 * 60),
-                true,
-                lastError,
-                checkedAt);
+        upsert(topUpId, attemptCount, 0, checkedAt.plusSeconds(365L * 24 * 60 * 60), true, lastError, checkedAt);
     }
 
     @Override
@@ -152,9 +136,7 @@ class TopUpRecoveryPersistenceAdapter implements TopUpRecoveryRepository {
                 notFoundCount,
                 Timestamp.from(nextCheckAt),
                 requiresManualReview,
-                lastError == null || lastError.length() <= 500
-                        ? lastError
-                        : lastError.substring(0, 500),
+                lastError == null || lastError.length() <= 500 ? lastError : lastError.substring(0, 500),
                 checkedAt == null ? null : Timestamp.from(checkedAt),
                 Timestamp.from(clock.instant()));
     }

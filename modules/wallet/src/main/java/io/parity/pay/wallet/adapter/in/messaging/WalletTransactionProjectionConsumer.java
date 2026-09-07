@@ -34,8 +34,7 @@ public class WalletTransactionProjectionConsumer {
     /** 소비 이력의 주체 이름입니다. 바꾸면 과거 이벤트를 다시 소비하게 되므로 신중히 변경합니다. */
     public static final String CONSUMER_NAME = "wallet-transaction-projection";
 
-    private static final Logger log =
-            LoggerFactory.getLogger(WalletTransactionProjectionConsumer.class);
+    private static final Logger log = LoggerFactory.getLogger(WalletTransactionProjectionConsumer.class);
 
     private final ConsumedEventStore consumedEventStore;
     private final WalletTransactionRepository transactionRepository;
@@ -97,8 +96,8 @@ public class WalletTransactionProjectionConsumer {
                     "PAYMENT_CANCELLATION",
                     payload.get("cancellationId").asText());
             default ->
-                // 이 프로젝션이 관심 없는 이벤트입니다. 소비 기록만 남기고 넘어갑니다.
-                log.debug("ignoring event type {}", eventType);
+            // 이 프로젝션이 관심 없는 이벤트입니다. 소비 기록만 남기고 넘어갑니다.
+            log.debug("ignoring event type {}", eventType);
         }
     }
 
@@ -120,7 +119,8 @@ public class WalletTransactionProjectionConsumer {
                 referenceType,
                 referenceId,
                 payload.hasNonNull("ledgerTransactionId")
-                        ? LedgerTransactionId.of(payload.get("ledgerTransactionId").asText())
+                        ? LedgerTransactionId.of(
+                                payload.get("ledgerTransactionId").asText())
                         : null,
                 occurredAt);
 

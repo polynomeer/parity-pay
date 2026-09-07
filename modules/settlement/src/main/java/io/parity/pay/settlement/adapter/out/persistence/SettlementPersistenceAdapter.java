@@ -44,7 +44,9 @@ class SettlementPersistenceAdapter implements SettlementRepository, SettlementIt
                 rs.getString("hold_reason"),
                 rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("updated_at").toInstant(),
-                rs.getTimestamp("paid_at") == null ? null : rs.getTimestamp("paid_at").toInstant());
+                rs.getTimestamp("paid_at") == null
+                        ? null
+                        : rs.getTimestamp("paid_at").toInstant());
     };
 
     private static final RowMapper<SettlementItem> ITEM_MAPPER = (rs, rowNum) -> new SettlementItem(
@@ -72,9 +74,7 @@ class SettlementPersistenceAdapter implements SettlementRepository, SettlementIt
     @Override
     public Optional<Settlement> findById(SettlementId settlementId) {
         List<Settlement> rows = jdbcTemplate.query(
-                "SELECT * FROM settlement WHERE settlement_id = ?",
-                SETTLEMENT_MAPPER,
-                settlementId.value());
+                "SELECT * FROM settlement WHERE settlement_id = ?", SETTLEMENT_MAPPER, settlementId.value());
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
 
@@ -199,8 +199,7 @@ class SettlementPersistenceAdapter implements SettlementRepository, SettlementIt
                     item.itemId());
             if (updated != 1) {
                 // 다른 회차가 이미 가져간 항목입니다. 같은 금액이 두 정산에 들어가면 안 됩니다.
-                throw new IllegalStateException(
-                        "settlement item " + item.itemId() + " was already assigned");
+                throw new IllegalStateException("settlement item " + item.itemId() + " was already assigned");
             }
         }
     }

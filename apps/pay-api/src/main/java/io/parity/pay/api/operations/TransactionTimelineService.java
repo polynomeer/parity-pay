@@ -121,8 +121,7 @@ public class TransactionTimelineService {
                  WHERE o.aggregate_id = ?
                     OR o.payload::text LIKE '%' || ? || '%'
                 """,
-                referenceId,
-                referenceId));
+                referenceId, referenceId));
 
         entries.addAll(query(
                 """
@@ -177,11 +176,5 @@ public class TransactionTimelineService {
     }
 
     public record TimelineEntry(
-            String kind,
-            String id,
-            String status,
-            Long amount,
-            String currency,
-            String detail,
-            Instant occurredAt) {}
+            String kind, String id, String status, Long amount, String currency, String detail, Instant occurredAt) {}
 }

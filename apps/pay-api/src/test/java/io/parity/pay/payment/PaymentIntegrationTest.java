@@ -85,14 +85,10 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
         walletId = WalletId.of(registered.walletId());
         merchantId = MerchantId.generate();
 
-        BankAccountId bankAccountId = onboardingService.linkBankAccount(
-                memberId, "004", "110-1234-5678", Money.krw(1_000_000));
+        BankAccountId bankAccountId =
+                onboardingService.linkBankAccount(memberId, "004", "110-1234-5678", Money.krw(1_000_000));
         requestTopUp.requestTopUp(new TopUpCommand(
-                memberId,
-                walletId,
-                bankAccountId,
-                Money.krw(50_000),
-                IdempotencyKey.of("payment-test-topup")));
+                memberId, walletId, bankAccountId, Money.krw(50_000), IdempotencyKey.of("payment-test-topup")));
     }
 
     @Test
@@ -134,7 +130,9 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
             }
         }
 
-        assertThat(results).extracting(PaymentView::paymentId).containsOnly(results.get(0).paymentId());
+        assertThat(results)
+                .extracting(PaymentView::paymentId)
+                .containsOnly(results.get(0).paymentId());
         assertThat(paymentCount()).isEqualTo(1L);
         assertThat(availableBalance()).isEqualTo(20_000L);
         assertThat(walletQuery.verifyAgainstLedger(walletId).matches()).isTrue();
@@ -181,8 +179,8 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
     void insufficientBalanceIsRejected() {
         assertThatThrownBy(() -> pay("order-3", "payment-key-00004", 50_001))
                 .isInstanceOf(BusinessException.class)
-                .satisfies(e -> assertThat(((BusinessException) e).errorCode())
-                        .isEqualTo(ErrorCode.INSUFFICIENT_BALANCE));
+                .satisfies(
+                        e -> assertThat(((BusinessException) e).errorCode()).isEqualTo(ErrorCode.INSUFFICIENT_BALANCE));
 
         assertThat(availableBalance()).isEqualTo(50_000L);
         assertThat(paymentCount()).isZero();
@@ -257,9 +255,7 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
                         // 이미 전액 취소되어 결제가 CANCELED가 된 뒤면 INVALID_STATE_TRANSITION입니다.
                         // 둘 다 "더 취소할 수 없다"는 같은 결론이며 사용자가 할 수 있는 행동만 다릅니다.
                         assertThat(e.errorCode())
-                                .isIn(
-                                        ErrorCode.CANCELLATION_AMOUNT_EXCEEDED,
-                                        ErrorCode.INVALID_STATE_TRANSITION);
+                                .isIn(ErrorCode.CANCELLATION_AMOUNT_EXCEEDED, ErrorCode.INVALID_STATE_TRANSITION);
                         rejected.incrementAndGet();
                     }
                     return null;
@@ -286,8 +282,8 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
 
         assertThatThrownBy(() -> pay("order-8", "payment-key-00010", 10_000))
                 .isInstanceOf(BusinessException.class)
-                .satisfies(e -> assertThat(((BusinessException) e).errorCode())
-                        .isEqualTo(ErrorCode.INVALID_STATE_TRANSITION));
+                .satisfies(e ->
+                        assertThat(((BusinessException) e).errorCode()).isEqualTo(ErrorCode.INVALID_STATE_TRANSITION));
 
         assertThat(availableBalance()).isEqualTo(40_000L);
     }
@@ -318,18 +314,12 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
 
     private void cancel(PaymentId paymentId, String idempotencyKey, long amount) {
         cancelPayment.cancel(new CancelPaymentCommand(
-                memberId,
-                paymentId,
-                Money.krw(amount),
-                "TEST",
-                IdempotencyKey.of(idempotencyKey)));
+                memberId, paymentId, Money.krw(amount), "TEST", IdempotencyKey.of(idempotencyKey)));
     }
 
     private long availableBalance() {
         Long balance = jdbcTemplate.queryForObject(
-                "SELECT available_amount FROM wallet_balance WHERE wallet_id = ?",
-                Long.class,
-                walletId.value());
+                "SELECT available_amount FROM wallet_balance WHERE wallet_id = ?", Long.class, walletId.value());
         return balance == null ? 0L : balance;
     }
 

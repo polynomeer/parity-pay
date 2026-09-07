@@ -18,11 +18,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
-import org.springframework.security.oauth2.jwt.JwsHeader;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,11 +46,7 @@ public class TokenService {
     private final SecurityProperties properties;
     private final Clock clock;
 
-    TokenService(
-            JwtEncoder jwtEncoder,
-            JdbcTemplate jdbcTemplate,
-            SecurityProperties properties,
-            Clock clock) {
+    TokenService(JwtEncoder jwtEncoder, JdbcTemplate jdbcTemplate, SecurityProperties properties, Clock clock) {
         this.jwtEncoder = jwtEncoder;
         this.jdbcTemplate = jdbcTemplate;
         this.properties = properties;
@@ -145,9 +141,7 @@ public class TokenService {
                 .issuedAt(now)
                 .expiresAt(now.plus(properties.accessTokenTtl()))
                 .claim("email", account.email())
-                .claim(
-                        "roles",
-                        account.roles().stream().map(Role::name).collect(Collectors.toList()))
+                .claim("roles", account.roles().stream().map(Role::name).collect(Collectors.toList()))
                 .build();
         return jwtEncoder
                 .encode(JwtEncoderParameters.from(

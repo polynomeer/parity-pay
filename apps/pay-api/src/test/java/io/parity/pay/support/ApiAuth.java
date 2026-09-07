@@ -27,8 +27,8 @@ public final class ApiAuth {
 
     /** 회원을 만들고 로그인해 토큰과 식별자를 돌려줍니다. */
     public static Session registerAndLogin(TestRestTemplate rest, String email, String password) {
-        ResponseEntity<Map> member = rest.postForEntity(
-                "/api/v1/members", Map.of("email", email, "password", password), Map.class);
+        ResponseEntity<Map> member =
+                rest.postForEntity("/api/v1/members", Map.of("email", email, "password", password), Map.class);
         assertThat(member.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
         String accessToken = login(rest, email, password);
@@ -39,8 +39,8 @@ public final class ApiAuth {
     }
 
     public static String login(TestRestTemplate rest, String email, String password) {
-        ResponseEntity<Map> tokens = rest.postForEntity(
-                "/api/v1/auth/tokens", Map.of("email", email, "password", password), Map.class);
+        ResponseEntity<Map> tokens =
+                rest.postForEntity("/api/v1/auth/tokens", Map.of("email", email, "password", password), Map.class);
         assertThat(tokens.getStatusCode())
                 .as("login should succeed for %s", email)
                 .isEqualTo(HttpStatus.OK);

@@ -54,8 +54,8 @@ class TopUpTest {
 
         assertThatThrownBy(() -> succeeded.fail("late failure", NOW))
                 .isInstanceOf(BusinessException.class)
-                .satisfies(e -> assertThat(((BusinessException) e).errorCode())
-                        .isEqualTo(ErrorCode.INVALID_STATE_TRANSITION));
+                .satisfies(e ->
+                        assertThat(((BusinessException) e).errorCode()).isEqualTo(ErrorCode.INVALID_STATE_TRANSITION));
     }
 
     @Test
@@ -69,15 +69,12 @@ class TopUpTest {
     @Test
     @DisplayName("0원 이하 충전은 만들 수 없다")
     void rejectsNonPositiveAmount() {
-        assertThatThrownBy(() -> TopUp.request(
-                        WalletId.generate(), BankAccountId.generate(), Money.krw(0), KEY, NOW))
+        assertThatThrownBy(() -> TopUp.request(WalletId.generate(), BankAccountId.generate(), Money.krw(0), KEY, NOW))
                 .isInstanceOf(BusinessException.class)
-                .satisfies(e -> assertThat(((BusinessException) e).errorCode())
-                        .isEqualTo(ErrorCode.INVALID_AMOUNT));
+                .satisfies(e -> assertThat(((BusinessException) e).errorCode()).isEqualTo(ErrorCode.INVALID_AMOUNT));
     }
 
     private static TopUp newTopUp() {
-        return TopUp.request(
-                WalletId.generate(), BankAccountId.generate(), Money.krw(100_000), KEY, NOW);
+        return TopUp.request(WalletId.generate(), BankAccountId.generate(), Money.krw(100_000), KEY, NOW);
     }
 }

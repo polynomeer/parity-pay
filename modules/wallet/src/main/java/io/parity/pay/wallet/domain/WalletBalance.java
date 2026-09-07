@@ -11,8 +11,7 @@ import java.util.Objects;
  * <p>진실의 원천은 원장이며 이 값은 조회용 파생 데이터입니다. 원장 전기와 같은 트랜잭션에서만
  * 갱신합니다. 근거: ADR-008, INV-010
  */
-public record WalletBalance(
-        WalletId walletId, Money available, Money pending, long version, Instant updatedAt) {
+public record WalletBalance(WalletId walletId, Money available, Money pending, long version, Instant updatedAt) {
 
     public WalletBalance {
         Objects.requireNonNull(walletId, "walletId must not be null");

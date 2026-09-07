@@ -50,45 +50,41 @@ class SettlementController {
     @PostMapping("/{settlementId}/payouts")
     ResponseEntity<SettlementResponse> pay(@PathVariable UUID settlementId) {
         SettlementView view = payoutService.pay(SettlementId.of(settlementId));
-        HttpStatus status = switch (view.status()) {
-            case PAID -> HttpStatus.OK;
-            // 결과를 모르는 지급은 실패가 아닙니다. 조회 위치를 알려주고 복구에 맡깁니다.
-            case UNKNOWN, PAYING -> HttpStatus.ACCEPTED;
-            default -> HttpStatus.OK;
-        };
+        HttpStatus status =
+                switch (view.status()) {
+                    case PAID -> HttpStatus.OK;
+                        // 결과를 모르는 지급은 실패가 아닙니다. 조회 위치를 알려주고 복구에 맡깁니다.
+                    case UNKNOWN, PAYING -> HttpStatus.ACCEPTED;
+                    default -> HttpStatus.OK;
+                };
         return ResponseEntity.status(status).body(SettlementResponse.from(view));
     }
 
     @PostMapping("/{settlementId}/hold")
-    ResponseEntity<SettlementResponse> hold(
-            @PathVariable UUID settlementId, @Valid @RequestBody HoldRequest request) {
-        return ResponseEntity.ok(SettlementResponse.from(
-                settlementService.hold(SettlementId.of(settlementId), request.reason())));
+    ResponseEntity<SettlementResponse> hold(@PathVariable UUID settlementId, @Valid @RequestBody HoldRequest request) {
+        return ResponseEntity.ok(
+                SettlementResponse.from(settlementService.hold(SettlementId.of(settlementId), request.reason())));
     }
 
     @PostMapping("/{settlementId}/release")
     ResponseEntity<SettlementResponse> release(@PathVariable UUID settlementId) {
-        return ResponseEntity.ok(
-                SettlementResponse.from(settlementService.release(SettlementId.of(settlementId))));
+        return ResponseEntity.ok(SettlementResponse.from(settlementService.release(SettlementId.of(settlementId))));
     }
 
     @GetMapping("/{settlementId}")
     ResponseEntity<SettlementResponse> get(@PathVariable UUID settlementId) {
-        return ResponseEntity.ok(
-                SettlementResponse.from(settlementService.get(SettlementId.of(settlementId))));
+        return ResponseEntity.ok(SettlementResponse.from(settlementService.get(SettlementId.of(settlementId))));
     }
 
     @GetMapping
     ResponseEntity<List<SettlementResponse>> listByMerchant(
             @RequestParam UUID merchantId, @RequestParam(defaultValue = "20") int limit) {
-        return ResponseEntity.ok(
-                settlementService.listByMerchant(MerchantId.of(merchantId), limit).stream()
-                        .map(SettlementResponse::from)
-                        .toList());
+        return ResponseEntity.ok(settlementService.listByMerchant(MerchantId.of(merchantId), limit).stream()
+                .map(SettlementResponse::from)
+                .toList());
     }
 
-    record CalculateRequest(
-            @NotNull UUID merchantId, @NotNull LocalDate periodStart, @NotNull LocalDate periodEnd) {}
+    record CalculateRequest(@NotNull UUID merchantId, @NotNull LocalDate periodStart, @NotNull LocalDate periodEnd) {}
 
     record HoldRequest(@NotBlank String reason) {}
 

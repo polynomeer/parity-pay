@@ -28,8 +28,7 @@ public final class WalletEvents {
         payload.put("walletId", walletId.toString());
         payload.put("memberId", memberId.toString());
         payload.put("currency", currency.name());
-        return EventEnvelope.of(
-                WALLET_CREATED, 1, "Wallet", walletId.toString(), occurredAt, null, payload);
+        return EventEnvelope.of(WALLET_CREATED, 1, "Wallet", walletId.toString(), occurredAt, null, payload);
     }
 
     public static EventEnvelope topUpCompleted(TopUp topUp, LedgerTransactionId ledgerTransactionId) {
@@ -40,12 +39,6 @@ public final class WalletEvents {
         payload.put("currency", topUp.completedAmount().currency().name());
         payload.put("ledgerTransactionId", ledgerTransactionId.toString());
         return EventEnvelope.of(
-                TOP_UP_COMPLETED,
-                1,
-                "TopUp",
-                topUp.walletId().toString(),
-                topUp.completedAt(),
-                null,
-                payload);
+                TOP_UP_COMPLETED, 1, "TopUp", topUp.walletId().toString(), topUp.completedAt(), null, payload);
     }
 }

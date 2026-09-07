@@ -94,13 +94,11 @@ public class SettlementItemConsumer {
             return;
         }
 
-        itemRepository.append(
-                SettlementItem.sale(merchantId, paymentId, settleable, currency, occurredAt));
+        itemRepository.append(SettlementItem.sale(merchantId, paymentId, settleable, currency, occurredAt));
 
         long fee = SettlementCalculator.feeFor(settleable, properties.feeBasisPoints());
         if (fee > 0) {
-            itemRepository.append(
-                    SettlementItem.fee(merchantId, paymentId, fee, currency, occurredAt));
+            itemRepository.append(SettlementItem.fee(merchantId, paymentId, fee, currency, occurredAt));
         }
     }
 
@@ -126,27 +124,22 @@ public class SettlementItemConsumer {
         }
 
         boolean alreadySettled = existing.stream()
-                .anyMatch(item -> item.type() == SettlementItemType.SALE
-                        && item.status() == SettlementItemStatus.SETTLED);
+                .anyMatch(item ->
+                        item.type() == SettlementItemType.SALE && item.status() == SettlementItemStatus.SETTLED);
 
         if (alreadySettled) {
-            itemRepository.append(SettlementItem.adjustment(
-                    merchantId, paymentId, cancellationId, -amount, currency, occurredAt));
+            itemRepository.append(
+                    SettlementItem.adjustment(merchantId, paymentId, cancellationId, -amount, currency, occurredAt));
         } else {
-            itemRepository.append(SettlementItem.cancellation(
-                    merchantId, paymentId, cancellationId, amount, currency, occurredAt));
+            itemRepository.append(
+                    SettlementItem.cancellation(merchantId, paymentId, cancellationId, amount, currency, occurredAt));
         }
 
         // 취소된 금액에 대한 수수료는 판매자에게 돌려줍니다.
         long feeRefund = SettlementCalculator.feeFor(amount, properties.feeBasisPoints());
         if (feeRefund > 0) {
             itemRepository.append(SettlementItem.adjustment(
-                    merchantId,
-                    paymentId,
-                    cancellationId + ":FEE_REFUND",
-                    feeRefund,
-                    currency,
-                    occurredAt));
+                    merchantId, paymentId, cancellationId + ":FEE_REFUND", feeRefund, currency, occurredAt));
         }
     }
 }

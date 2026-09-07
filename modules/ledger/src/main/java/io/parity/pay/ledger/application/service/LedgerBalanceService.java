@@ -35,8 +35,8 @@ public class LedgerBalanceService implements LedgerBalanceQuery {
     public Money balanceOf(LedgerAccountId accountId) {
         LedgerAccount account = accountRepository
                 .findById(accountId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "ledger account not found: " + accountId));
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "ledger account not found: " + accountId));
 
         LedgerTransactionRepository.DebitCreditTotals totals = transactionRepository.totalsOf(accountId);
         long balance = account.normalBalance() == Direction.DEBIT

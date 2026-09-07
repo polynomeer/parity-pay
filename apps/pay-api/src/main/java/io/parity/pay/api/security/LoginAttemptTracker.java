@@ -35,15 +35,14 @@ class LoginAttemptTracker {
     }
 
     void requireNotLocked(String email) {
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT locked_until FROM login_attempt WHERE email = ?", email);
+        List<Map<String, Object>> rows =
+                jdbcTemplate.queryForList("SELECT locked_until FROM login_attempt WHERE email = ?", email);
         if (rows.isEmpty() || rows.get(0).get("locked_until") == null) {
             return;
         }
         Instant lockedUntil = ((Timestamp) rows.get(0).get("locked_until")).toInstant();
         if (lockedUntil.isAfter(clock.instant())) {
-            throw new BusinessException(
-                    ErrorCode.LIMIT_EXCEEDED, "too many failed sign-in attempts; try again later");
+            throw new BusinessException(ErrorCode.LIMIT_EXCEEDED, "too many failed sign-in attempts; try again later");
         }
     }
 

@@ -10,8 +10,7 @@ import java.util.Objects;
  *
  * <p>근거: INV-006, ADR-009
  */
-public record LedgerEntry(
-        LedgerEntryId id, LedgerAccountId accountId, Direction direction, Money money) {
+public record LedgerEntry(LedgerEntryId id, LedgerAccountId accountId, Direction direction, Money money) {
 
     public LedgerEntry {
         Objects.requireNonNull(id, "id must not be null");

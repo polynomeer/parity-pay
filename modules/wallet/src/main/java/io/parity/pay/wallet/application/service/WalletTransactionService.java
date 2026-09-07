@@ -43,15 +43,14 @@ public class WalletTransactionService implements WalletTransactionQuery {
     public TransactionPage list(MemberId memberId, WalletId walletId, String cursor, int limit) {
         Wallet wallet = walletRepository
                 .findById(walletId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "wallet not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "wallet not found"));
         wallet.requireOwnedBy(memberId);
 
         int pageSize = normalizeLimit(limit);
         Cursor decoded = decodeCursor(cursor);
 
-        List<WalletTransactionEntry> entries = transactionRepository.findPage(
-                walletId, decoded.occurredAt(), decoded.transactionId(), pageSize);
+        List<WalletTransactionEntry> entries =
+                transactionRepository.findPage(walletId, decoded.occurredAt(), decoded.transactionId(), pageSize);
 
         String nextCursor = entries.size() < pageSize ? null : encodeCursor(entries.getLast());
         return new TransactionPage(entries, nextCursor);

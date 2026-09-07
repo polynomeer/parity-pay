@@ -20,11 +20,7 @@ public interface CancelPaymentUseCase {
     CancellationView cancel(CancelPaymentCommand command);
 
     record CancelPaymentCommand(
-            MemberId memberId,
-            PaymentId paymentId,
-            Money amount,
-            String reason,
-            IdempotencyKey idempotencyKey) {}
+            MemberId memberId, PaymentId paymentId, Money amount, String reason, IdempotencyKey idempotencyKey) {}
 
     record CancellationView(
             CancellationId cancellationId,

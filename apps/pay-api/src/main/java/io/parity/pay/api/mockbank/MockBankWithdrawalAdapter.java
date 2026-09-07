@@ -23,26 +23,23 @@ class MockBankWithdrawalAdapter implements BankWithdrawalPort {
     private final MockBankBehavior behavior;
     private final JdbcTemplate jdbcTemplate;
 
-    MockBankWithdrawalAdapter(
-            MockBankLedger mockBankLedger, MockBankBehavior behavior, JdbcTemplate jdbcTemplate) {
+    MockBankWithdrawalAdapter(MockBankLedger mockBankLedger, MockBankBehavior behavior, JdbcTemplate jdbcTemplate) {
         this.mockBankLedger = mockBankLedger;
         this.behavior = behavior;
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public BankWithdrawalResult withdraw(
-            BankAccountId bankAccountId, Money amount, TopUpId externalIdempotencyKey) {
+    public BankWithdrawalResult withdraw(BankAccountId bankAccountId, Money amount, TopUpId externalIdempotencyKey) {
         String accountNumberToken = accountNumberTokenOf(bankAccountId);
         String externalKey = externalIdempotencyKey.toString();
 
         return switch (behavior.mode()) {
-            case NORMAL -> toResult(
-                    mockBankLedger.withdraw(accountNumberToken, amount, externalKey));
+            case NORMAL -> toResult(mockBankLedger.withdraw(accountNumberToken, amount, externalKey));
             case EXPLICIT_FAILURE -> BankWithdrawalResult.failed("MOCK_BANK_DECLINED");
             case TIMEOUT_BEFORE_WITHDRAWAL ->
-                // 외부는 아무것도 하지 않았지만 내부는 그 사실을 알 수 없습니다.
-                throw new MockBankTimeoutException("mock bank timed out before processing");
+            // 외부는 아무것도 하지 않았지만 내부는 그 사실을 알 수 없습니다.
+            throw new MockBankTimeoutException("mock bank timed out before processing");
             case TIMEOUT_AFTER_WITHDRAWAL -> {
                 mockBankLedger.withdraw(accountNumberToken, amount, externalKey);
                 // 외부는 출금을 마쳤지만 응답이 유실됩니다(F-006).
@@ -59,9 +56,7 @@ class MockBankWithdrawalAdapter implements BankWithdrawalPort {
         }
         return mockBankLedger
                 .findWithdrawalStatus(externalIdempotencyKey.toString())
-                .map(status -> "SUCCEEDED".equals(status)
-                        ? WithdrawalStatus.SUCCEEDED
-                        : WithdrawalStatus.FAILED)
+                .map(status -> "SUCCEEDED".equals(status) ? WithdrawalStatus.SUCCEEDED : WithdrawalStatus.FAILED)
                 .orElse(WithdrawalStatus.NOT_FOUND);
     }
 

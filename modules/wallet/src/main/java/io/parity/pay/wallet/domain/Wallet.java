@@ -13,8 +13,7 @@ import java.util.Objects;
  *
  * <p>근거: docs/06-domain-state-design.md §2
  */
-public record Wallet(
-        WalletId id, MemberId memberId, CurrencyCode currency, WalletStatus status, Instant createdAt) {
+public record Wallet(WalletId id, MemberId memberId, CurrencyCode currency, WalletStatus status, Instant createdAt) {
 
     public Wallet {
         Objects.requireNonNull(id, "id must not be null");
@@ -31,16 +30,14 @@ public record Wallet(
     /** 충전할 수 없는 상태이면 예외를 던집니다. 근거: docs/04-payment-policy.md §3 */
     public void requireTopUpAllowed() {
         if (!status.canTopUp()) {
-            throw new BusinessException(
-                    ErrorCode.WALLET_NOT_ACTIVE, "wallet is not active: " + status);
+            throw new BusinessException(ErrorCode.WALLET_NOT_ACTIVE, "wallet is not active: " + status);
         }
     }
 
     /** 지출할 수 없는 상태이면 예외를 던집니다. 근거: docs/04-payment-policy.md §2 */
     public void requireSpendAllowed() {
         if (!status.canSpend()) {
-            throw new BusinessException(
-                    ErrorCode.WALLET_NOT_ACTIVE, "wallet is not active: " + status);
+            throw new BusinessException(ErrorCode.WALLET_NOT_ACTIVE, "wallet is not active: " + status);
         }
     }
 

@@ -94,8 +94,7 @@ public class PaymentService implements ApprovePaymentUseCase, PaymentQuery {
         // 같은 주문에 이미 승인된 결제가 있으면 새로 승인하지 않습니다.
         // 근거: docs/04-payment-policy.md §4, docs/06-domain-state-design.md §6
         paymentRepository.findActiveByOrderId(command.orderId()).ifPresent(active -> {
-            throw new BusinessException(
-                    ErrorCode.INVALID_STATE_TRANSITION, "order already has an approved payment");
+            throw new BusinessException(ErrorCode.INVALID_STATE_TRANSITION, "order already has an approved payment");
         });
 
         WalletFundsUseCase.SpendableWallet wallet = walletFunds.requireSpendable(
@@ -152,8 +151,7 @@ public class PaymentService implements ApprovePaymentUseCase, PaymentQuery {
     public PaymentView getPayment(MemberId memberId, PaymentId paymentId) {
         Payment payment = paymentRepository
                 .findById(paymentId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
         payment.requireOwnedBy(memberId);
         return PaymentView.of(payment);
     }
@@ -163,8 +161,7 @@ public class PaymentService implements ApprovePaymentUseCase, PaymentQuery {
     public PaymentView getPaymentByOrderId(MemberId memberId, String orderId) {
         Payment payment = paymentRepository
                 .findActiveByOrderId(orderId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
         payment.requireOwnedBy(memberId);
         return PaymentView.of(payment);
     }

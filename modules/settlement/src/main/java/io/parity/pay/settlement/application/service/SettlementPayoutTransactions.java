@@ -65,8 +65,7 @@ class SettlementPayoutTransactions {
         // JE-008: 판매자 지급 의무가 사라지고 법인 은행 자산이 줄어듭니다.
         LedgerAccount merchantPayable = resolveLedgerAccount.resolve(
                 AccountCode.MERCHANT_PAYABLE, paid.merchantId().value(), paid.currency());
-        LedgerAccount bankDeposit =
-                resolveLedgerAccount.resolveCorporate(AccountCode.BANK_DEPOSIT, paid.currency());
+        LedgerAccount bankDeposit = resolveLedgerAccount.resolveCorporate(AccountCode.BANK_DEPOSIT, paid.currency());
         postJournal.post(JournalFactory.settlementPaid(
                 paid.id(), merchantPayable.id(), bankDeposit.id(), paid.netAmount(), paid.paidAt()));
 
@@ -99,7 +98,6 @@ class SettlementPayoutTransactions {
     private Settlement load(SettlementId settlementId) {
         return settlementRepository
                 .findById(settlementId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "settlement not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "settlement not found"));
     }
 }

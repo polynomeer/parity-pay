@@ -28,9 +28,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * <p>근거: docs/02-prd.md §6(권한 모델), docs/05-technical-design.md §11(토큰 수명·철회, 로그인 실패
  * 제한), NFR-007
  */
-@SpringBootTest(
-        classes = ParityPayApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = ParityPayApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AuthenticationApiTest extends AbstractIntegrationTest {
 
     @Autowired
@@ -64,30 +62,23 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
     @DisplayName("가입한 사용자는 로그인해 토큰을 받고 CUSTOMER 역할을 가진다")
     void loginIssuesTokens() {
         restTemplate.postForEntity(
-                "/api/v1/members",
-                Map.of("email", "auth-user@example.com", "password", "password1234"),
-                Map.class);
+                "/api/v1/members", Map.of("email", "auth-user@example.com", "password", "password1234"), Map.class);
 
         ResponseEntity<Map> tokens = restTemplate.postForEntity(
-                "/api/v1/auth/tokens",
-                Map.of("email", "auth-user@example.com", "password", "password1234"),
-                Map.class);
+                "/api/v1/auth/tokens", Map.of("email", "auth-user@example.com", "password", "password1234"), Map.class);
 
         assertThat(tokens.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(tokens.getBody().get("tokenType")).isEqualTo("Bearer");
         assertThat(tokens.getBody().get("accessToken")).isNotNull();
         assertThat(tokens.getBody().get("refreshToken")).isNotNull();
-        assertThat((List<Object>) tokens.getBody().get("roles"))
-                .containsExactly((Object) "CUSTOMER");
+        assertThat((List<Object>) tokens.getBody().get("roles")).containsExactly((Object) "CUSTOMER");
     }
 
     @Test
     @DisplayName("비밀번호가 틀리면 계정 존재 여부를 알려주지 않는다")
     void wrongPasswordDoesNotRevealAccountExistence() {
         restTemplate.postForEntity(
-                "/api/v1/members",
-                Map.of("email", "auth-known@example.com", "password", "password1234"),
-                Map.class);
+                "/api/v1/members", Map.of("email", "auth-known@example.com", "password", "password1234"), Map.class);
 
         ResponseEntity<Map> wrongPassword = restTemplate.postForEntity(
                 "/api/v1/auth/tokens",
@@ -100,7 +91,8 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
 
         assertThat(wrongPassword.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         // 두 경우의 응답이 같아야 계정 존재 여부가 새지 않습니다.
-        assertThat(wrongPassword.getBody().get("code")).isEqualTo(unknownAccount.getBody().get("code"));
+        assertThat(wrongPassword.getBody().get("code"))
+                .isEqualTo(unknownAccount.getBody().get("code"));
         assertThat(wrongPassword.getBody().get("message"))
                 .isEqualTo(unknownAccount.getBody().get("message"));
     }
@@ -109,16 +101,12 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
     @DisplayName("로그인 실패가 반복되면 계정을 잠근다")
     void repeatedFailuresLockTheAccount() {
         restTemplate.postForEntity(
-                "/api/v1/members",
-                Map.of("email", "auth-lock@example.com", "password", "password1234"),
-                Map.class);
+                "/api/v1/members", Map.of("email", "auth-lock@example.com", "password", "password1234"), Map.class);
 
         // max-login-failures=3 (테스트 설정)
         for (int i = 0; i < 3; i++) {
             restTemplate.postForEntity(
-                    "/api/v1/auth/tokens",
-                    Map.of("email", "auth-lock@example.com", "password", "wrong"),
-                    Map.class);
+                    "/api/v1/auth/tokens", Map.of("email", "auth-lock@example.com", "password", "wrong"), Map.class);
         }
 
         ResponseEntity<Map> afterLock = restTemplate.postForEntity(
@@ -135,9 +123,7 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
     @DisplayName("리프레시 토큰은 교환할 때마다 회전하고, 쓴 토큰은 다시 쓸 수 없다")
     void refreshTokensRotate() {
         restTemplate.postForEntity(
-                "/api/v1/members",
-                Map.of("email", "auth-refresh@example.com", "password", "password1234"),
-                Map.class);
+                "/api/v1/members", Map.of("email", "auth-refresh@example.com", "password", "password1234"), Map.class);
         ResponseEntity<Map> first = restTemplate.postForEntity(
                 "/api/v1/auth/tokens",
                 Map.of("email", "auth-refresh@example.com", "password", "password1234"),
@@ -158,8 +144,7 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("로그아웃하면 리프레시 토큰이 모두 철회된다")
     void logoutRevokesRefreshTokens() {
-        ApiAuth.Session session =
-                ApiAuth.registerAndLogin(restTemplate, "auth-logout@example.com", "password1234");
+        ApiAuth.Session session = ApiAuth.registerAndLogin(restTemplate, "auth-logout@example.com", "password1234");
         ResponseEntity<Map> tokens = restTemplate.postForEntity(
                 "/api/v1/auth/tokens",
                 Map.of("email", "auth-logout@example.com", "password", "password1234"),
@@ -184,10 +169,7 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
         headers.setBearerAuth("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhdHRhY2tlciJ9.not-a-valid-signature");
 
         ResponseEntity<Map> response = restTemplate.exchange(
-                "/api/v1/wallets/" + UUID.randomUUID(),
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                Map.class);
+                "/api/v1/wallets/" + UUID.randomUUID(), HttpMethod.GET, new HttpEntity<>(headers), Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
@@ -196,9 +178,7 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
     @DisplayName("가입은 공개이지만 계좌 연결부터는 인증이 필요하다")
     void registrationIsPublicButTheRestIsNot() {
         ResponseEntity<Map> registration = restTemplate.postForEntity(
-                "/api/v1/members",
-                Map.of("email", "auth-public@example.com", "password", "password1234"),
-                Map.class);
+                "/api/v1/members", Map.of("email", "auth-public@example.com", "password", "password1234"), Map.class);
         assertThat(registration.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
         ResponseEntity<Map> withoutToken = restTemplate.postForEntity(
@@ -214,8 +194,7 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
         assertThat(restTemplate.getForEntity("/actuator/health", String.class).getStatusCode())
                 .isEqualTo(HttpStatus.OK);
 
-        ResponseEntity<String> scrape =
-                restTemplate.getForEntity("/actuator/prometheus", String.class);
+        ResponseEntity<String> scrape = restTemplate.getForEntity("/actuator/prometheus", String.class);
         assertThat(scrape.getStatusCode()).isEqualTo(HttpStatus.OK);
         // Phase 6에서 만든 불변조건 지표가 실제로 노출되는지 확인합니다.
         assertThat(scrape.getBody())
@@ -230,8 +209,7 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("인증된 호출자의 잘못된 경로는 404이며 500으로 부풀리지 않는다")
     void unknownPathReturnsNotFound() {
-        ApiAuth.Session session =
-                ApiAuth.registerAndLogin(restTemplate, "auth-404@example.com", "password1234");
+        ApiAuth.Session session = ApiAuth.registerAndLogin(restTemplate, "auth-404@example.com", "password1234");
 
         ResponseEntity<Map> response = restTemplate.exchange(
                 "/api/v1/does-not-exist",
@@ -247,9 +225,12 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
     @DisplayName("미인증 호출자에게는 경로 존재 여부도 알려주지 않는다")
     void anonymousCallersCannotProbePaths() {
         // 없는 경로든 있는 경로든 똑같이 401입니다.
-        assertThat(restTemplate.getForEntity("/api/v1/does-not-exist", Map.class).getStatusCode())
+        assertThat(restTemplate
+                        .getForEntity("/api/v1/does-not-exist", Map.class)
+                        .getStatusCode())
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(restTemplate.getForEntity("/api/v1/wallets/" + UUID.randomUUID(), Map.class)
+        assertThat(restTemplate
+                        .getForEntity("/api/v1/wallets/" + UUID.randomUUID(), Map.class)
                         .getStatusCode())
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
     }

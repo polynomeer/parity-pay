@@ -32,8 +32,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 class MigrationTest extends AbstractIntegrationTest {
 
-    private static final Path MIGRATION_DIR =
-            Path.of("src", "main", "resources", "db", "migration");
+    private static final Path MIGRATION_DIR = Path.of("src", "main", "resources", "db", "migration");
 
     @Autowired
     private Flyway flyway;
@@ -71,10 +70,9 @@ class MigrationTest extends AbstractIntegrationTest {
         assertThat(appliedVersions).containsExactlyElementsOf(fileVersions);
         // 버전이 1부터 빠짐없이 이어져야 합니다.
         assertThat(fileVersions)
-                .containsExactlyElementsOf(
-                        java.util.stream.IntStream.rangeClosed(1, fileVersions.size())
-                                .mapToObj(String::valueOf)
-                                .toList());
+                .containsExactlyElementsOf(java.util.stream.IntStream.rangeClosed(1, fileVersions.size())
+                        .mapToObj(String::valueOf)
+                        .toList());
     }
 
     @Test

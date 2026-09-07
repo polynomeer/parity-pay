@@ -117,16 +117,14 @@ public class MismatchResolutionService {
             throw new BusinessException(ErrorCode.INVALID_AMOUNT, "adjustment amount must be positive");
         }
 
-        CurrencyCode currency = mismatch.currency() == null
-                ? CurrencyCode.KRW
-                : CurrencyCode.valueOf(mismatch.currency());
+        CurrencyCode currency =
+                mismatch.currency() == null ? CurrencyCode.KRW : CurrencyCode.valueOf(mismatch.currency());
 
         LedgerAccount debit = resolveAccount(debitAccount, debitOwnerId, currency);
         LedgerAccount credit = resolveAccount(creditAccount, creditOwnerId, currency);
 
         LedgerTransaction adjustment = postJournal.post(JournalFactory.operationalAdjustment(
-                mismatch.mismatchId(), debit.id(), credit.id(), Money.of(amount, currency),
-                clock.instant()));
+                mismatch.mismatchId(), debit.id(), credit.id(), Money.of(amount, currency), clock.instant()));
 
         ReconciliationMismatch resolved = new ReconciliationMismatch(
                 mismatch.mismatchId(),
@@ -159,8 +157,7 @@ public class MismatchResolutionService {
 
     private static UUID requireOwner(AccountCode code, UUID ownerId) {
         if (ownerId == null) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_REQUEST, "account " + code + " requires an owner id");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "account " + code + " requires an owner id");
         }
         return ownerId;
     }
@@ -168,15 +165,13 @@ public class MismatchResolutionService {
     private void requireOpen(ReconciliationMismatch mismatch) {
         if (mismatch.resolutionStatus() != ResolutionStatus.OPEN) {
             throw new BusinessException(
-                    ErrorCode.INVALID_STATE_TRANSITION,
-                    "mismatch is already " + mismatch.resolutionStatus());
+                    ErrorCode.INVALID_STATE_TRANSITION, "mismatch is already " + mismatch.resolutionStatus());
         }
     }
 
     private ReconciliationMismatch load(UUID mismatchId) {
         return repository
                 .findById(mismatchId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "mismatch not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "mismatch not found"));
     }
 }

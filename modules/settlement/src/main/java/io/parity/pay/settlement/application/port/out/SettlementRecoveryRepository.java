@@ -17,8 +17,7 @@ public interface SettlementRecoveryRepository {
             String lastError,
             Instant checkedAt);
 
-    void markManualReview(
-            SettlementId settlementId, int attemptCount, String lastError, Instant checkedAt);
+    void markManualReview(SettlementId settlementId, int attemptCount, String lastError, Instant checkedAt);
 
     void clear(SettlementId settlementId);
 

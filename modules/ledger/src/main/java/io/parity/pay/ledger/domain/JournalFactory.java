@@ -166,8 +166,7 @@ public final class JournalFactory {
             Money amount,
             Instant effectiveAt) {
         if (debitAccountId.equals(creditAccountId)) {
-            throw new UnbalancedJournalException(
-                    "adjustment must move value between two different accounts");
+            throw new UnbalancedJournalException("adjustment must move value between two different accounts");
         }
         return new Journal(
                 ReferenceType.ADJUSTMENT,
@@ -175,9 +174,7 @@ public final class JournalFactory {
                 TransactionType.OPERATIONAL_ADJUSTMENT,
                 amount.currency(),
                 effectiveAt,
-                List.of(
-                        JournalLine.debit(debitAccountId, amount),
-                        JournalLine.credit(creditAccountId, amount)));
+                List.of(JournalLine.debit(debitAccountId, amount), JournalLine.credit(creditAccountId, amount)));
     }
 
     /**
@@ -196,11 +193,6 @@ public final class JournalFactory {
                         new JournalLine(entry.accountId(), entry.direction().opposite(), entry.money()))
                 .toList();
         return new Journal(
-                referenceType,
-                referenceId,
-                transactionType,
-                original.currency(),
-                effectiveAt,
-                reversedLines);
+                referenceType, referenceId, transactionType, original.currency(), effectiveAt, reversedLines);
     }
 }

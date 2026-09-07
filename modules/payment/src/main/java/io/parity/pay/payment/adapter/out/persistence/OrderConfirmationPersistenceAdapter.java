@@ -37,9 +37,7 @@ class OrderConfirmationPersistenceAdapter implements OrderConfirmationRepository
     @Override
     public Optional<Instant> findConfirmedAt(PaymentId paymentId) {
         List<Timestamp> rows = jdbcTemplate.queryForList(
-                "SELECT confirmed_at FROM order_confirmation WHERE payment_id = ?",
-                Timestamp.class,
-                paymentId.value());
+                "SELECT confirmed_at FROM order_confirmation WHERE payment_id = ?", Timestamp.class, paymentId.value());
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0).toInstant());
     }
 }

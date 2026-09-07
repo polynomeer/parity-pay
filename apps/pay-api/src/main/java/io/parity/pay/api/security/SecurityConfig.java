@@ -46,52 +46,42 @@ class SecurityConfig {
         return http
                 // 토큰 기반이며 브라우저 폼을 쓰지 않으므로 CSRF 토큰이 필요 없습니다.
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(requests -> requests
-                        .requestMatchers(HttpMethod.POST, "/api/v1/members").permitAll()
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(requests -> requests.requestMatchers(HttpMethod.POST, "/api/v1/members")
+                        .permitAll()
                         .requestMatchers("/api/v1/auth/tokens", "/api/v1/auth/tokens/refresh")
                         .permitAll()
                         // 헬스와 지표는 내부 수집 대상입니다. 운영에서는 네트워크로 제한합니다.
-                        .requestMatchers("/actuator/health/**", "/actuator/prometheus").permitAll()
+                        .requestMatchers("/actuator/health/**", "/actuator/prometheus")
+                        .permitAll()
                         // API 문서는 내부 도구입니다. 공개하면 공격자에게 전체 표면을 알려주는
                         // 것이므로 운영자 권한으로 제한합니다.
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
-                        .hasAnyRole(
-                                Role.OPS_VIEWER.name(),
-                                Role.OPS_OPERATOR.name(),
-                                Role.OPS_APPROVER.name())
-                        .requestMatchers("/actuator/**").hasRole(Role.OPS_VIEWER.name())
+                        .hasAnyRole(Role.OPS_VIEWER.name(), Role.OPS_OPERATOR.name(), Role.OPS_APPROVER.name())
+                        .requestMatchers("/actuator/**")
+                        .hasRole(Role.OPS_VIEWER.name())
                         // 장애 주입은 운영 환경에 존재하면 안 되는 기능입니다. 최소한 운영자로 제한합니다.
                         .requestMatchers("/api/v1/admin/mock-bank/**")
                         .hasRole(Role.OPS_OPERATOR.name())
                         .requestMatchers(HttpMethod.GET, "/api/v1/admin/**")
-                        .hasAnyRole(
-                                Role.OPS_VIEWER.name(),
-                                Role.OPS_OPERATOR.name(),
-                                Role.OPS_APPROVER.name())
+                        .hasAnyRole(Role.OPS_VIEWER.name(), Role.OPS_OPERATOR.name(), Role.OPS_APPROVER.name())
                         .requestMatchers("/api/v1/admin/**")
                         .hasAnyRole(Role.OPS_OPERATOR.name(), Role.OPS_APPROVER.name())
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-                .exceptionHandling(handling -> handling
-                        .authenticationEntryPoint((request, response, exception) ->
-                                writeError(response, 401, ErrorCode.RESOURCE_NOT_FOUND,
-                                        "authentication is required"))
-                        .accessDeniedHandler((request, response, exception) ->
-                                writeError(response, 403, ErrorCode.RISK_BLOCKED,
-                                        "this operation requires a different role")))
+                        .anyRequest()
+                        .authenticated())
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .exceptionHandling(handling -> handling.authenticationEntryPoint((request, response, exception) ->
+                                writeError(response, 401, ErrorCode.RESOURCE_NOT_FOUND, "authentication is required"))
+                        .accessDeniedHandler((request, response, exception) -> writeError(
+                                response, 403, ErrorCode.RISK_BLOCKED, "this operation requires a different role")))
                 .httpBasic(Customizer.withDefaults())
                 .build();
     }
 
     /** 오류 응답 형식을 API 나머지와 맞춥니다. 근거: docs/08-db-api-event-spec.md §5 */
     private static void writeError(
-            jakarta.servlet.http.HttpServletResponse response,
-            int status,
-            ErrorCode code,
-            String message)
+            jakarta.servlet.http.HttpServletResponse response, int status, ErrorCode code, String message)
             throws java.io.IOException {
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -124,8 +114,7 @@ class SecurityConfig {
     }
 
     private static SecretKeySpec secretKey(SecurityProperties properties) {
-        return new SecretKeySpec(
-                properties.jwtSecret().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        return new SecretKeySpec(properties.jwtSecret().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     }
 
     /** 비밀번호는 bcrypt로 해시합니다. 근거: docs/05-technical-design.md §11 */

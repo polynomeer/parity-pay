@@ -92,8 +92,7 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
         memberId = registered.memberId();
         walletId = WalletId.of(registered.walletId());
         merchantId = MerchantId.generate();
-        bankAccountId = onboardingService.linkBankAccount(
-                memberId, "004", "110-9999-8888", Money.krw(1_000_000));
+        bankAccountId = onboardingService.linkBankAccount(memberId, "004", "110-9999-8888", Money.krw(1_000_000));
     }
 
     @Test
@@ -136,8 +135,8 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
         assertThat(outboxCount("PUBLISHED")).isEqualTo(2L);
 
         // 브로커로 나간 이벤트를 소비자가 받아 거래내역을 만듭니다.
-        await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
-                assertThat(projectionCount()).isEqualTo(1L));
+        await().atMost(Duration.ofSeconds(20))
+                .untilAsserted(() -> assertThat(projectionCount()).isEqualTo(1L));
     }
 
     @Test
@@ -145,8 +144,8 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
     void duplicateDeliveryProducesSingleRow() throws Exception {
         topUp("outbox-topup-00004", 100_000);
         outboxPublisher.publishBatch();
-        await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
-                assertThat(projectionCount()).isEqualTo(1L));
+        await().atMost(Duration.ofSeconds(20))
+                .untilAsserted(() -> assertThat(projectionCount()).isEqualTo(1L));
 
         // 브로커 ACK 유실로 같은 봉투가 다시 도착한 상황을 그대로 재현합니다.
         JsonNode envelope = objectMapper.readTree(publishedEnvelopeJson("TopUpCompleted"));
@@ -170,8 +169,8 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
     void businessUniqueKeyIsTheSecondDefence() throws Exception {
         topUp("outbox-topup-00005", 100_000);
         outboxPublisher.publishBatch();
-        await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
-                assertThat(projectionCount()).isEqualTo(1L));
+        await().atMost(Duration.ofSeconds(20))
+                .untilAsserted(() -> assertThat(projectionCount()).isEqualTo(1L));
 
         // 이 소비자의 이력만 강제로 지워 "처음 보는 이벤트"처럼 만듭니다.
         jdbcTemplate.update(
@@ -198,16 +197,15 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
 
         outboxPublisher.publishBatch();
 
-        await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
-                assertThat(projectionCount()).isEqualTo(3L));
+        await().atMost(Duration.ofSeconds(20))
+                .untilAsserted(() -> assertThat(projectionCount()).isEqualTo(3L));
 
-        WalletTransactionQuery.TransactionPage page =
-                walletTransactionQuery.list(memberId, walletId, null, 20);
+        WalletTransactionQuery.TransactionPage page = walletTransactionQuery.list(memberId, walletId, null, 20);
 
         assertThat(page.entries())
-                .extracting(entry -> entry.type().name() + ":" + entry.direction().name())
-                .containsExactlyInAnyOrder(
-                        "TOP_UP:CREDIT", "PAYMENT:DEBIT", "PAYMENT_CANCELLATION:CREDIT");
+                .extracting(
+                        entry -> entry.type().name() + ":" + entry.direction().name())
+                .containsExactlyInAnyOrder("TOP_UP:CREDIT", "PAYMENT:DEBIT", "PAYMENT_CANCELLATION:CREDIT");
         assertThat(page.nextCursor()).isNull();
     }
 
@@ -219,11 +217,10 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
         pay("order-page-2", "outbox-payment-00004", 10_000);
         pay("order-page-3", "outbox-payment-00005", 10_000);
         outboxPublisher.publishBatch();
-        await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
-                assertThat(projectionCount()).isEqualTo(4L));
+        await().atMost(Duration.ofSeconds(20))
+                .untilAsserted(() -> assertThat(projectionCount()).isEqualTo(4L));
 
-        WalletTransactionQuery.TransactionPage firstPage =
-                walletTransactionQuery.list(memberId, walletId, null, 2);
+        WalletTransactionQuery.TransactionPage firstPage = walletTransactionQuery.list(memberId, walletId, null, 2);
         assertThat(firstPage.entries()).hasSize(2);
         assertThat(firstPage.nextCursor()).isNotNull();
 
@@ -239,8 +236,8 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
     }
 
     private void topUp(String key, long amount) {
-        requestTopUp.requestTopUp(new TopUpCommand(
-                memberId, walletId, bankAccountId, Money.krw(amount), IdempotencyKey.of(key)));
+        requestTopUp.requestTopUp(
+                new TopUpCommand(memberId, walletId, bankAccountId, Money.krw(amount), IdempotencyKey.of(key)));
     }
 
     private PaymentView pay(String orderId, String key, long amount) {
@@ -255,8 +252,8 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
     }
 
     private long outboxCount(String status) {
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM outbox_event WHERE status = ?", Long.class, status);
+        Long count =
+                jdbcTemplate.queryForObject("SELECT count(*) FROM outbox_event WHERE status = ?", Long.class, status);
         return count == null ? 0L : count;
     }
 
@@ -292,9 +289,7 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
 
     private long projectionCount() {
         Long count = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM wallet_transaction WHERE wallet_id = ?",
-                Long.class,
-                walletId.value());
+                "SELECT count(*) FROM wallet_transaction WHERE wallet_id = ?", Long.class, walletId.value());
         return count == null ? 0L : count;
     }
 

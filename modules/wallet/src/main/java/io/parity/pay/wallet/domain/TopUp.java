@@ -46,17 +46,12 @@ public record TopUp(
         }
         requestedAmount.requireSameCurrency(completedAmount);
         if (completedAmount.isGreaterThan(requestedAmount)) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_AMOUNT, "completed amount must not exceed requested amount");
+            throw new BusinessException(ErrorCode.INVALID_AMOUNT, "completed amount must not exceed requested amount");
         }
     }
 
     public static TopUp request(
-            WalletId walletId,
-            BankAccountId bankAccountId,
-            Money amount,
-            IdempotencyKey idempotencyKey,
-            Instant now) {
+            WalletId walletId, BankAccountId bankAccountId, Money amount, IdempotencyKey idempotencyKey, Instant now) {
         return new TopUp(
                 TopUpId.generate(),
                 walletId,
@@ -149,8 +144,7 @@ public record TopUp(
     private void requireTransitionTo(TopUpStatus next) {
         if (!status.canTransitionTo(next)) {
             throw new BusinessException(
-                    ErrorCode.INVALID_STATE_TRANSITION,
-                    "top-up cannot move from " + status + " to " + next);
+                    ErrorCode.INVALID_STATE_TRANSITION, "top-up cannot move from " + status + " to " + next);
         }
     }
 }

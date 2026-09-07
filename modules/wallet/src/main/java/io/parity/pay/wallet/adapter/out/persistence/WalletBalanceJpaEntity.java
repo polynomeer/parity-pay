@@ -30,8 +30,7 @@ class WalletBalanceJpaEntity {
 
     protected WalletBalanceJpaEntity() {}
 
-    WalletBalanceJpaEntity(
-            UUID walletId, long availableAmount, long pendingAmount, long version, Instant updatedAt) {
+    WalletBalanceJpaEntity(UUID walletId, long availableAmount, long pendingAmount, long version, Instant updatedAt) {
         this.walletId = walletId;
         this.availableAmount = availableAmount;
         this.pendingAmount = pendingAmount;

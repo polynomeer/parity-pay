@@ -43,7 +43,9 @@ public class EventSchemaValidator {
 
     /** 이 봉투가 자기 이벤트 타입의 스키마를 만족하는지 봅니다. */
     void validate(JsonNode envelope) {
-        String key = keyOf(envelope.path("eventType").asText(), envelope.path("eventVersion").asInt());
+        String key = keyOf(
+                envelope.path("eventType").asText(),
+                envelope.path("eventVersion").asInt());
         JsonSchema schema = schemas.get(key);
         if (schema == null) {
             throw new EventContractViolationException(

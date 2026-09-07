@@ -105,8 +105,8 @@ public class ReconciliationService {
         UUID runId = UUID.randomUUID();
         Instant startedAt = clock.instant();
 
-        List<ReconciliationMismatch> mismatches = ReconciliationMatcher.match(
-                runId, internalRecords, externalRecords, properties.delayTolerance(), now);
+        List<ReconciliationMismatch> mismatches =
+                ReconciliationMatcher.match(runId, internalRecords, externalRecords, properties.delayTolerance(), now);
 
         // 불일치가 실행 기록을 참조하므로 실행을 먼저 남깁니다. 건수는 처리 후 갱신합니다.
         repository.saveRun(
@@ -137,10 +137,8 @@ public class ReconciliationService {
 
         repository.updateRunMismatchCount(runId, opened);
 
-        return new ReconciliationSummary(
-                runId, internalRecords.size(), externalRecords.size(), opened);
+        return new ReconciliationSummary(runId, internalRecords.size(), externalRecords.size(), opened);
     }
 
-    public record ReconciliationSummary(
-            UUID runId, int internalCount, int externalCount, int mismatchCount) {}
+    public record ReconciliationSummary(UUID runId, int internalCount, int externalCount, int mismatchCount) {}
 }

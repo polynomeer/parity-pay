@@ -35,22 +35,16 @@ public record PaymentCancellation(
         Objects.requireNonNull(requestedAt, "requestedAt must not be null");
 
         if (!requestedAmount.isPositive()) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_AMOUNT, "cancellation amount must be positive");
+            throw new BusinessException(ErrorCode.INVALID_AMOUNT, "cancellation amount must be positive");
         }
         requestedAmount.requireSameCurrency(completedAmount);
         if (completedAmount.isGreaterThan(requestedAmount)) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_AMOUNT, "completed amount must not exceed requested amount");
+            throw new BusinessException(ErrorCode.INVALID_AMOUNT, "completed amount must not exceed requested amount");
         }
     }
 
     public static PaymentCancellation request(
-            PaymentId paymentId,
-            Money amount,
-            String reason,
-            IdempotencyKey idempotencyKey,
-            Instant now) {
+            PaymentId paymentId, Money amount, String reason, IdempotencyKey idempotencyKey, Instant now) {
         return new PaymentCancellation(
                 CancellationId.generate(),
                 paymentId,
@@ -116,8 +110,7 @@ public record PaymentCancellation(
     private void requireTransitionTo(CancellationStatus next) {
         if (!status.canTransitionTo(next)) {
             throw new BusinessException(
-                    ErrorCode.INVALID_STATE_TRANSITION,
-                    "cancellation cannot move from " + status + " to " + next);
+                    ErrorCode.INVALID_STATE_TRANSITION, "cancellation cannot move from " + status + " to " + next);
         }
     }
 }

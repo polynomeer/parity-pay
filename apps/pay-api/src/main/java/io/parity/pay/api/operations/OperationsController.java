@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -71,8 +70,7 @@ class OperationsController {
     /** 아직 최종 상태에 도달하지 못한 충전 목록입니다. */
     @GetMapping("/top-ups")
     ResponseEntity<List<UnresolvedTopUpResponse>> listUnresolved(
-            @RequestParam(defaultValue = "UNKNOWN") String status,
-            @RequestParam(defaultValue = "50") int limit) {
+            @RequestParam(defaultValue = "UNKNOWN") String status, @RequestParam(defaultValue = "50") int limit) {
         List<UnresolvedTopUpResponse> rows = jdbcTemplate.query(
                 """
                 SELECT t.top_up_id, t.wallet_id, t.status, t.requested_amount, t.currency,
@@ -103,8 +101,7 @@ class OperationsController {
 
     /** 자동 복구를 포기하고 사람에게 넘어온 건들입니다. */
     @GetMapping("/recovery/manual-review")
-    ResponseEntity<List<Map<String, Object>>> listManualReview(
-            @RequestParam(defaultValue = "50") int limit) {
+    ResponseEntity<List<Map<String, Object>>> listManualReview(@RequestParam(defaultValue = "50") int limit) {
         List<Map<String, Object>> rows = recoveryRepository.findManualReview(limit).stream()
                 .map(item -> Map.<String, Object>of(
                         "topUpId", item.topUpId().toString(),
@@ -137,13 +134,13 @@ class OperationsController {
                 outcome.changed() ? AuditLogWriter.Result.SUCCEEDED : AuditLogWriter.Result.NO_CHANGE,
                 outcome.detail());
 
-        return ResponseEntity.ok(new RecoveryOutcomeResponse(
-                topUpId, outcome.status(), outcome.changed(), outcome.detail()));
+        return ResponseEntity.ok(
+                new RecoveryOutcomeResponse(topUpId, outcome.status(), outcome.changed(), outcome.detail()));
     }
 
     private String currentStatus(UUID topUpId) {
-        List<String> rows = jdbcTemplate.queryForList(
-                "SELECT status FROM top_up WHERE top_up_id = ?", String.class, topUpId);
+        List<String> rows =
+                jdbcTemplate.queryForList("SELECT status FROM top_up WHERE top_up_id = ?", String.class, topUpId);
         return rows.isEmpty() ? null : rows.get(0);
     }
 

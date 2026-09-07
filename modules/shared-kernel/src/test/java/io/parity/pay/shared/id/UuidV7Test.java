@@ -67,8 +67,6 @@ class UuidV7Test {
 
     private static int compareUnsigned(UUID left, UUID right) {
         int high = Long.compareUnsigned(left.getMostSignificantBits(), right.getMostSignificantBits());
-        return high != 0
-                ? high
-                : Long.compareUnsigned(left.getLeastSignificantBits(), right.getLeastSignificantBits());
+        return high != 0 ? high : Long.compareUnsigned(left.getLeastSignificantBits(), right.getLeastSignificantBits());
     }
 }

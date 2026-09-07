@@ -1,9 +1,9 @@
 package io.parity.pay.api.web;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.parity.pay.shared.error.BusinessException;
 import io.parity.pay.shared.error.ErrorCode;
 import io.parity.pay.shared.error.ErrorResponse;
-import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -46,21 +46,18 @@ public class ApiExceptionHandler {
             log.info("business rule rejected request: {} {}", code, exception.getMessage());
         }
         countRejection(code);
-        ErrorResponse body =
-                ErrorResponse.of(code, exception.getMessage(), traceId(), exception.details());
+        ErrorResponse body = ErrorResponse.of(code, exception.getMessage(), traceId(), exception.details());
         return ResponseEntity.status(code.httpStatus()).body(body);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
-            MethodArgumentNotValidException exception) {
+    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException exception) {
         countRejection(ErrorCode.INVALID_REQUEST);
         String message = exception.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(error -> error.getField() + " " + error.getDefaultMessage())
                 .orElse("request is not valid");
-        ErrorResponse body =
-                ErrorResponse.of(ErrorCode.INVALID_REQUEST, message, traceId(), java.util.Map.of());
+        ErrorResponse body = ErrorResponse.of(ErrorCode.INVALID_REQUEST, message, traceId(), java.util.Map.of());
         return ResponseEntity.status(ErrorCode.INVALID_REQUEST.httpStatus()).body(body);
     }
 
@@ -74,8 +71,7 @@ public class ApiExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNoResourceFound(
             org.springframework.web.servlet.resource.NoResourceFoundException exception) {
         ErrorResponse body = ErrorResponse.of(
-                ErrorCode.RESOURCE_NOT_FOUND, "the requested resource does not exist", traceId(),
-                java.util.Map.of());
+                ErrorCode.RESOURCE_NOT_FOUND, "the requested resource does not exist", traceId(), java.util.Map.of());
         return ResponseEntity.status(ErrorCode.RESOURCE_NOT_FOUND.httpStatus()).body(body);
     }
 

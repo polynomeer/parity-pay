@@ -54,8 +54,8 @@ class PaymentTest {
         assertThat(canceled.cancellableAmount()).isEqualTo(Money.krw(0));
         assertThatThrownBy(() -> canceled.reserveCancellation(Money.krw(1), NOW))
                 .isInstanceOf(BusinessException.class)
-                .satisfies(e -> assertThat(((BusinessException) e).errorCode())
-                        .isEqualTo(ErrorCode.INVALID_STATE_TRANSITION));
+                .satisfies(e ->
+                        assertThat(((BusinessException) e).errorCode()).isEqualTo(ErrorCode.INVALID_STATE_TRANSITION));
     }
 
     @Test

@@ -21,7 +21,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -31,9 +30,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * <p>운영자가 미확정 거래를 찾고 안전한 재조회를 요청할 수 있는지, 그 작업이 지울 수 없는 기록으로
  * 남는지 확인합니다. 근거: FR-012, NFR-006, docs/09-consistency-recovery.md §10
  */
-@SpringBootTest(
-        classes = ParityPayApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = ParityPayApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OperationsApiTest extends AbstractIntegrationTest {
 
     @Autowired
@@ -70,8 +67,7 @@ class OperationsApiTest extends AbstractIntegrationTest {
         operatorBootstrap.createConfiguredOperators();
         operatorToken = ApiAuth.login(restTemplate, ApiAuth.OPS_OPERATOR, ApiAuth.OPS_PASSWORD);
 
-        ApiAuth.Session session =
-                ApiAuth.registerAndLogin(restTemplate, "ops@example.com", "password1234");
+        ApiAuth.Session session = ApiAuth.registerAndLogin(restTemplate, "ops@example.com", "password1234");
         walletId = session.walletId();
         customerToken = session.accessToken();
 
@@ -116,8 +112,7 @@ class OperationsApiTest extends AbstractIntegrationTest {
         ResponseEntity<Map> response = restTemplate.exchange(
                 "/api/v1/admin/top-ups/" + topUpId + "/resolve",
                 HttpMethod.POST,
-                new HttpEntity<>(
-                        Map.of("reason", "고객 문의 - 충전 반영 확인"), ApiAuth.bearer(operatorToken)),
+                new HttpEntity<>(Map.of("reason", "고객 문의 - 충전 반영 확인"), ApiAuth.bearer(operatorToken)),
                 Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -164,7 +159,8 @@ class OperationsApiTest extends AbstractIntegrationTest {
                 Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM audit_log", Long.class)).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM audit_log", Long.class))
+                .isZero();
     }
 
     @Test
@@ -180,8 +176,7 @@ class OperationsApiTest extends AbstractIntegrationTest {
 
         assertThatThrownBy(() -> jdbcTemplate.update("UPDATE audit_log SET actor = 'someone-else'"))
                 .hasStackTraceContaining("NFR-006");
-        assertThatThrownBy(() -> jdbcTemplate.update("DELETE FROM audit_log"))
-                .hasStackTraceContaining("NFR-006");
+        assertThatThrownBy(() -> jdbcTemplate.update("DELETE FROM audit_log")).hasStackTraceContaining("NFR-006");
     }
 
     /** 승인 후 응답이 유실되어 UNKNOWN으로 남은 충전을 만듭니다. */
@@ -193,10 +188,14 @@ class OperationsApiTest extends AbstractIntegrationTest {
                 HttpMethod.POST,
                 new HttpEntity<>(
                         Map.of(
-                                "walletId", walletId.toString(),
-                                "bankAccountId", bankAccountId.toString(),
-                                "amount", 100_000,
-                                "currency", "KRW"),
+                                "walletId",
+                                walletId.toString(),
+                                "bankAccountId",
+                                bankAccountId.toString(),
+                                "amount",
+                                100_000,
+                                "currency",
+                                "KRW"),
                         headers),
                 Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
@@ -230,6 +229,7 @@ class OperationsApiTest extends AbstractIntegrationTest {
                 Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM audit_log", Long.class)).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM audit_log", Long.class))
+                .isZero();
     }
 }

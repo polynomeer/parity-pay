@@ -31,7 +31,7 @@ public enum SettlementStatus {
             case CALCULATED -> next == PAYING || next == HELD;
             case HELD -> next == CALCULATED;
             case PAYING -> next == PAID || next == FAILED || next == UNKNOWN;
-            // 실패한 지급은 다시 시도할 수 있습니다. 근거: docs/06-domain-state-design.md §4
+                // 실패한 지급은 다시 시도할 수 있습니다. 근거: docs/06-domain-state-design.md §4
             case FAILED -> next == PAYING;
             case UNKNOWN -> next == PAID || next == FAILED;
             case PAID -> false;

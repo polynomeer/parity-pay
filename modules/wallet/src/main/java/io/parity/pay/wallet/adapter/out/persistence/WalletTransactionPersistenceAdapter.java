@@ -21,19 +21,18 @@ import org.springframework.stereotype.Repository;
 @Repository
 class WalletTransactionPersistenceAdapter implements WalletTransactionRepository {
 
-    private static final RowMapper<WalletTransactionEntry> ROW_MAPPER = (rs, rowNum) ->
-            new WalletTransactionEntry(
-                    rs.getObject("transaction_id", UUID.class),
-                    WalletId.of(rs.getObject("wallet_id", UUID.class)),
-                    WalletTransactionType.valueOf(rs.getString("transaction_type")),
-                    TransactionDirection.valueOf(rs.getString("direction")),
-                    Money.of(rs.getLong("amount"), CurrencyCode.valueOf(rs.getString("currency"))),
-                    rs.getString("reference_type"),
-                    rs.getString("reference_id"),
-                    rs.getObject("ledger_transaction_id", UUID.class) == null
-                            ? null
-                            : LedgerTransactionId.of(rs.getObject("ledger_transaction_id", UUID.class)),
-                    rs.getTimestamp("occurred_at").toInstant());
+    private static final RowMapper<WalletTransactionEntry> ROW_MAPPER = (rs, rowNum) -> new WalletTransactionEntry(
+            rs.getObject("transaction_id", UUID.class),
+            WalletId.of(rs.getObject("wallet_id", UUID.class)),
+            WalletTransactionType.valueOf(rs.getString("transaction_type")),
+            TransactionDirection.valueOf(rs.getString("direction")),
+            Money.of(rs.getLong("amount"), CurrencyCode.valueOf(rs.getString("currency"))),
+            rs.getString("reference_type"),
+            rs.getString("reference_id"),
+            rs.getObject("ledger_transaction_id", UUID.class) == null
+                    ? null
+                    : LedgerTransactionId.of(rs.getObject("ledger_transaction_id", UUID.class)),
+            rs.getTimestamp("occurred_at").toInstant());
 
     private final JdbcTemplate jdbcTemplate;
     private final Clock clock;
@@ -61,7 +60,9 @@ class WalletTransactionPersistenceAdapter implements WalletTransactionRepository
                 entry.amount().currency().name(),
                 entry.referenceType(),
                 entry.referenceId(),
-                entry.ledgerTransactionId() == null ? null : entry.ledgerTransactionId().value(),
+                entry.ledgerTransactionId() == null
+                        ? null
+                        : entry.ledgerTransactionId().value(),
                 Timestamp.from(entry.occurredAt()),
                 Timestamp.from(clock.instant()));
         return inserted == 1;

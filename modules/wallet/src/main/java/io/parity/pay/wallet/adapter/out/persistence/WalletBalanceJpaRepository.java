@@ -19,10 +19,7 @@ interface WalletBalanceJpaRepository extends JpaRepository<WalletBalanceJpaEntit
                    b.updatedAt = :now
              where b.walletId = :walletId
             """)
-    int increaseAvailable(
-            @Param("walletId") UUID walletId,
-            @Param("amount") long amount,
-            @Param("now") Instant now);
+    int increaseAvailable(@Param("walletId") UUID walletId, @Param("amount") long amount, @Param("now") Instant now);
 
     /**
      * 잔액이 충분할 때만 차감하는 조건부 원자 갱신입니다.
@@ -41,7 +38,5 @@ interface WalletBalanceJpaRepository extends JpaRepository<WalletBalanceJpaEntit
                and b.availableAmount >= :amount
             """)
     int decreaseAvailableIfSufficient(
-            @Param("walletId") UUID walletId,
-            @Param("amount") long amount,
-            @Param("now") Instant now);
+            @Param("walletId") UUID walletId, @Param("amount") long amount, @Param("now") Instant now);
 }

@@ -12,15 +12,11 @@ class IdempotencyKeyTest {
     @Test
     @DisplayName("허용 문자와 길이만 통과한다")
     void validatesFormat() {
-        assertThat(IdempotencyKey.of("top-up-2026-09-05-0001").value())
-                .isEqualTo("top-up-2026-09-05-0001");
+        assertThat(IdempotencyKey.of("top-up-2026-09-05-0001").value()).isEqualTo("top-up-2026-09-05-0001");
 
-        assertThatThrownBy(() -> IdempotencyKey.of("short"))
-                .isInstanceOf(BusinessException.class);
-        assertThatThrownBy(() -> IdempotencyKey.of("has space in it"))
-                .isInstanceOf(BusinessException.class);
-        assertThatThrownBy(() -> IdempotencyKey.of("x".repeat(101)))
-                .isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> IdempotencyKey.of("short")).isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> IdempotencyKey.of("has space in it")).isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> IdempotencyKey.of("x".repeat(101))).isInstanceOf(BusinessException.class);
     }
 
     @Test

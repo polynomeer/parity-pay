@@ -108,10 +108,9 @@ class OutboxRepository {
         if (eventIds.isEmpty()) {
             return;
         }
-        jdbcTemplate.update(
-                connection -> {
-                    PreparedStatement statement = connection.prepareStatement(
-                            """
+        jdbcTemplate.update(connection -> {
+            PreparedStatement statement = connection.prepareStatement(
+                    """
                             UPDATE outbox_event
                                SET status = 'PUBLISHED',
                                    attempt_count = attempt_count + 1,
@@ -119,10 +118,10 @@ class OutboxRepository {
                                    last_error = NULL
                              WHERE event_id = ANY (?)
                             """);
-                    statement.setTimestamp(1, Timestamp.from(now));
-                    statement.setArray(2, connection.createArrayOf("uuid", eventIds.toArray()));
-                    return statement;
-                });
+            statement.setTimestamp(1, Timestamp.from(now));
+            statement.setArray(2, connection.createArrayOf("uuid", eventIds.toArray()));
+            return statement;
+        });
     }
 
     /** 발행에 실패했지만 재시도할 수 있는 상태입니다. */
@@ -157,8 +156,8 @@ class OutboxRepository {
     }
 
     long countByStatus(String status) {
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM outbox_event WHERE status = ?", Long.class, status);
+        Long count =
+                jdbcTemplate.queryForObject("SELECT count(*) FROM outbox_event WHERE status = ?", Long.class, status);
         return count == null ? 0L : count;
     }
 

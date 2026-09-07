@@ -3,9 +3,9 @@ package io.parity.pay.wallet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.parity.pay.ParityPayApplication;
+import io.parity.pay.api.security.OperatorBootstrap;
 import io.parity.pay.support.AbstractIntegrationTest;
 import io.parity.pay.support.ApiAuth;
-import io.parity.pay.api.security.OperatorBootstrap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +18,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -28,9 +27,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * <p>상태 코드가 정책과 일치하는지 확인합니다. 특히 결과가 불명확한 요청은 실패(4xx·5xx)가 아니라
  * 202로 응답해야 합니다.
  */
-@SpringBootTest(
-        classes = ParityPayApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = ParityPayApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TopUpApiTest extends AbstractIntegrationTest {
 
     @Autowired
@@ -59,8 +56,7 @@ class TopUpApiTest extends AbstractIntegrationTest {
         operatorBootstrap.createConfiguredOperators();
         setMockBankMode("NORMAL");
 
-        ApiAuth.Session session = ApiAuth.registerAndLogin(
-                restTemplate, "api-buyer@example.com", "password1234");
+        ApiAuth.Session session = ApiAuth.registerAndLogin(restTemplate, "api-buyer@example.com", "password1234");
         walletId = session.walletId();
         accessToken = session.accessToken();
 
@@ -119,8 +115,7 @@ class TopUpApiTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("다른 사용자의 지갑은 조회되지 않는다")
     void otherMembersWalletIsNotVisible() {
-        ApiAuth.Session other =
-                ApiAuth.registerAndLogin(restTemplate, "api-other@example.com", "password1234");
+        ApiAuth.Session other = ApiAuth.registerAndLogin(restTemplate, "api-other@example.com", "password1234");
 
         ResponseEntity<Map> response = restTemplate.exchange(
                 "/api/v1/wallets/" + walletId,
@@ -136,10 +131,7 @@ class TopUpApiTest extends AbstractIntegrationTest {
     @DisplayName("토큰이 없으면 401이다")
     void anonymousRequestIsRejected() {
         ResponseEntity<Map> response = restTemplate.exchange(
-                "/api/v1/wallets/" + walletId,
-                HttpMethod.GET,
-                new HttpEntity<>(new HttpHeaders()),
-                Map.class);
+                "/api/v1/wallets/" + walletId, HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
@@ -165,10 +157,7 @@ class TopUpApiTest extends AbstractIntegrationTest {
                 "/api/v1/bank-accounts",
                 HttpMethod.POST,
                 new HttpEntity<>(
-                        Map.of(
-                                "bankCode", "004",
-                                "accountNumber", "1".repeat(64),
-                                "initialBalance", 1_000),
+                        Map.of("bankCode", "004", "accountNumber", "1".repeat(64), "initialBalance", 1_000),
                         ApiAuth.bearer(accessToken)),
                 Map.class);
 
@@ -211,8 +200,7 @@ class TopUpApiTest extends AbstractIntegrationTest {
 
     /** 장애 주입은 운영자 권한이 필요합니다. */
     private void setMockBankMode(String mode) {
-        String operatorToken =
-                ApiAuth.login(restTemplate, ApiAuth.OPS_OPERATOR, ApiAuth.OPS_PASSWORD);
+        String operatorToken = ApiAuth.login(restTemplate, ApiAuth.OPS_OPERATOR, ApiAuth.OPS_PASSWORD);
         restTemplate.exchange(
                 "/api/v1/admin/mock-bank/mode",
                 HttpMethod.POST,
@@ -227,12 +215,15 @@ class TopUpApiTest extends AbstractIntegrationTest {
                 HttpMethod.POST,
                 new HttpEntity<>(
                         Map.of(
-                                "walletId", walletId.toString(),
-                                "bankAccountId", bankAccountId.toString(),
-                                "amount", amount,
-                                "currency", "KRW"),
+                                "walletId",
+                                walletId.toString(),
+                                "bankAccountId",
+                                bankAccountId.toString(),
+                                "amount",
+                                amount,
+                                "currency",
+                                "KRW"),
                         headers),
                 Map.class);
     }
-
 }

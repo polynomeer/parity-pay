@@ -109,7 +109,8 @@ class OutboxRetryTest extends AbstractIntegrationTest {
 
         // 적체 지표가 실패 건수를 드러냅니다.
         assertThat(meterRegistry.get("paritypay.outbox.failed").gauge().value()).isEqualTo(1.0d);
-        assertThat(meterRegistry.get("paritypay.outbox.pending").gauge().value()).isZero();
+        assertThat(meterRegistry.get("paritypay.outbox.pending").gauge().value())
+                .isZero();
     }
 
     @Test
@@ -117,8 +118,12 @@ class OutboxRetryTest extends AbstractIntegrationTest {
     void pendingBacklogIsObservable() {
         onboardingService.registerMember("retry4@example.com", "password1234");
 
-        assertThat(meterRegistry.get("paritypay.outbox.pending").gauge().value()).isEqualTo(1.0d);
-        assertThat(meterRegistry.get("paritypay.outbox.oldest_pending_age_seconds").gauge().value())
+        assertThat(meterRegistry.get("paritypay.outbox.pending").gauge().value())
+                .isEqualTo(1.0d);
+        assertThat(meterRegistry
+                        .get("paritypay.outbox.oldest_pending_age_seconds")
+                        .gauge()
+                        .value())
                 .isGreaterThanOrEqualTo(0.0d);
     }
 
@@ -134,8 +139,10 @@ class OutboxRetryTest extends AbstractIntegrationTest {
             for (int i = 0; i < messages.size(); i++) {
                 outcomes.add(
                         i == 0
-                                ? MessageBroker.SendOutcome.acknowledged(messages.get(i).eventId())
-                                : MessageBroker.SendOutcome.failed(messages.get(i).eventId(), "not acked"));
+                                ? MessageBroker.SendOutcome.acknowledged(
+                                        messages.get(i).eventId())
+                                : MessageBroker.SendOutcome.failed(
+                                        messages.get(i).eventId(), "not acked"));
             }
             return outcomes;
         });

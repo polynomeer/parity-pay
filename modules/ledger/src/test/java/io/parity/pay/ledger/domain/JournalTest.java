@@ -22,8 +22,7 @@ class JournalTest {
     @DisplayName("INV-001: 차변과 대변이 다르면 Journal을 만들 수 없다")
     void rejectsUnbalancedJournal() {
         assertThatThrownBy(() -> journal(List.of(
-                        JournalLine.debit(BANK, Money.krw(100_000)),
-                        JournalLine.credit(USER, Money.krw(99_999)))))
+                        JournalLine.debit(BANK, Money.krw(100_000)), JournalLine.credit(USER, Money.krw(99_999)))))
                 .isInstanceOf(UnbalancedJournalException.class)
                 .hasMessageContaining("does not match");
     }
@@ -59,8 +58,8 @@ class JournalTest {
     @Test
     @DisplayName("lines는 방어적으로 복사되어 외부에서 변경할 수 없다")
     void copiesLines() {
-        List<JournalLine> lines = new java.util.ArrayList<>(List.of(
-                JournalLine.debit(BANK, Money.krw(1_000)), JournalLine.credit(USER, Money.krw(1_000))));
+        List<JournalLine> lines = new java.util.ArrayList<>(
+                List.of(JournalLine.debit(BANK, Money.krw(1_000)), JournalLine.credit(USER, Money.krw(1_000))));
         Journal journal = journal(lines);
 
         lines.clear();

@@ -30,14 +30,12 @@ class AuthController {
 
     @PostMapping("/tokens")
     ResponseEntity<TokenResponse> issue(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(
-                TokenResponse.from(authenticationService.login(request.email(), request.password())));
+        return ResponseEntity.ok(TokenResponse.from(authenticationService.login(request.email(), request.password())));
     }
 
     @PostMapping("/tokens/refresh")
     ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request) {
-        return ResponseEntity.ok(
-                TokenResponse.from(authenticationService.refresh(request.refreshToken())));
+        return ResponseEntity.ok(TokenResponse.from(authenticationService.refresh(request.refreshToken())));
     }
 
     /** 이 사용자의 리프레시 토큰을 모두 철회합니다. 액세스 토큰은 만료로 사라집니다. */

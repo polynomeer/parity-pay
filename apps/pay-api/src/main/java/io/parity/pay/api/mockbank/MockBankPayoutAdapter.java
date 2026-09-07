@@ -30,8 +30,8 @@ class MockBankPayoutAdapter implements MerchantPayoutPort {
         return switch (behavior.payoutMode()) {
             case NORMAL -> toResult(mockBankLedger.payout(externalKey, merchantId.value(), amount));
             case EXPLICIT_FAILURE -> PayoutResult.failed("MOCK_BANK_PAYOUT_DECLINED");
-            case TIMEOUT_BEFORE_WITHDRAWAL ->
-                throw new IllegalStateException("mock bank timed out before processing payout");
+            case TIMEOUT_BEFORE_WITHDRAWAL -> throw new IllegalStateException(
+                    "mock bank timed out before processing payout");
             case TIMEOUT_AFTER_WITHDRAWAL -> {
                 mockBankLedger.payout(externalKey, merchantId.value(), amount);
                 // 지급은 끝났지만 응답이 유실됩니다(F-010).

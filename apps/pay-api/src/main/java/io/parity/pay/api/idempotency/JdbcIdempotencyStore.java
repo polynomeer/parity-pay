@@ -43,8 +43,7 @@ class JdbcIdempotencyStore implements IdempotencyStore {
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
-    public IdempotencyRecord beginOrGet(
-            UUID principalId, String operation, IdempotencyKey key, String requestHash) {
+    public IdempotencyRecord beginOrGet(UUID principalId, String operation, IdempotencyKey key, String requestHash) {
         Timestamp now = Timestamp.from(clock.instant());
         jdbcTemplate.update(
                 """
@@ -72,8 +71,7 @@ class JdbcIdempotencyStore implements IdempotencyStore {
                 operation,
                 key.value());
         if (rows.isEmpty()) {
-            throw new BusinessException(
-                    ErrorCode.INTERNAL_ERROR, "idempotency record disappeared for " + operation);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "idempotency record disappeared for " + operation);
         }
 
         Map<String, Object> row = rows.get(0);

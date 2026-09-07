@@ -29,8 +29,7 @@ public abstract class AbstractIntegrationTest {
             .withPassword("paritypay");
 
     @ServiceConnection
-    static final RedpandaContainer REDPANDA =
-            new RedpandaContainer("redpandadata/redpanda:v24.3.6");
+    static final RedpandaContainer REDPANDA = new RedpandaContainer("redpandadata/redpanda:v24.3.6");
 
     static {
         POSTGRES.start();

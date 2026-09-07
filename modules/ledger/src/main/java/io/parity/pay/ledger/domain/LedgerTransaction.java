@@ -60,8 +60,8 @@ public record LedgerTransaction(
     /** 검증된 Journal을 POSTED 원장 거래로 확정합니다. */
     public static LedgerTransaction post(LedgerTransactionId id, Journal journal, Instant now) {
         List<LedgerEntry> entries = journal.lines().stream()
-                .map(line -> new LedgerEntry(
-                        LedgerEntryId.generate(), line.accountId(), line.direction(), line.money()))
+                .map(line ->
+                        new LedgerEntry(LedgerEntryId.generate(), line.accountId(), line.direction(), line.money()))
                 .toList();
         return new LedgerTransaction(
                 id,

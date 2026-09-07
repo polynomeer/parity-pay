@@ -40,8 +40,7 @@ class SettlementCalculatorTest {
                 SettlementItem.cancellation(MERCHANT, payment, "c-1", 10_000, CurrencyCode.KRW, NOW),
                 SettlementItem.adjustment(MERCHANT, payment, "c-1:FEE", 1_000, CurrencyCode.KRW, NOW));
 
-        Settlement settlement =
-                SettlementCalculator.calculate(MERCHANT, START, END, CurrencyCode.KRW, items, NOW);
+        Settlement settlement = SettlementCalculator.calculate(MERCHANT, START, END, CurrencyCode.KRW, items, NOW);
 
         long sumOfItems = items.stream().mapToLong(SettlementItem::amount).sum();
         assertThat(settlement.netAmount().amount()).isEqualTo(sumOfItems).isEqualTo(18_000);
@@ -60,9 +59,7 @@ class SettlementCalculatorTest {
                 SettlementItem.sale(MERCHANT, payment, 10_000, CurrencyCode.KRW, NOW),
                 SettlementItem.cancellation(MERCHANT, payment, "c-2", 30_000, CurrencyCode.KRW, NOW));
 
-        assertThatThrownBy(
-                        () -> SettlementCalculator.calculate(
-                                MERCHANT, START, END, CurrencyCode.KRW, items, NOW))
+        assertThatThrownBy(() -> SettlementCalculator.calculate(MERCHANT, START, END, CurrencyCode.KRW, items, NOW))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("negative");
     }
@@ -70,12 +67,9 @@ class SettlementCalculatorTest {
     @Test
     @DisplayName("항목이 없으면 정산할 것이 없다")
     void emptyItemsAreRejected() {
-        assertThatThrownBy(
-                        () -> SettlementCalculator.calculate(
-                                MERCHANT, START, END, CurrencyCode.KRW, List.of(), NOW))
+        assertThatThrownBy(() -> SettlementCalculator.calculate(MERCHANT, START, END, CurrencyCode.KRW, List.of(), NOW))
                 .isInstanceOf(BusinessException.class)
-                .satisfies(e -> assertThat(((BusinessException) e).errorCode())
-                        .isEqualTo(ErrorCode.INVALID_REQUEST));
+                .satisfies(e -> assertThat(((BusinessException) e).errorCode()).isEqualTo(ErrorCode.INVALID_REQUEST));
     }
 
     @Test
@@ -102,8 +96,7 @@ class SettlementCalculatorTest {
                         START,
                         END,
                         CurrencyCode.KRW,
-                        List.of(SettlementItem.sale(
-                                MERCHANT, PaymentId.generate(), 10_000, CurrencyCode.KRW, NOW)),
+                        List.of(SettlementItem.sale(MERCHANT, PaymentId.generate(), 10_000, CurrencyCode.KRW, NOW)),
                         NOW)
                 .beginPayout(NOW)
                 .completePayout("payout-1", NOW);
@@ -111,8 +104,8 @@ class SettlementCalculatorTest {
         assertThat(paid.isPaid()).isTrue();
         assertThatThrownBy(() -> paid.beginPayout(NOW))
                 .isInstanceOf(BusinessException.class)
-                .satisfies(e -> assertThat(((BusinessException) e).errorCode())
-                        .isEqualTo(ErrorCode.INVALID_STATE_TRANSITION));
+                .satisfies(e ->
+                        assertThat(((BusinessException) e).errorCode()).isEqualTo(ErrorCode.INVALID_STATE_TRANSITION));
     }
 
     @Test
@@ -123,8 +116,7 @@ class SettlementCalculatorTest {
                         START,
                         END,
                         CurrencyCode.KRW,
-                        List.of(SettlementItem.sale(
-                                MERCHANT, PaymentId.generate(), 10_000, CurrencyCode.KRW, NOW)),
+                        List.of(SettlementItem.sale(MERCHANT, PaymentId.generate(), 10_000, CurrencyCode.KRW, NOW)),
                         NOW)
                 .beginPayout(NOW)
                 .failPayout("declined", NOW);

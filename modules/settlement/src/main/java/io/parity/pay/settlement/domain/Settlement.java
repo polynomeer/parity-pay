@@ -45,8 +45,7 @@ public record Settlement(
         Objects.requireNonNull(currency, "currency must not be null");
 
         // INV-008: 순액은 구성 항목 계산과 일치해야 합니다.
-        long expected = grossAmount.amount() - cancellationAmount.amount() - feeAmount.amount()
-                + adjustmentAmount;
+        long expected = grossAmount.amount() - cancellationAmount.amount() - feeAmount.amount() + adjustmentAmount;
         if (expected != netAmount.amount()) {
             throw new BusinessException(
                     ErrorCode.INTERNAL_ERROR,
@@ -101,17 +100,12 @@ public record Settlement(
     private void requireTransitionTo(SettlementStatus next) {
         if (!status.canTransitionTo(next)) {
             throw new BusinessException(
-                    ErrorCode.INVALID_STATE_TRANSITION,
-                    "settlement cannot move from " + status + " to " + next);
+                    ErrorCode.INVALID_STATE_TRANSITION, "settlement cannot move from " + status + " to " + next);
         }
     }
 
     private Settlement withStatus(
-            SettlementStatus next,
-            String externalReferenceId,
-            String holdReason,
-            Instant updatedAt,
-            Instant paidAt) {
+            SettlementStatus next, String externalReferenceId, String holdReason, Instant updatedAt, Instant paidAt) {
         return new Settlement(
                 id,
                 merchantId,

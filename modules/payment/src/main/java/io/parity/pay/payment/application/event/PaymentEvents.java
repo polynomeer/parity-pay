@@ -32,13 +32,7 @@ public final class PaymentEvents {
         payload.put("currency", payment.approvedAmount().currency().name());
         payload.put("ledgerTransactionId", ledgerTransactionId.toString());
         return EventEnvelope.of(
-                PAYMENT_APPROVED,
-                1,
-                "Payment",
-                payment.id().toString(),
-                payment.approvedAt(),
-                null,
-                payload);
+                PAYMENT_APPROVED, 1, "Payment", payment.id().toString(), payment.approvedAt(), null, payload);
     }
 
     /**
@@ -57,8 +51,7 @@ public final class PaymentEvents {
         payload.put("settleableAmount", settleableAmount);
         payload.put("currency", payment.approvedAmount().currency().name());
         payload.put("confirmedAt", confirmedAt.toString());
-        return EventEnvelope.of(
-                ORDER_CONFIRMED, 1, "Payment", payment.id().toString(), confirmedAt, null, payload);
+        return EventEnvelope.of(ORDER_CONFIRMED, 1, "Payment", payment.id().toString(), confirmedAt, null, payload);
     }
 
     public static EventEnvelope cancellationCompleted(

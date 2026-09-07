@@ -16,11 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 class SettlementRecoveryPersistenceAdapter implements SettlementRecoveryRepository {
 
-    private static final RowMapper<PendingPayoutRecovery> ROW_MAPPER = (rs, rowNum) ->
-            new PendingPayoutRecovery(
-                    SettlementId.of(rs.getObject("settlement_id", UUID.class)),
-                    rs.getInt("attempt_count"),
-                    rs.getInt("not_found_count"));
+    private static final RowMapper<PendingPayoutRecovery> ROW_MAPPER = (rs, rowNum) -> new PendingPayoutRecovery(
+            SettlementId.of(rs.getObject("settlement_id", UUID.class)),
+            rs.getInt("attempt_count"),
+            rs.getInt("not_found_count"));
 
     private final JdbcTemplate jdbcTemplate;
     private final Clock clock;
@@ -78,23 +77,14 @@ class SettlementRecoveryPersistenceAdapter implements SettlementRecoveryReposito
 
     @Override
     @Transactional
-    public void markManualReview(
-            SettlementId settlementId, int attemptCount, String lastError, Instant checkedAt) {
-        upsert(
-                settlementId,
-                attemptCount,
-                0,
-                checkedAt.plusSeconds(365L * 24 * 60 * 60),
-                true,
-                lastError,
-                checkedAt);
+    public void markManualReview(SettlementId settlementId, int attemptCount, String lastError, Instant checkedAt) {
+        upsert(settlementId, attemptCount, 0, checkedAt.plusSeconds(365L * 24 * 60 * 60), true, lastError, checkedAt);
     }
 
     @Override
     @Transactional
     public void clear(SettlementId settlementId) {
-        jdbcTemplate.update(
-                "DELETE FROM settlement_recovery WHERE settlement_id = ?", settlementId.value());
+        jdbcTemplate.update("DELETE FROM settlement_recovery WHERE settlement_id = ?", settlementId.value());
     }
 
     private void upsert(

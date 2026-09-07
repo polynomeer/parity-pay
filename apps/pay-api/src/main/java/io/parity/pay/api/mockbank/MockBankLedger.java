@@ -115,8 +115,8 @@ public class MockBankLedger {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public WithdrawalOutcome payout(String externalKey, UUID merchantId, Money amount) {
-        List<Map<String, Object>> existing = jdbcTemplate.queryForList(
-                "SELECT status FROM mock_bank_payout WHERE external_key = ?", externalKey);
+        List<Map<String, Object>> existing =
+                jdbcTemplate.queryForList("SELECT status FROM mock_bank_payout WHERE external_key = ?", externalKey);
         if (!existing.isEmpty()) {
             return "SUCCEEDED".equals(existing.get(0).get("status"))
                     ? WithdrawalOutcome.succeeded(externalKey)
@@ -142,8 +142,8 @@ public class MockBankLedger {
     }
 
     public java.util.Optional<String> findPayoutStatus(String externalKey) {
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT status FROM mock_bank_payout WHERE external_key = ?", externalKey);
+        List<Map<String, Object>> rows =
+                jdbcTemplate.queryForList("SELECT status FROM mock_bank_payout WHERE external_key = ?", externalKey);
         return rows.isEmpty()
                 ? java.util.Optional.empty()
                 : java.util.Optional.of((String) rows.get(0).get("status"));
@@ -151,9 +151,7 @@ public class MockBankLedger {
 
     public long balanceOf(String accountNumberToken) {
         Long balance = jdbcTemplate.queryForObject(
-                "SELECT balance FROM mock_bank_account WHERE account_number_token = ?",
-                Long.class,
-                accountNumberToken);
+                "SELECT balance FROM mock_bank_account WHERE account_number_token = ?", Long.class, accountNumberToken);
         return balance == null ? 0L : balance;
     }
 

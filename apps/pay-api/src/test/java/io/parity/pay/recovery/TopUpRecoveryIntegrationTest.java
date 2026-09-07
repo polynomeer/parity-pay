@@ -78,8 +78,7 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
                 onboardingService.registerMember("recovery@example.com", "password1234");
         memberId = registered.memberId();
         walletId = WalletId.of(registered.walletId());
-        bankAccountId = onboardingService.linkBankAccount(
-                memberId, "004", "110-7777-6666", Money.krw(BANK_BALANCE));
+        bankAccountId = onboardingService.linkBankAccount(memberId, "004", "110-7777-6666", Money.krw(BANK_BALANCE));
     }
 
     @Test
@@ -180,9 +179,8 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
         // 실제 시간이 흐르기를 기다리면 백오프 길이에 따라 결과가 달라지는 테스트가 됩니다.
         for (int i = 0; i < 3; i++) {
             recoveryService.resolveDue();
-            jdbcTemplate.update(
-                    "UPDATE top_up_recovery SET next_check_at = now() - interval '1 minute'"
-                            + " WHERE requires_manual_review = false");
+            jdbcTemplate.update("UPDATE top_up_recovery SET next_check_at = now() - interval '1 minute'"
+                    + " WHERE requires_manual_review = false");
         }
 
         assertThat(requiresManualReview(view.topUpId())).isTrue();
@@ -200,7 +198,8 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
         mockBankBehavior.setMode(MockBankBehavior.Mode.TIMEOUT_AFTER_WITHDRAWAL);
         TopUpView view = topUp("recovery-key-00007", 100_000);
         jdbcTemplate.update(
-                "UPDATE top_up SET status = 'PROCESSING' WHERE top_up_id = ?", view.topUpId().value());
+                "UPDATE top_up SET status = 'PROCESSING' WHERE top_up_id = ?",
+                view.topUpId().value());
         mockBankBehavior.reset();
 
         assertThat(recoveryService.resolveDue()).isEqualTo(1);
@@ -221,8 +220,8 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
     }
 
     private TopUpView topUp(String key, long amount) {
-        return requestTopUp.requestTopUp(new TopUpCommand(
-                memberId, walletId, bankAccountId, Money.krw(amount), IdempotencyKey.of(key)));
+        return requestTopUp.requestTopUp(
+                new TopUpCommand(memberId, walletId, bankAccountId, Money.krw(amount), IdempotencyKey.of(key)));
     }
 
     private String topUpStatus(TopUpId topUpId) {
@@ -231,15 +230,11 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
     }
 
     private int attemptCount(TopUpId topUpId) {
-        return recoveryRow(topUpId) == null
-                ? 0
-                : ((Number) recoveryRow(topUpId).get("attempt_count")).intValue();
+        return recoveryRow(topUpId) == null ? 0 : ((Number) recoveryRow(topUpId).get("attempt_count")).intValue();
     }
 
     private int notFoundCount(TopUpId topUpId) {
-        return recoveryRow(topUpId) == null
-                ? 0
-                : ((Number) recoveryRow(topUpId).get("not_found_count")).intValue();
+        return recoveryRow(topUpId) == null ? 0 : ((Number) recoveryRow(topUpId).get("not_found_count")).intValue();
     }
 
     private boolean requiresManualReview(TopUpId topUpId) {
@@ -248,8 +243,7 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
     }
 
     private Map<String, Object> recoveryRow(TopUpId topUpId) {
-        var rows = jdbcTemplate.queryForList(
-                "SELECT * FROM top_up_recovery WHERE top_up_id = ?", topUpId.value());
+        var rows = jdbcTemplate.queryForList("SELECT * FROM top_up_recovery WHERE top_up_id = ?", topUpId.value());
         return rows.isEmpty() ? null : rows.get(0);
     }
 
@@ -260,9 +254,7 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
 
     private long availableBalance() {
         Long balance = jdbcTemplate.queryForObject(
-                "SELECT available_amount FROM wallet_balance WHERE wallet_id = ?",
-                Long.class,
-                walletId.value());
+                "SELECT available_amount FROM wallet_balance WHERE wallet_id = ?", Long.class, walletId.value());
         return balance == null ? 0L : balance;
     }
 

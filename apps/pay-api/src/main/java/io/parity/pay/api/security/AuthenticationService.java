@@ -47,8 +47,7 @@ public class AuthenticationService {
         if (account == null || !passwordEncoder.matches(rawPassword, account.passwordHash())) {
             loginAttemptTracker.recordFailure(email);
             // 계정 존재 여부를 노출하지 않기 위해 같은 응답을 돌려줍니다.
-            throw new BusinessException(
-                    ErrorCode.INVALID_REQUEST, "email or password is not correct");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "email or password is not correct");
         }
         if (!account.isActive()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "account is not active");
@@ -72,8 +71,6 @@ public class AuthenticationService {
     private MemberAccount requireMember(MemberId memberId) {
         return memberAccountRepository
                 .findById(memberId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "member not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "member not found"));
     }
-
 }

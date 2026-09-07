@@ -72,8 +72,7 @@ class TopUpIntegrationTest extends AbstractIntegrationTest {
                 onboardingService.registerMember("buyer@example.com", "password1234");
         memberId = registered.memberId();
         walletId = WalletId.of(registered.walletId());
-        bankAccountId = onboardingService.linkBankAccount(
-                memberId, "004", "110-1234-5678", Money.krw(BANK_BALANCE));
+        bankAccountId = onboardingService.linkBankAccount(memberId, "004", "110-1234-5678", Money.krw(BANK_BALANCE));
     }
 
     @Test
@@ -210,24 +209,17 @@ class TopUpIntegrationTest extends AbstractIntegrationTest {
 
     private TopUpView topUp(String idempotencyKey, long amount) {
         return requestTopUp.requestTopUp(new TopUpCommand(
-                memberId,
-                walletId,
-                bankAccountId,
-                Money.krw(amount),
-                IdempotencyKey.of(idempotencyKey)));
+                memberId, walletId, bankAccountId, Money.krw(amount), IdempotencyKey.of(idempotencyKey)));
     }
 
     private long availableBalance() {
         Long balance = jdbcTemplate.queryForObject(
-                "SELECT available_amount FROM wallet_balance WHERE wallet_id = ?",
-                Long.class,
-                walletId.value());
+                "SELECT available_amount FROM wallet_balance WHERE wallet_id = ?", Long.class, walletId.value());
         return balance == null ? 0L : balance;
     }
 
     private long bankBalance() {
-        Long balance = jdbcTemplate.queryForObject(
-                "SELECT balance FROM mock_bank_account", Long.class);
+        Long balance = jdbcTemplate.queryForObject("SELECT balance FROM mock_bank_account", Long.class);
         return balance == null ? 0L : balance;
     }
 

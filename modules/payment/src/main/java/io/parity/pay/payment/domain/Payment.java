@@ -59,14 +59,12 @@ public record Payment(
         requestedAmount.requireSameCurrency(processingCancellationAmount);
 
         if (approvedAmount.isGreaterThan(requestedAmount)) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_AMOUNT, "approved amount must not exceed requested amount");
+            throw new BusinessException(ErrorCode.INVALID_AMOUNT, "approved amount must not exceed requested amount");
         }
         // INV-005
         if (completedCancellationAmount.plus(processingCancellationAmount).isGreaterThan(approvedAmount)) {
             throw new BusinessException(
-                    ErrorCode.CANCELLATION_AMOUNT_EXCEEDED,
-                    "cancellation amounts must not exceed the approved amount");
+                    ErrorCode.CANCELLATION_AMOUNT_EXCEEDED, "cancellation amounts must not exceed the approved amount");
         }
     }
 
@@ -190,8 +188,7 @@ public record Payment(
     }
 
     public CancellationCapacity capacity() {
-        return new CancellationCapacity(
-                approvedAmount, completedCancellationAmount, processingCancellationAmount);
+        return new CancellationCapacity(approvedAmount, completedCancellationAmount, processingCancellationAmount);
     }
 
     public Money cancellableAmount() {
@@ -218,13 +215,11 @@ public record Payment(
     private void requireTransitionTo(PaymentStatus next) {
         if (!status.canTransitionTo(next)) {
             throw new BusinessException(
-                    ErrorCode.INVALID_STATE_TRANSITION,
-                    "payment cannot move from " + status + " to " + next);
+                    ErrorCode.INVALID_STATE_TRANSITION, "payment cannot move from " + status + " to " + next);
         }
     }
 
-    private Payment withStatus(
-            PaymentStatus next, Money approved, Instant approvedAt, Instant updatedAt) {
+    private Payment withStatus(PaymentStatus next, Money approved, Instant approvedAt, Instant updatedAt) {
         return new Payment(
                 id,
                 orderId,

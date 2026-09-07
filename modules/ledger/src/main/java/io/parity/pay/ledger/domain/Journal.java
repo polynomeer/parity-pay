@@ -46,11 +46,10 @@ public record Journal(
         for (JournalLine line : lines) {
             if (line.money().currency() != currency) {
                 // INV-007
-                throw new UnbalancedJournalException(
-                        "journal must use a single currency: expected "
-                                + currency
-                                + " but found "
-                                + line.money().currency());
+                throw new UnbalancedJournalException("journal must use a single currency: expected "
+                        + currency
+                        + " but found "
+                        + line.money().currency());
             }
             if (line.isDebit()) {
                 debitTotal = Math.addExact(debitTotal, line.money().amount());
@@ -70,7 +69,10 @@ public record Journal(
 
     /** 차변 합계입니다. INV-001에 따라 대변 합계와 같습니다. */
     public Money total() {
-        long sum = lines.stream().filter(JournalLine::isDebit).mapToLong(line -> line.money().amount()).sum();
+        long sum = lines.stream()
+                .filter(JournalLine::isDebit)
+                .mapToLong(line -> line.money().amount())
+                .sum();
         return Money.of(sum, currency);
     }
 }

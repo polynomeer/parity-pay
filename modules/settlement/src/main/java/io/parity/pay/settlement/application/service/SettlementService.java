@@ -76,8 +76,7 @@ public class SettlementService {
                 properties.maxItemsPerSettlement());
 
         if (items.isEmpty()) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_REQUEST, "no eligible settlement items for the period");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "no eligible settlement items for the period");
         }
 
         Settlement settlement = SettlementCalculator.calculate(
@@ -90,8 +89,8 @@ public class SettlementService {
         if (settlement.feeAmount().isPositive()) {
             LedgerAccount merchantPayable = resolveLedgerAccount.resolve(
                     AccountCode.MERCHANT_PAYABLE, merchantId.value(), settlement.currency());
-            LedgerAccount feeRevenue = resolveLedgerAccount.resolveCorporate(
-                    AccountCode.PLATFORM_FEE_REVENUE, settlement.currency());
+            LedgerAccount feeRevenue =
+                    resolveLedgerAccount.resolveCorporate(AccountCode.PLATFORM_FEE_REVENUE, settlement.currency());
             postJournal.post(JournalFactory.feeRecognized(
                     settlement.id(),
                     merchantPayable.id(),
@@ -139,7 +138,6 @@ public class SettlementService {
     Settlement load(SettlementId settlementId) {
         return settlementRepository
                 .findById(settlementId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "settlement not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "settlement not found"));
     }
 }

@@ -23,13 +23,7 @@ public final class SettlementEvents {
         payload.put("netAmount", settlement.netAmount().amount());
         payload.put("currency", settlement.currency().name());
         return EventEnvelope.of(
-                SETTLEMENT_CREATED,
-                1,
-                "Settlement",
-                settlement.id().toString(),
-                occurredAt,
-                null,
-                payload);
+                SETTLEMENT_CREATED, 1, "Settlement", settlement.id().toString(), occurredAt, null, payload);
     }
 
     public static EventEnvelope settlementPaid(Settlement settlement, Instant occurredAt) {

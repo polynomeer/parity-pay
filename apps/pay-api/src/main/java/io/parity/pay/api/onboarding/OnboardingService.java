@@ -90,8 +90,7 @@ public class OnboardingService {
         // 사용자 페이머니 계정을 가입 시점에 함께 만듭니다. 근거: FR-001
         resolveLedgerAccount.resolve(AccountCode.USER_PAY_MONEY, wallet.id().value(), CurrencyCode.KRW);
 
-        outboxAppender.append(WalletEvents.walletCreated(
-                wallet.id(), memberId, CurrencyCode.KRW, wallet.createdAt()));
+        outboxAppender.append(WalletEvents.walletCreated(wallet.id(), memberId, CurrencyCode.KRW, wallet.createdAt()));
 
         return new RegisteredMember(memberId, wallet.id().value());
     }

@@ -10,8 +10,7 @@ import java.util.UUID;
  *
  * <p>근거: docs/07-ledger-journal-catalog.md §3, §4
  */
-public record LedgerAccount(
-        LedgerAccountId id, AccountCode code, UUID ownerId, CurrencyCode currency, boolean active) {
+public record LedgerAccount(LedgerAccountId id, AccountCode code, UUID ownerId, CurrencyCode currency, boolean active) {
 
     public LedgerAccount {
         Objects.requireNonNull(id, "id must not be null");

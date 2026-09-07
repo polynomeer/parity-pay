@@ -51,18 +51,15 @@ class ReconciliationController {
     ResponseEntity<RunResponse> run() {
         ReconciliationSummary summary = reconciliationService.runAll();
         return ResponseEntity.ok(new RunResponse(
-                summary.runId(),
-                summary.internalCount(),
-                summary.externalCount(),
-                summary.mismatchCount()));
+                summary.runId(), summary.internalCount(), summary.externalCount(), summary.mismatchCount()));
     }
 
     @GetMapping("/mismatches")
     ResponseEntity<List<MismatchResponse>> listOpen(
-            @RequestParam(required = false) MismatchType type,
-            @RequestParam(defaultValue = "50") int limit) {
-        return ResponseEntity.ok(
-                resolutionService.findOpen(type, limit).stream().map(MismatchResponse::from).toList());
+            @RequestParam(required = false) MismatchType type, @RequestParam(defaultValue = "50") int limit) {
+        return ResponseEntity.ok(resolutionService.findOpen(type, limit).stream()
+                .map(MismatchResponse::from)
+                .toList());
     }
 
     /** 조사 결과 조치가 필요 없을 때 사용합니다. 사유는 필수입니다. */

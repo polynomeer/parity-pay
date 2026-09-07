@@ -61,22 +61,20 @@ public class TopUpService implements RequestTopUpUseCase {
         TopUp topUp = started.topUp();
         BankWithdrawalResult result;
         try {
-            result = bankWithdrawalPort.withdraw(
-                    topUp.bankAccountId(), topUp.requestedAmount(), topUp.id());
+            result = bankWithdrawalPort.withdraw(topUp.bankAccountId(), topUp.requestedAmount(), topUp.id());
         } catch (RuntimeException e) {
             // 예외를 실패로 단정하지 않습니다. 결과를 모르는 상태로 보존합니다. 근거: ADR-007
             log.warn("bank withdrawal outcome is unknown for top-up {}", topUp.id(), e);
             result = BankWithdrawalResult.unknown(null);
         }
 
-        TopUp settled = switch (result.outcome()) {
-            case SUCCEEDED -> transactions.completeSucceeded(
-                    command.memberId(), topUp, result.externalReferenceId());
-            case FAILED -> transactions.completeFailed(
-                    command.memberId(), topUp, result.failureReason());
-            case UNKNOWN -> transactions.markUnknown(
-                    command.memberId(), topUp, result.externalReferenceId());
-        };
+        TopUp settled =
+                switch (result.outcome()) {
+                    case SUCCEEDED -> transactions.completeSucceeded(
+                            command.memberId(), topUp, result.externalReferenceId());
+                    case FAILED -> transactions.completeFailed(command.memberId(), topUp, result.failureReason());
+                    case UNKNOWN -> transactions.markUnknown(command.memberId(), topUp, result.externalReferenceId());
+                };
         return TopUpView.of(settled);
     }
 
@@ -84,12 +82,10 @@ public class TopUpService implements RequestTopUpUseCase {
     public TopUpView getTopUp(MemberId memberId, TopUpId topUpId) {
         TopUp topUp = topUpRepository
                 .findById(topUpId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "top-up not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "top-up not found"));
         Wallet wallet = walletRepository
                 .findById(topUp.walletId())
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "wallet not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "wallet not found"));
         wallet.requireOwnedBy(memberId);
         return TopUpView.of(topUp);
     }

@@ -14,10 +14,10 @@ import io.parity.pay.payment.application.port.in.CancelPaymentUseCase;
 import io.parity.pay.payment.application.port.in.CancelPaymentUseCase.CancelPaymentCommand;
 import io.parity.pay.payment.application.port.in.ConfirmOrderUseCase;
 import io.parity.pay.payment.domain.PaymentMethod;
+import io.parity.pay.settlement.adapter.in.messaging.SettlementItemConsumer;
 import io.parity.pay.settlement.application.port.in.SettlementUseCases.SettlementView;
 import io.parity.pay.settlement.application.service.SettlementPayoutService;
 import io.parity.pay.settlement.application.service.SettlementRecoveryService;
-import io.parity.pay.settlement.adapter.in.messaging.SettlementItemConsumer;
 import io.parity.pay.settlement.application.service.SettlementService;
 import io.parity.pay.settlement.domain.SettlementItem;
 import io.parity.pay.settlement.domain.SettlementStatus;
@@ -115,14 +115,10 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
         walletId = WalletId.of(registered.walletId());
         merchantId = MerchantId.generate();
 
-        BankAccountId bankAccountId = onboardingService.linkBankAccount(
-                memberId, "004", "110-3333-2222", Money.krw(1_000_000));
+        BankAccountId bankAccountId =
+                onboardingService.linkBankAccount(memberId, "004", "110-3333-2222", Money.krw(1_000_000));
         requestTopUp.requestTopUp(new TopUpCommand(
-                memberId,
-                walletId,
-                bankAccountId,
-                Money.krw(200_000),
-                IdempotencyKey.of("settlement-topup-001")));
+                memberId, walletId, bankAccountId, Money.krw(200_000), IdempotencyKey.of("settlement-topup-001")));
     }
 
     @Test
@@ -157,12 +153,13 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("INV-008: 정산 순액은 항목 금액의 합과 같고 수수료가 원장에 인식된다")
     void calculateProducesBalancedSettlement() {
-        confirmOrder.confirm(memberId, pay("order-s3", "settle-payment-0003", 30_000).paymentId());
-        confirmOrder.confirm(memberId, pay("order-s4", "settle-payment-0004", 20_000).paymentId());
+        confirmOrder.confirm(
+                memberId, pay("order-s3", "settle-payment-0003", 30_000).paymentId());
+        confirmOrder.confirm(
+                memberId, pay("order-s4", "settle-payment-0004", 20_000).paymentId());
         deliverEvents();
 
-        SettlementView settlement =
-                settlementService.calculate(merchantId, PERIOD_START, PERIOD_END);
+        SettlementView settlement = settlementService.calculate(merchantId, PERIOD_START, PERIOD_END);
 
         assertThat(settlement.grossAmount()).isEqualTo(Money.krw(50_000));
         assertThat(settlement.feeAmount()).isEqualTo(Money.krw(5_000));
@@ -180,7 +177,8 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("이미 정산된 항목은 다음 회차에 다시 들어가지 않는다")
     void settledItemsAreNotSettledAgain() {
-        confirmOrder.confirm(memberId, pay("order-s5", "settle-payment-0005", 30_000).paymentId());
+        confirmOrder.confirm(
+                memberId, pay("order-s5", "settle-payment-0005", 30_000).paymentId());
         deliverEvents();
         settlementService.calculate(merchantId, PERIOD_START, PERIOD_END);
 
@@ -192,7 +190,8 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("JE-008: 지급이 완료되면 지급예정금이 비고 은행 자산이 줄어든다")
     void payoutClearsMerchantPayable() {
-        confirmOrder.confirm(memberId, pay("order-s6", "settle-payment-0006", 30_000).paymentId());
+        confirmOrder.confirm(
+                memberId, pay("order-s6", "settle-payment-0006", 30_000).paymentId());
         deliverEvents();
         SettlementView settlement = settlementService.calculate(merchantId, PERIOD_START, PERIOD_END);
 
@@ -208,7 +207,8 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("F-010: 지급 응답이 유실되면 UNKNOWN으로 보존하고 조회로 확정한다")
     void lostPayoutResponseConvergesToPaid() {
-        confirmOrder.confirm(memberId, pay("order-s7", "settle-payment-0007", 30_000).paymentId());
+        confirmOrder.confirm(
+                memberId, pay("order-s7", "settle-payment-0007", 30_000).paymentId());
         deliverEvents();
         SettlementView settlement = settlementService.calculate(merchantId, PERIOD_START, PERIOD_END);
 
@@ -231,18 +231,17 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("지급이 명시적으로 실패하면 FAILED가 되고 다시 시도할 수 있다")
     void failedPayoutCanBeRetried() {
-        confirmOrder.confirm(memberId, pay("order-s8", "settle-payment-0008", 30_000).paymentId());
+        confirmOrder.confirm(
+                memberId, pay("order-s8", "settle-payment-0008", 30_000).paymentId());
         deliverEvents();
         SettlementView settlement = settlementService.calculate(merchantId, PERIOD_START, PERIOD_END);
 
         mockBankBehavior.setPayoutMode(MockBankBehavior.Mode.EXPLICIT_FAILURE);
-        assertThat(payoutService.pay(settlement.settlementId()).status())
-                .isEqualTo(SettlementStatus.FAILED);
+        assertThat(payoutService.pay(settlement.settlementId()).status()).isEqualTo(SettlementStatus.FAILED);
         assertThat(merchantPayableBalance()).isEqualTo(27_000L);
 
         mockBankBehavior.reset();
-        assertThat(payoutService.pay(settlement.settlementId()).status())
-                .isEqualTo(SettlementStatus.PAID);
+        assertThat(payoutService.pay(settlement.settlementId()).status()).isEqualTo(SettlementStatus.PAID);
         assertThat(merchantPayableBalance()).isZero();
     }
 
@@ -292,7 +291,8 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("보류된 정산은 지급할 수 없고, 해제하면 다시 지급할 수 있다")
     void heldSettlementCannotBePaid() {
-        confirmOrder.confirm(memberId, pay("order-s11", "settle-payment-0011", 30_000).paymentId());
+        confirmOrder.confirm(
+                memberId, pay("order-s11", "settle-payment-0011", 30_000).paymentId());
         deliverEvents();
         SettlementView settlement = settlementService.calculate(merchantId, PERIOD_START, PERIOD_END);
 
@@ -303,14 +303,14 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
                 .hasMessageContaining("HELD");
 
         settlementService.release(settlement.settlementId());
-        assertThat(payoutService.pay(settlement.settlementId()).status())
-                .isEqualTo(SettlementStatus.PAID);
+        assertThat(payoutService.pay(settlement.settlementId()).status()).isEqualTo(SettlementStatus.PAID);
     }
 
     @Test
     @DisplayName("정산 이벤트도 Outbox로 발행된다")
     void settlementEventsAreEmitted() {
-        confirmOrder.confirm(memberId, pay("order-s12", "settle-payment-0012", 30_000).paymentId());
+        confirmOrder.confirm(
+                memberId, pay("order-s12", "settle-payment-0012", 30_000).paymentId());
         deliverEvents();
         SettlementView settlement = settlementService.calculate(merchantId, PERIOD_START, PERIOD_END);
         payoutService.pay(settlement.settlementId());
@@ -332,8 +332,8 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     }
 
     private long publishedCount() {
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM outbox_event WHERE status = 'PUBLISHED'", Long.class);
+        Long count =
+                jdbcTemplate.queryForObject("SELECT count(*) FROM outbox_event WHERE status = 'PUBLISHED'", Long.class);
         return count == null ? 0L : count;
     }
 
@@ -355,8 +355,8 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     }
 
     private void cancel(PaymentId paymentId, String key, long amount) {
-        cancelPayment.cancel(new CancelPaymentCommand(
-                memberId, paymentId, Money.krw(amount), "TEST", IdempotencyKey.of(key)));
+        cancelPayment.cancel(
+                new CancelPaymentCommand(memberId, paymentId, Money.krw(amount), "TEST", IdempotencyKey.of(key)));
     }
 
     private long settlementItemCount() {
@@ -369,8 +369,8 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     }
 
     private long outboxPendingCount() {
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM outbox_event WHERE status = 'PENDING'", Long.class);
+        Long count =
+                jdbcTemplate.queryForObject("SELECT count(*) FROM outbox_event WHERE status = 'PENDING'", Long.class);
         return count == null ? 0L : count;
     }
 

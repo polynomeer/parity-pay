@@ -18,30 +18,28 @@ import org.springframework.stereotype.Repository;
 @Repository
 class ReconciliationPersistenceAdapter implements ReconciliationRepository {
 
-    private static final RowMapper<ReconciliationMismatch> ROW_MAPPER = (rs, rowNum) ->
-            new ReconciliationMismatch(
-                    rs.getObject("mismatch_id", UUID.class),
-                    rs.getObject("run_id", UUID.class),
-                    MismatchType.valueOf(rs.getString("mismatch_type")),
-                    rs.getString("reference_type"),
-                    rs.getString("reference_id"),
-                    rs.getString("external_reference_id"),
-                    rs.getObject("internal_amount", Long.class),
-                    rs.getObject("external_amount", Long.class),
-                    rs.getString("currency"),
-                    rs.getString("detail"),
-                    ResolutionStatus.valueOf(rs.getString("resolution_status")),
-                    rs.getString("resolution_type"),
-                    rs.getString("resolved_by"),
-                    rs.getString("resolution_reason"),
-                    rs.getObject("adjustment_ledger_transaction_id", UUID.class) == null
-                            ? null
-                            : LedgerTransactionId.of(
-                                    rs.getObject("adjustment_ledger_transaction_id", UUID.class)),
-                    rs.getTimestamp("detected_at").toInstant(),
-                    rs.getTimestamp("resolved_at") == null
-                            ? null
-                            : rs.getTimestamp("resolved_at").toInstant());
+    private static final RowMapper<ReconciliationMismatch> ROW_MAPPER = (rs, rowNum) -> new ReconciliationMismatch(
+            rs.getObject("mismatch_id", UUID.class),
+            rs.getObject("run_id", UUID.class),
+            MismatchType.valueOf(rs.getString("mismatch_type")),
+            rs.getString("reference_type"),
+            rs.getString("reference_id"),
+            rs.getString("external_reference_id"),
+            rs.getObject("internal_amount", Long.class),
+            rs.getObject("external_amount", Long.class),
+            rs.getString("currency"),
+            rs.getString("detail"),
+            ResolutionStatus.valueOf(rs.getString("resolution_status")),
+            rs.getString("resolution_type"),
+            rs.getString("resolved_by"),
+            rs.getString("resolution_reason"),
+            rs.getObject("adjustment_ledger_transaction_id", UUID.class) == null
+                    ? null
+                    : LedgerTransactionId.of(rs.getObject("adjustment_ledger_transaction_id", UUID.class)),
+            rs.getTimestamp("detected_at").toInstant(),
+            rs.getTimestamp("resolved_at") == null
+                    ? null
+                    : rs.getTimestamp("resolved_at").toInstant());
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -80,10 +78,7 @@ class ReconciliationPersistenceAdapter implements ReconciliationRepository {
 
     @Override
     public void updateRunMismatchCount(UUID runId, int mismatchCount) {
-        jdbcTemplate.update(
-                "UPDATE reconciliation_run SET mismatch_count = ? WHERE run_id = ?",
-                mismatchCount,
-                runId);
+        jdbcTemplate.update("UPDATE reconciliation_run SET mismatch_count = ? WHERE run_id = ?", mismatchCount, runId);
     }
 
     @Override

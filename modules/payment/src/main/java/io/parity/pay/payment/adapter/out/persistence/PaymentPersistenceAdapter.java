@@ -53,7 +53,8 @@ class PaymentPersistenceAdapter implements PaymentRepository, PaymentCancellatio
 
     @Override
     public Payment save(Payment payment) {
-        PaymentJpaEntity existing = entityManager.find(PaymentJpaEntity.class, payment.id().value());
+        PaymentJpaEntity existing =
+                entityManager.find(PaymentJpaEntity.class, payment.id().value());
         if (existing == null) {
             entityManager.persist(new PaymentJpaEntity(
                     payment.id().value(),
@@ -85,33 +86,28 @@ class PaymentPersistenceAdapter implements PaymentRepository, PaymentCancellatio
 
     @Override
     public int reserveCancellation(PaymentId paymentId, Money amount) {
-        return paymentJpaRepository.reserveCancellation(
-                paymentId.value(), amount.amount(), clock.instant());
+        return paymentJpaRepository.reserveCancellation(paymentId.value(), amount.amount(), clock.instant());
     }
 
     @Override
     public int completeCancellation(PaymentId paymentId, Money amount) {
-        return paymentJpaRepository.completeCancellation(
-                paymentId.value(), amount.amount(), clock.instant());
+        return paymentJpaRepository.completeCancellation(paymentId.value(), amount.amount(), clock.instant());
     }
 
     @Override
     public int releaseCancellation(PaymentId paymentId, Money amount) {
-        return paymentJpaRepository.releaseCancellation(
-                paymentId.value(), amount.amount(), clock.instant());
+        return paymentJpaRepository.releaseCancellation(paymentId.value(), amount.amount(), clock.instant());
     }
 
     @Override
     public Optional<PaymentCancellation> findById(CancellationId cancellationId) {
-        return cancellationJpaRepository
-                .findById(cancellationId.value())
-                .map(PaymentPersistenceAdapter::toDomain);
+        return cancellationJpaRepository.findById(cancellationId.value()).map(PaymentPersistenceAdapter::toDomain);
     }
 
     @Override
     public PaymentCancellation save(PaymentCancellation cancellation) {
-        PaymentCancellationJpaEntity existing =
-                entityManager.find(PaymentCancellationJpaEntity.class, cancellation.id().value());
+        PaymentCancellationJpaEntity existing = entityManager.find(
+                PaymentCancellationJpaEntity.class, cancellation.id().value());
         if (existing == null) {
             entityManager.persist(new PaymentCancellationJpaEntity(
                     cancellation.id().value(),

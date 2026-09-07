@@ -44,8 +44,8 @@ class LedgerPostingServiceTest {
         postingService = new LedgerPostingService(transactionRepository, accountRepository, clock);
         balanceService = new LedgerBalanceService(transactionRepository, accountRepository);
 
-        bankAccount = accountRepository.save(new LedgerAccount(
-                LedgerAccountId.generate(), AccountCode.BANK_DEPOSIT, null, CurrencyCode.KRW, true));
+        bankAccount = accountRepository.save(
+                new LedgerAccount(LedgerAccountId.generate(), AccountCode.BANK_DEPOSIT, null, CurrencyCode.KRW, true));
         userAccount = accountRepository.save(new LedgerAccount(
                 LedgerAccountId.generate(),
                 AccountCode.USER_PAY_MONEY,
@@ -82,8 +82,8 @@ class LedgerPostingServiceTest {
     @Test
     @DisplayName("비활성 계정에는 전기할 수 없다")
     void rejectsInactiveAccount() {
-        accountRepository.save(new LedgerAccount(
-                bankAccount.id(), AccountCode.BANK_DEPOSIT, null, CurrencyCode.KRW, false));
+        accountRepository.save(
+                new LedgerAccount(bankAccount.id(), AccountCode.BANK_DEPOSIT, null, CurrencyCode.KRW, false));
 
         assertThatThrownBy(() -> postingService.post(topUpJournal(TopUpId.generate(), 1_000)))
                 .isInstanceOf(BusinessException.class)
@@ -101,7 +101,6 @@ class LedgerPostingServiceTest {
     }
 
     private Journal topUpJournal(TopUpId topUpId, long amount) {
-        return JournalFactory.topUpCompleted(
-                topUpId, bankAccount.id(), userAccount.id(), Money.krw(amount), NOW);
+        return JournalFactory.topUpCompleted(topUpId, bankAccount.id(), userAccount.id(), Money.krw(amount), NOW);
     }
 }

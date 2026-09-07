@@ -56,8 +56,7 @@ public record Money(long amount, CurrencyCode currency) implements Comparable<Mo
         requireSameCurrency(other);
         long result = Math.subtractExact(amount, other.amount);
         if (result < 0) {
-            throw new IllegalArgumentException(
-                    "result must not be negative: " + amount + " - " + other.amount);
+            throw new IllegalArgumentException("result must not be negative: " + amount + " - " + other.amount);
         }
         return new Money(result, currency);
     }
@@ -88,8 +87,7 @@ public record Money(long amount, CurrencyCode currency) implements Comparable<Mo
     public void requireSameCurrency(Money other) {
         Objects.requireNonNull(other, "other must not be null");
         if (currency != other.currency) {
-            throw new IllegalArgumentException(
-                    "currency mismatch: " + currency + " vs " + other.currency);
+            throw new IllegalArgumentException("currency mismatch: " + currency + " vs " + other.currency);
         }
     }
 

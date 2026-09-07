@@ -16,8 +16,7 @@ public interface WalletQuery {
      */
     BalanceVerification verifyAgainstLedger(WalletId walletId);
 
-    record WalletBalanceView(
-            WalletId walletId, Money available, Money pending, Instant asOf) {}
+    record WalletBalanceView(WalletId walletId, Money available, Money pending, Instant asOf) {}
 
     record BalanceVerification(WalletId walletId, Money snapshot, Money ledger, boolean matches) {}
 }

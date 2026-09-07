@@ -8,9 +8,9 @@ import io.parity.pay.shared.idempotency.IdempotencyKey;
 import io.parity.pay.shared.money.CurrencyCode;
 import io.parity.pay.shared.money.Money;
 import io.parity.pay.wallet.application.port.out.TopUpRepository;
-import io.parity.pay.wallet.application.service.BalanceStrategySelector;
 import io.parity.pay.wallet.application.port.out.WalletBalanceRepository;
 import io.parity.pay.wallet.application.port.out.WalletRepository;
+import io.parity.pay.wallet.application.service.BalanceStrategySelector;
 import io.parity.pay.wallet.domain.TopUp;
 import io.parity.pay.wallet.domain.TopUpStatus;
 import io.parity.pay.wallet.domain.Wallet;
@@ -68,7 +68,8 @@ class WalletPersistenceAdapter implements WalletRepository, WalletBalanceReposit
 
     @Override
     public Wallet save(Wallet wallet) {
-        WalletJpaEntity existing = entityManager.find(WalletJpaEntity.class, wallet.id().value());
+        WalletJpaEntity existing =
+                entityManager.find(WalletJpaEntity.class, wallet.id().value());
         if (existing == null) {
             entityManager.persist(new WalletJpaEntity(
                     wallet.id().value(),
@@ -84,26 +85,26 @@ class WalletPersistenceAdapter implements WalletRepository, WalletBalanceReposit
 
     @Override
     public Optional<WalletBalance> findByWalletId(WalletId walletId) {
-        return balanceJpaRepository.findById(walletId.value()).map(entity -> new WalletBalance(
-                WalletId.of(entity.walletId()),
-                Money.krw(entity.availableAmount()),
-                Money.krw(entity.pendingAmount()),
-                entity.version(),
-                entity.updatedAt()));
+        return balanceJpaRepository
+                .findById(walletId.value())
+                .map(entity -> new WalletBalance(
+                        WalletId.of(entity.walletId()),
+                        Money.krw(entity.availableAmount()),
+                        Money.krw(entity.pendingAmount()),
+                        entity.version(),
+                        entity.updatedAt()));
     }
 
     @Override
     public WalletBalance create(WalletId walletId, Money zero) {
-        WalletBalanceJpaEntity entity =
-                new WalletBalanceJpaEntity(walletId.value(), 0L, 0L, 0L, clock.instant());
+        WalletBalanceJpaEntity entity = new WalletBalanceJpaEntity(walletId.value(), 0L, 0L, 0L, clock.instant());
         entityManager.persist(entity);
         return new WalletBalance(walletId, zero, zero, 0L, entity.updatedAt());
     }
 
     @Override
     public int increaseAvailable(WalletId walletId, Money amount) {
-        return balanceJpaRepository.increaseAvailable(
-                walletId.value(), amount.amount(), clock.instant());
+        return balanceJpaRepository.increaseAvailable(walletId.value(), amount.amount(), clock.instant());
     }
 
     /**
@@ -179,7 +180,8 @@ class WalletPersistenceAdapter implements WalletRepository, WalletBalanceReposit
 
     @Override
     public TopUp save(TopUp topUp) {
-        TopUpJpaEntity existing = entityManager.find(TopUpJpaEntity.class, topUp.id().value());
+        TopUpJpaEntity existing =
+                entityManager.find(TopUpJpaEntity.class, topUp.id().value());
         if (existing == null) {
             entityManager.persist(new TopUpJpaEntity(
                     topUp.id().value(),

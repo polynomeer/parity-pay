@@ -24,11 +24,9 @@ public record SettlementProperties(
         feeBasisPoints = feeBasisPoints <= 0 ? 1_000 : feeBasisPoints;
         maxItemsPerSettlement = maxItemsPerSettlement <= 0 ? 1_000 : maxItemsPerSettlement;
         recoveryLease = recoveryLease == null ? Duration.ofSeconds(30) : recoveryLease;
-        recoveryBaseBackoff =
-                recoveryBaseBackoff == null ? Duration.ofSeconds(2) : recoveryBaseBackoff;
+        recoveryBaseBackoff = recoveryBaseBackoff == null ? Duration.ofSeconds(2) : recoveryBaseBackoff;
         recoveryMaxBackoff = recoveryMaxBackoff == null ? Duration.ofMinutes(10) : recoveryMaxBackoff;
         recoveryMaxAttempts = recoveryMaxAttempts <= 0 ? 8 : recoveryMaxAttempts;
-        recoveryNotFoundConfirmThreshold =
-                recoveryNotFoundConfirmThreshold <= 0 ? 3 : recoveryNotFoundConfirmThreshold;
+        recoveryNotFoundConfirmThreshold = recoveryNotFoundConfirmThreshold <= 0 ? 3 : recoveryNotFoundConfirmThreshold;
     }
 }

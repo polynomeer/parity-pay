@@ -34,8 +34,7 @@ public record AuthenticatedMember(MemberId memberId, String email, Set<Role> rol
                 .filter(authority -> authority.startsWith("ROLE_"))
                 .map(authority -> Role.valueOf(authority.substring("ROLE_".length())))
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
-        return new AuthenticatedMember(
-                MemberId.of(jwt.getSubject()), jwt.getClaimAsString("email"), roles);
+        return new AuthenticatedMember(MemberId.of(jwt.getSubject()), jwt.getClaimAsString("email"), roles);
     }
 
     public boolean hasRole(Role role) {

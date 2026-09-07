@@ -46,8 +46,7 @@ public class WalletService implements WalletQuery, WalletFundsUseCase {
         Wallet wallet = loadWallet(walletId);
         wallet.requireOwnedBy(memberId);
         WalletBalance balance = loadBalance(walletId);
-        return new WalletBalanceView(
-                walletId, balance.available(), balance.pending(), balance.updatedAt());
+        return new WalletBalanceView(walletId, balance.available(), balance.pending(), balance.updatedAt());
     }
 
     /**
@@ -63,19 +62,16 @@ public class WalletService implements WalletQuery, WalletFundsUseCase {
         WalletBalance snapshot = loadBalance(walletId);
 
         LedgerAccount userPayMoney =
-                resolveLedgerAccount.resolve(
-                        AccountCode.USER_PAY_MONEY, walletId.value(), wallet.currency());
+                resolveLedgerAccount.resolve(AccountCode.USER_PAY_MONEY, walletId.value(), wallet.currency());
         Money ledgerBalance = ledgerBalanceQuery.balanceOf(userPayMoney.id());
         Money snapshotTotal = snapshot.ledgerEquivalent();
 
-        return new BalanceVerification(
-                walletId, snapshotTotal, ledgerBalance, snapshotTotal.equals(ledgerBalance));
+        return new BalanceVerification(walletId, snapshotTotal, ledgerBalance, snapshotTotal.equals(ledgerBalance));
     }
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
-    public SpendableWallet requireSpendable(
-            WalletId walletId, MemberId memberId, CurrencyCode currency) {
+    public SpendableWallet requireSpendable(WalletId walletId, MemberId memberId, CurrencyCode currency) {
         Wallet wallet = loadWallet(walletId);
         wallet.requireOwnedBy(memberId);
         wallet.requireSpendAllowed();
@@ -89,8 +85,7 @@ public class WalletService implements WalletQuery, WalletFundsUseCase {
         int updated = walletBalanceRepository.decreaseAvailableIfSufficient(walletId, amount);
         if (updated != 1) {
             // 잔액 부족입니다. 현재 잔액을 응답에 노출하지 않습니다. 근거: docs/04-payment-policy.md §10
-            throw new BusinessException(
-                    ErrorCode.INSUFFICIENT_BALANCE, "available balance is not sufficient");
+            throw new BusinessException(ErrorCode.INSUFFICIENT_BALANCE, "available balance is not sufficient");
         }
     }
 
@@ -99,22 +94,20 @@ public class WalletService implements WalletQuery, WalletFundsUseCase {
     public void credit(WalletId walletId, Money amount) {
         int updated = walletBalanceRepository.increaseAvailable(walletId, amount);
         if (updated != 1) {
-            throw new BusinessException(
-                    ErrorCode.INTERNAL_ERROR, "wallet balance row missing for " + walletId);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "wallet balance row missing for " + walletId);
         }
     }
 
     private Wallet loadWallet(WalletId walletId) {
         return walletRepository
                 .findById(walletId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "wallet not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "wallet not found"));
     }
 
     private WalletBalance loadBalance(WalletId walletId) {
         return walletBalanceRepository
                 .findByWalletId(walletId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.INTERNAL_ERROR, "wallet balance row missing for " + walletId));
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.INTERNAL_ERROR, "wallet balance row missing for " + walletId));
     }
 }

@@ -53,8 +53,7 @@ class OpenApiConfig {
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
-                                        .description(
-                                                "POST /api/v1/auth/tokens 로 발급받은 액세스 토큰")));
+                                        .description("POST /api/v1/auth/tokens 로 발급받은 액세스 토큰")));
     }
 
     /** 고객이 쓰는 API입니다. */
@@ -70,6 +69,9 @@ class OpenApiConfig {
     /** 운영자 전용 API입니다. 역할이 없으면 403입니다. */
     @Bean
     GroupedOpenApi operationsApi() {
-        return GroupedOpenApi.builder().group("operations").pathsToMatch("/api/v1/admin/**").build();
+        return GroupedOpenApi.builder()
+                .group("operations")
+                .pathsToMatch("/api/v1/admin/**")
+                .build();
     }
 }

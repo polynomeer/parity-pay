@@ -140,8 +140,7 @@ public final class ReconciliationMatcher {
             if (isWithinTolerance(external.occurredAt(), delayTolerance, now)) {
                 continue;
             }
-            mismatches.add(new ReconciliationMismatchBuilder(runId, now)
-                    .externalOnly(external));
+            mismatches.add(new ReconciliationMismatchBuilder(runId, now).externalOnly(external));
         }
 
         return mismatches;

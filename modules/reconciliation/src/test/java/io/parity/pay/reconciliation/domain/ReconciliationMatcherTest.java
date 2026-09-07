@@ -54,11 +54,7 @@ class ReconciliationMatcherTest {
     @DisplayName("EXTERNAL_ONLY: 외부는 처리했는데 우리에게 기록이 없다")
     void externalOnly() {
         List<ReconciliationMismatch> mismatches = ReconciliationMatcher.match(
-                RUN_ID,
-                List.of(),
-                List.of(external("ext-9", Outcome.SUCCEEDED, 50_000, OLD)),
-                TOLERANCE,
-                NOW);
+                RUN_ID, List.of(), List.of(external("ext-9", Outcome.SUCCEEDED, 50_000, OLD)), TOLERANCE, NOW);
 
         assertThat(mismatches).singleElement().satisfies(mismatch -> {
             assertThat(mismatch.type()).isEqualTo(MismatchType.EXTERNAL_ONLY);
@@ -122,9 +118,7 @@ class ReconciliationMatcherTest {
                 TOLERANCE,
                 NOW);
 
-        assertThat(mismatches)
-                .extracting(ReconciliationMismatch::type)
-                .containsExactly(MismatchType.DUPLICATE);
+        assertThat(mismatches).extracting(ReconciliationMismatch::type).containsExactly(MismatchType.DUPLICATE);
     }
 
     @Test
@@ -137,9 +131,7 @@ class ReconciliationMatcherTest {
                 TOLERANCE,
                 NOW);
 
-        assertThat(mismatches)
-                .extracting(ReconciliationMismatch::type)
-                .containsExactly(MismatchType.LEDGER_MISSING);
+        assertThat(mismatches).extracting(ReconciliationMismatch::type).containsExactly(MismatchType.LEDGER_MISSING);
     }
 
     @Test
@@ -162,8 +154,7 @@ class ReconciliationMatcherTest {
     void pendingBecomesMismatchOnlyAfterTolerance() {
         assertThat(ReconciliationMatcher.match(
                         RUN_ID,
-                        List.of(internal(
-                                "t-1", "ext-1", Outcome.PENDING, 100_000, false, NOW.minusSeconds(60))),
+                        List.of(internal("t-1", "ext-1", Outcome.PENDING, 100_000, false, NOW.minusSeconds(60))),
                         List.of(),
                         TOLERANCE,
                         NOW))
@@ -184,8 +175,7 @@ class ReconciliationMatcherTest {
     void pendingInternalWithSucceededExternalWaits() {
         assertThat(ReconciliationMatcher.match(
                         RUN_ID,
-                        List.of(internal(
-                                "t-1", "ext-1", Outcome.PENDING, 100_000, false, NOW.minusSeconds(60))),
+                        List.of(internal("t-1", "ext-1", Outcome.PENDING, 100_000, false, NOW.minusSeconds(60))),
                         List.of(external("ext-1", Outcome.SUCCEEDED, 100_000, NOW.minusSeconds(60))),
                         TOLERANCE,
                         NOW))
@@ -193,18 +183,11 @@ class ReconciliationMatcherTest {
     }
 
     private static InternalRecord internal(
-            String id,
-            String externalKey,
-            Outcome outcome,
-            long amount,
-            boolean hasLedger,
-            Instant occurredAt) {
-        return new InternalRecord(
-                "TOP_UP", id, externalKey, outcome, amount, "KRW", hasLedger, occurredAt);
+            String id, String externalKey, Outcome outcome, long amount, boolean hasLedger, Instant occurredAt) {
+        return new InternalRecord("TOP_UP", id, externalKey, outcome, amount, "KRW", hasLedger, occurredAt);
     }
 
-    private static ExternalRecord external(
-            String externalKey, Outcome outcome, long amount, Instant occurredAt) {
+    private static ExternalRecord external(String externalKey, Outcome outcome, long amount, Instant occurredAt) {
         return new ExternalRecord(externalKey, outcome, amount, "KRW", occurredAt);
     }
 }

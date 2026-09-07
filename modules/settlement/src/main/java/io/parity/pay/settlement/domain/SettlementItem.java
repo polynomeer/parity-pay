@@ -50,11 +50,7 @@ public record SettlementItem(
     }
 
     public static SettlementItem sale(
-            MerchantId merchantId,
-            PaymentId paymentId,
-            long amount,
-            CurrencyCode currency,
-            Instant occurredAt) {
+            MerchantId merchantId, PaymentId paymentId, long amount, CurrencyCode currency, Instant occurredAt) {
         return new SettlementItem(
                 UUID.randomUUID(),
                 null,
@@ -69,11 +65,7 @@ public record SettlementItem(
     }
 
     public static SettlementItem fee(
-            MerchantId merchantId,
-            PaymentId paymentId,
-            long feeAmount,
-            CurrencyCode currency,
-            Instant occurredAt) {
+            MerchantId merchantId, PaymentId paymentId, long feeAmount, CurrencyCode currency, Instant occurredAt) {
         return new SettlementItem(
                 UUID.randomUUID(),
                 null,

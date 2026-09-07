@@ -47,8 +47,7 @@ class TopUpController {
 
     @PostMapping
     ResponseEntity<TopUpResponse> requestTopUp(
-            @RequestHeader("Idempotency-Key") String idempotencyKey,
-            @Valid @RequestBody TopUpRequest request) {
+            @RequestHeader("Idempotency-Key") String idempotencyKey, @Valid @RequestBody TopUpRequest request) {
 
         TopUpView view = requestTopUp.requestTopUp(new TopUpCommand(
                 currentPrincipal.memberId(),
@@ -61,7 +60,7 @@ class TopUpController {
         return switch (view.status()) {
             case SUCCEEDED -> ResponseEntity.status(HttpStatus.CREATED).body(body);
             case FAILED -> ResponseEntity.status(HttpStatus.OK).body(body);
-            // PROCESSING·UNKNOWN은 아직 결과를 모르는 상태입니다. 실패로 단정하지 않습니다.
+                // PROCESSING·UNKNOWN은 아직 결과를 모르는 상태입니다. 실패로 단정하지 않습니다.
             case REQUESTED, PROCESSING, UNKNOWN -> ResponseEntity.accepted()
                     .location(URI.create("/api/v1/top-ups/" + view.topUpId()))
                     .body(body);
@@ -75,10 +74,7 @@ class TopUpController {
     }
 
     record TopUpRequest(
-            @NotNull UUID walletId,
-            @NotNull UUID bankAccountId,
-            @Positive long amount,
-            @NotNull String currency) {}
+            @NotNull UUID walletId, @NotNull UUID bankAccountId, @Positive long amount, @NotNull String currency) {}
 
     record TopUpResponse(
             UUID topUpId,

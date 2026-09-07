@@ -19,8 +19,7 @@ class MoneyTest {
     @Test
     @DisplayName("INV-002: positive()는 0을 허용하지 않는다")
     void positiveRejectsZero() {
-        assertThatThrownBy(() -> Money.positive(0, CurrencyCode.KRW))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Money.positive(0, CurrencyCode.KRW)).isInstanceOf(IllegalArgumentException.class);
         assertThat(Money.positive(1, CurrencyCode.KRW).amount()).isEqualTo(1);
     }
 
@@ -35,16 +34,14 @@ class MoneyTest {
     @Test
     @DisplayName("INV-003: 뺄셈 결과가 음수면 예외다")
     void minusRejectsNegativeResult() {
-        assertThatThrownBy(() -> Money.krw(1_000).minus(Money.krw(1_001)))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Money.krw(1_000).minus(Money.krw(1_001))).isInstanceOf(IllegalArgumentException.class);
         assertThat(Money.krw(1_000).minus(Money.krw(1_000))).isEqualTo(Money.krw(0));
     }
 
     @Test
     @DisplayName("덧셈 오버플로는 조용히 넘어가지 않는다")
     void plusDetectsOverflow() {
-        assertThatThrownBy(() -> Money.krw(Long.MAX_VALUE).plus(Money.krw(1)))
-                .isInstanceOf(ArithmeticException.class);
+        assertThatThrownBy(() -> Money.krw(Long.MAX_VALUE).plus(Money.krw(1))).isInstanceOf(ArithmeticException.class);
     }
 
     @Test

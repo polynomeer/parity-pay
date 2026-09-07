@@ -16,17 +16,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /** 결제·취소 HTTP 계약. 근거: docs/08-db-api-event-spec.md §4·§5 */
-@SpringBootTest(
-        classes = ParityPayApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = ParityPayApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class PaymentApiTest extends AbstractIntegrationTest {
 
     @Autowired
@@ -59,8 +55,7 @@ class PaymentApiTest extends AbstractIntegrationTest {
         mockBankBehavior.reset();
         operatorBootstrap.createConfiguredOperators();
 
-        ApiAuth.Session session =
-                ApiAuth.registerAndLogin(restTemplate, "api-payer@example.com", "password1234");
+        ApiAuth.Session session = ApiAuth.registerAndLogin(restTemplate, "api-payer@example.com", "password1234");
         walletId = session.walletId();
         accessToken = session.accessToken();
 
@@ -81,10 +76,14 @@ class PaymentApiTest extends AbstractIntegrationTest {
                 HttpMethod.POST,
                 new HttpEntity<>(
                         Map.of(
-                                "walletId", walletId.toString(),
-                                "bankAccountId", bankAccountId.toString(),
-                                "amount", 50_000,
-                                "currency", "KRW"),
+                                "walletId",
+                                walletId.toString(),
+                                "bankAccountId",
+                                bankAccountId.toString(),
+                                "amount",
+                                50_000,
+                                "currency",
+                                "KRW"),
                         ApiAuth.bearer(accessToken, "api-payer-topup-001")),
                 Map.class);
     }
@@ -161,8 +160,7 @@ class PaymentApiTest extends AbstractIntegrationTest {
         ResponseEntity<Map> payment = pay("order-api-5", "api-payment-0005", 10_000);
         String paymentId = (String) payment.getBody().get("paymentId");
 
-        ApiAuth.Session other =
-                ApiAuth.registerAndLogin(restTemplate, "api-other-payer@example.com", "password1234");
+        ApiAuth.Session other = ApiAuth.registerAndLogin(restTemplate, "api-other-payer@example.com", "password1234");
 
         ResponseEntity<Map> response = restTemplate.exchange(
                 "/api/v1/payments/" + paymentId,
@@ -180,12 +178,18 @@ class PaymentApiTest extends AbstractIntegrationTest {
                 HttpMethod.POST,
                 new HttpEntity<>(
                         Map.of(
-                                "orderId", orderId,
-                                "walletId", walletId.toString(),
-                                "merchantId", merchantId.toString(),
-                                "amount", amount,
-                                "currency", "KRW",
-                                "method", "PAY_MONEY"),
+                                "orderId",
+                                orderId,
+                                "walletId",
+                                walletId.toString(),
+                                "merchantId",
+                                merchantId.toString(),
+                                "amount",
+                                amount,
+                                "currency",
+                                "KRW",
+                                "method",
+                                "PAY_MONEY"),
                         ApiAuth.bearer(accessToken, idempotencyKey)),
                 Map.class);
     }

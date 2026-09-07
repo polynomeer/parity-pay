@@ -5,14 +5,14 @@ import io.parity.pay.shared.security.CurrentPrincipal;
 import io.parity.pay.wallet.application.port.in.WalletQuery;
 import io.parity.pay.wallet.application.port.in.WalletTransactionQuery;
 import io.parity.pay.wallet.domain.WalletTransactionEntry;
-import java.util.List;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 지갑 조회 API. 근거: FR-004 */
@@ -25,9 +25,7 @@ class WalletController {
     private final CurrentPrincipal currentPrincipal;
 
     WalletController(
-            WalletQuery walletQuery,
-            WalletTransactionQuery walletTransactionQuery,
-            CurrentPrincipal currentPrincipal) {
+            WalletQuery walletQuery, WalletTransactionQuery walletTransactionQuery, CurrentPrincipal currentPrincipal) {
         this.walletQuery = walletQuery;
         this.walletTransactionQuery = walletTransactionQuery;
         this.currentPrincipal = currentPrincipal;
@@ -35,8 +33,7 @@ class WalletController {
 
     @GetMapping("/{walletId}")
     ResponseEntity<WalletBalanceResponse> getBalance(@PathVariable UUID walletId) {
-        WalletQuery.WalletBalanceView view =
-                walletQuery.getBalance(currentPrincipal.memberId(), WalletId.of(walletId));
+        WalletQuery.WalletBalanceView view = walletQuery.getBalance(currentPrincipal.memberId(), WalletId.of(walletId));
         return ResponseEntity.ok(new WalletBalanceResponse(
                 view.walletId().value(),
                 view.available().amount(),
@@ -56,8 +53,8 @@ class WalletController {
             @PathVariable UUID walletId,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int limit) {
-        WalletTransactionQuery.TransactionPage page = walletTransactionQuery.list(
-                currentPrincipal.memberId(), WalletId.of(walletId), cursor, limit);
+        WalletTransactionQuery.TransactionPage page =
+                walletTransactionQuery.list(currentPrincipal.memberId(), WalletId.of(walletId), cursor, limit);
         return ResponseEntity.ok(new TransactionPageResponse(
                 page.entries().stream().map(TransactionResponse::from).toList(), page.nextCursor()));
     }
@@ -68,8 +65,7 @@ class WalletController {
      */
     @GetMapping("/{walletId}/ledger-verification")
     ResponseEntity<BalanceVerificationResponse> verify(@PathVariable UUID walletId) {
-        WalletQuery.BalanceVerification verification =
-                walletQuery.verifyAgainstLedger(WalletId.of(walletId));
+        WalletQuery.BalanceVerification verification = walletQuery.verifyAgainstLedger(WalletId.of(walletId));
         return ResponseEntity.ok(new BalanceVerificationResponse(
                 verification.walletId().value(),
                 verification.snapshot().amount(),
@@ -102,9 +98,7 @@ class WalletController {
         }
     }
 
-    record WalletBalanceResponse(
-            UUID walletId, long available, long pending, String currency, Instant asOf) {}
+    record WalletBalanceResponse(UUID walletId, long available, long pending, String currency, Instant asOf) {}
 
-    record BalanceVerificationResponse(
-            UUID walletId, long snapshotBalance, long ledgerBalance, boolean matches) {}
+    record BalanceVerificationResponse(UUID walletId, long snapshotBalance, long ledgerBalance, boolean matches) {}
 }

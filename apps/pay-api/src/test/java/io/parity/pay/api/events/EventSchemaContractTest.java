@@ -79,8 +79,8 @@ class EventSchemaContractTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("타입이 다르면 기록 단계에서 막힌다")
     void wrongTypeIsRejected() {
-        assertThatThrownBy(() -> transactionTemplate.executeWithoutResult(status -> outboxAppender.append(
-                        walletCreated(payload -> payload.put("walletId", "not-a-uuid")))))
+        assertThatThrownBy(() -> transactionTemplate.executeWithoutResult(status ->
+                        outboxAppender.append(walletCreated(payload -> payload.put("walletId", "not-a-uuid")))))
                 .hasMessageContaining("walletId");
 
         assertThat(outboxCount()).isZero();

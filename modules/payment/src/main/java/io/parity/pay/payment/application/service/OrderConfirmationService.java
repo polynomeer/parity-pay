@@ -45,8 +45,7 @@ public class OrderConfirmationService implements ConfirmOrderUseCase {
     public OrderConfirmationView confirm(MemberId memberId, PaymentId paymentId) {
         Payment payment = paymentRepository
                 .findById(paymentId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
         payment.requireOwnedBy(memberId);
 
         if (!payment.isApproved()) {
@@ -56,12 +55,10 @@ public class OrderConfirmationService implements ConfirmOrderUseCase {
         }
 
         Instant now = clock.instant();
-        boolean newlyConfirmed =
-                orderConfirmationRepository.confirm(payment.id(), payment.orderId(), now);
+        boolean newlyConfirmed = orderConfirmationRepository.confirm(payment.id(), payment.orderId(), now);
         if (!newlyConfirmed) {
-            Instant confirmedAt = orderConfirmationRepository
-                    .findConfirmedAt(payment.id())
-                    .orElse(now);
+            Instant confirmedAt =
+                    orderConfirmationRepository.findConfirmedAt(payment.id()).orElse(now);
             return new OrderConfirmationView(payment.id(), payment.orderId(), confirmedAt, false);
         }
 

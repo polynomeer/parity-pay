@@ -75,7 +75,6 @@ public class InMemoryLedgerTransactionRepository implements LedgerTransactionRep
     }
 
     private static String referenceKey(LedgerTransaction transaction) {
-        return transaction.referenceType() + "|" + transaction.referenceId() + "|"
-                + transaction.transactionType();
+        return transaction.referenceType() + "|" + transaction.referenceId() + "|" + transaction.transactionType();
     }
 }

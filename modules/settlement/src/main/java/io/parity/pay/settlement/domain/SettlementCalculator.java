@@ -45,8 +45,7 @@ public final class SettlementCalculator {
             List<SettlementItem> items,
             Instant now) {
         if (items.isEmpty()) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_REQUEST, "settlement requires at least one eligible item");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "settlement requires at least one eligible item");
         }
 
         long gross = 0L;
@@ -56,8 +55,7 @@ public final class SettlementCalculator {
 
         for (SettlementItem item : items) {
             if (item.currency() != currency) {
-                throw new BusinessException(
-                        ErrorCode.INTERNAL_ERROR, "settlement items must share a single currency");
+                throw new BusinessException(ErrorCode.INTERNAL_ERROR, "settlement items must share a single currency");
             }
             switch (item.type()) {
                 case SALE -> gross += item.amount();

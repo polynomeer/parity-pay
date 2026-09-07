@@ -6,7 +6,6 @@ import io.parity.pay.settlement.application.port.out.SettlementRecoveryRepositor
 import io.parity.pay.settlement.application.port.out.SettlementRecoveryRepository.PendingPayoutRecovery;
 import io.parity.pay.settlement.application.port.out.SettlementRepository;
 import io.parity.pay.settlement.domain.Settlement;
-import io.parity.pay.shared.id.SettlementId;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -66,8 +65,8 @@ public class SettlementRecoveryService {
     /** 미확정 지급을 조회로 확정합니다. 확정된 건수를 돌려줍니다. */
     public int resolveDue() {
         Instant now = clock.instant();
-        List<PendingPayoutRecovery> pending = recoveryRepository.claimDue(
-                now, now.plus(properties.recoveryLease()), 50);
+        List<PendingPayoutRecovery> pending =
+                recoveryRepository.claimDue(now, now.plus(properties.recoveryLease()), 50);
 
         int settled = 0;
         for (PendingPayoutRecovery item : pending) {
@@ -95,7 +94,8 @@ public class SettlementRecoveryService {
 
         return switch (status) {
             case SUCCEEDED -> {
-                transactions.completePayout(item.settlementId(), item.settlementId().toString());
+                transactions.completePayout(
+                        item.settlementId(), item.settlementId().toString());
                 recoveryRepository.clear(item.settlementId());
                 log.info("recovered settlement {} as PAID", item.settlementId());
                 yield true;
@@ -135,8 +135,7 @@ public class SettlementRecoveryService {
     private void scheduleRetryOrEscalate(PendingPayoutRecovery item, String reason) {
         int attemptCount = item.attemptCount() + 1;
         if (attemptCount >= properties.recoveryMaxAttempts()) {
-            recoveryRepository.markManualReview(
-                    item.settlementId(), attemptCount, reason, clock.instant());
+            recoveryRepository.markManualReview(item.settlementId(), attemptCount, reason, clock.instant());
             log.warn("settlement {} needs manual review: {}", item.settlementId(), reason);
             return;
         }

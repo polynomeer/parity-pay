@@ -13,6 +13,5 @@ public interface ConfirmOrderUseCase {
 
     OrderConfirmationView confirm(MemberId memberId, PaymentId paymentId);
 
-    record OrderConfirmationView(
-            PaymentId paymentId, String orderId, Instant confirmedAt, boolean newlyConfirmed) {}
+    record OrderConfirmationView(PaymentId paymentId, String orderId, Instant confirmedAt, boolean newlyConfirmed) {}
 }

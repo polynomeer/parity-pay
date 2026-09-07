@@ -36,7 +36,7 @@ public enum PaymentStatus {
             case PROCESSING -> next == APPROVED || next == FAILED || next == UNKNOWN;
             case UNKNOWN -> next == APPROVED || next == FAILED;
             case APPROVED -> next == PARTIALLY_CANCELED || next == CANCELED;
-            // 부분 취소가 반복되는 동안에는 같은 상태에 머무릅니다.
+                // 부분 취소가 반복되는 동안에는 같은 상태에 머무릅니다.
             case PARTIALLY_CANCELED -> next == PARTIALLY_CANCELED || next == CANCELED;
             case CANCELED, FAILED -> false;
         };

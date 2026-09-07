@@ -163,10 +163,7 @@ public class TopUpRecoveryService {
         if (notFoundCount >= properties.notFoundConfirmThreshold()) {
             transactions.completeFailed(memberId, topUp, "EXTERNAL_RECORD_NOT_FOUND");
             recoveryRepository.clear(topUp.id());
-            log.info(
-                    "settled top-up {} as FAILED after {} consecutive not-found results",
-                    topUp.id(),
-                    notFoundCount);
+            log.info("settled top-up {} as FAILED after {} consecutive not-found results", topUp.id(), notFoundCount);
             return true;
         }
         int attemptCount = item.attemptCount() + 1;
@@ -185,11 +182,7 @@ public class TopUpRecoveryService {
         if (attemptCount >= properties.maxAttempts()) {
             // 자동으로 안전하게 확정할 수 없습니다. 계속 외부를 두드리는 대신 사람에게 넘깁니다.
             recoveryRepository.markManualReview(item.topUpId(), attemptCount, reason, clock.instant());
-            log.warn(
-                    "top-up {} needs manual review after {} attempts: {}",
-                    item.topUpId(),
-                    attemptCount,
-                    reason);
+            log.warn("top-up {} needs manual review after {} attempts: {}", item.topUpId(), attemptCount, reason);
             return;
         }
         recoveryRepository.scheduleRetry(
@@ -212,15 +205,14 @@ public class TopUpRecoveryService {
     private TopUp loadTopUp(TopUpId topUpId) {
         return topUpRepository
                 .findById(topUpId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "top-up not found: " + topUpId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "top-up not found: " + topUpId));
     }
 
     private MemberId ownerOf(TopUp topUp) {
         Wallet wallet = walletRepository
                 .findById(topUp.walletId())
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.INTERNAL_ERROR, "wallet not found for top-up " + topUp.id()));
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.INTERNAL_ERROR, "wallet not found for top-up " + topUp.id()));
         return wallet.memberId();
     }
 

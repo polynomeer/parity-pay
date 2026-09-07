@@ -73,8 +73,7 @@ class OutboxPublishTransaction {
             try {
                 String envelope = toEnvelopeJson(record);
                 claimed.put(record.eventId(), record);
-                messages.add(
-                        new MessageBroker.OutboxMessage(record.eventId(), record.partitionKey(), envelope));
+                messages.add(new MessageBroker.OutboxMessage(record.eventId(), record.partitionKey(), envelope));
             } catch (RuntimeException e) {
                 // 봉투를 만들지 못하는 이벤트는 보내봐야 소용이 없습니다. 배치 전체를 막지 않고
                 // 그 건만 재시도 경로로 보냅니다.

@@ -26,8 +26,7 @@ public record IdempotencyKey(String value) {
                     "Idempotency-Key length must be between " + MIN_LENGTH + " and " + MAX_LENGTH);
         }
         if (!ALLOWED.matcher(value).matches()) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_REQUEST, "Idempotency-Key contains unsupported characters");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Idempotency-Key contains unsupported characters");
         }
     }
 

@@ -31,9 +31,7 @@ class OnboardingController {
     private final CurrentPrincipal currentPrincipal;
 
     OnboardingController(
-            OnboardingService onboardingService,
-            MockBankBehavior mockBankBehavior,
-            CurrentPrincipal currentPrincipal) {
+            OnboardingService onboardingService, MockBankBehavior mockBankBehavior, CurrentPrincipal currentPrincipal) {
         this.onboardingService = onboardingService;
         this.mockBankBehavior = mockBankBehavior;
         this.currentPrincipal = currentPrincipal;
@@ -45,8 +43,7 @@ class OnboardingController {
         OnboardingService.RegisteredMember registered =
                 onboardingService.registerMember(request.email(), request.password());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new RegisterMemberResponse(
-                        registered.memberId().value(), registered.walletId()));
+                .body(new RegisterMemberResponse(registered.memberId().value(), registered.walletId()));
     }
 
     @PostMapping("/bank-accounts")
@@ -57,8 +54,7 @@ class OnboardingController {
                 request.bankCode(),
                 request.accountNumber(),
                 Money.krw(request.initialBalance()));
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new LinkBankAccountResponse(bankAccountId.value()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new LinkBankAccountResponse(bankAccountId.value()));
     }
 
     /**
@@ -71,8 +67,7 @@ class OnboardingController {
         return ResponseEntity.noContent().build();
     }
 
-    record RegisterMemberRequest(
-            @Email @NotBlank String email, @NotBlank @Size(min = 8, max = 72) String password) {}
+    record RegisterMemberRequest(@Email @NotBlank String email, @NotBlank @Size(min = 8, max = 72) String password) {}
 
     record RegisterMemberResponse(UUID memberId, UUID walletId) {}
 

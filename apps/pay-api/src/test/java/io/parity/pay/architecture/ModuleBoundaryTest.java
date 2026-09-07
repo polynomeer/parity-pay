@@ -26,10 +26,7 @@ class ModuleBoundaryTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(
-                    "org.springframework..",
-                    "jakarta.persistence..",
-                    "org.hibernate..",
-                    "com.fasterxml.jackson..")
+                    "org.springframework..", "jakarta.persistence..", "org.hibernate..", "com.fasterxml.jackson..")
             .as("도메인 계층은 Spring·JPA·Jackson에 의존하지 않아야 합니다");
 
     /** 도메인은 바깥 계층을 모릅니다. */
@@ -132,10 +129,7 @@ class ModuleBoundaryTest {
             .resideInAPackage("io.parity.pay.reconciliation..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage(
-                    "io.parity.pay.wallet..",
-                    "io.parity.pay.payment..",
-                    "io.parity.pay.settlement..")
+            .resideInAnyPackage("io.parity.pay.wallet..", "io.parity.pay.payment..", "io.parity.pay.settlement..")
             .as("reconciliation 모듈은 업무 모듈에 직접 의존하지 않아야 합니다");
 
     /**

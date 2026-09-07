@@ -24,8 +24,7 @@ public class SettlementPayoutService {
     private final SettlementPayoutTransactions transactions;
     private final MerchantPayoutPort merchantPayoutPort;
 
-    public SettlementPayoutService(
-            SettlementPayoutTransactions transactions, MerchantPayoutPort merchantPayoutPort) {
+    public SettlementPayoutService(SettlementPayoutTransactions transactions, MerchantPayoutPort merchantPayoutPort) {
         this.transactions = transactions;
         this.merchantPayoutPort = merchantPayoutPort;
     }
@@ -41,11 +40,12 @@ public class SettlementPayoutService {
             result = PayoutResult.unknown();
         }
 
-        Settlement settled = switch (result.outcome()) {
-            case SUCCEEDED -> transactions.completePayout(paying.id(), result.externalReferenceId());
-            case FAILED -> transactions.failPayout(paying.id(), result.failureReason());
-            case UNKNOWN -> transactions.markUnknown(paying.id());
-        };
+        Settlement settled =
+                switch (result.outcome()) {
+                    case SUCCEEDED -> transactions.completePayout(paying.id(), result.externalReferenceId());
+                    case FAILED -> transactions.failPayout(paying.id(), result.failureReason());
+                    case UNKNOWN -> transactions.markUnknown(paying.id());
+                };
         return SettlementView.of(settled);
     }
 }

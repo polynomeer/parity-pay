@@ -27,8 +27,7 @@ public record SecurityProperties(
         loginLockDuration = loginLockDuration == null ? Duration.ofMinutes(10) : loginLockDuration;
         bootstrapOperators = bootstrapOperators == null ? List.of() : List.copyOf(bootstrapOperators);
         if (jwtSecret == null || jwtSecret.length() < 32) {
-            throw new IllegalStateException(
-                    "paritypay.security.jwt-secret must be at least 32 characters");
+            throw new IllegalStateException("paritypay.security.jwt-secret must be at least 32 characters");
         }
     }
 

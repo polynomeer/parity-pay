@@ -31,9 +31,7 @@ public class LedgerPostingService implements PostJournalUseCase {
     private final Clock clock;
 
     public LedgerPostingService(
-            LedgerTransactionRepository transactionRepository,
-            LedgerAccountRepository accountRepository,
-            Clock clock) {
+            LedgerTransactionRepository transactionRepository, LedgerAccountRepository accountRepository, Clock clock) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.clock = clock;
@@ -68,8 +66,7 @@ public class LedgerPostingService implements PostJournalUseCase {
         }
 
         // 3. POSTED 상태로 확정합니다. 이후 이 행은 수정·삭제하지 않습니다 (INV-006).
-        LedgerTransaction posted =
-                LedgerTransaction.post(LedgerTransactionId.generate(), journal, clock.instant());
+        LedgerTransaction posted = LedgerTransaction.post(LedgerTransactionId.generate(), journal, clock.instant());
         return transactionRepository.save(posted);
     }
 }

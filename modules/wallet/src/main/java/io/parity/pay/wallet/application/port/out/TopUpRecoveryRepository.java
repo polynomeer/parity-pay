@@ -41,9 +41,5 @@ public interface TopUpRecoveryRepository {
     List<PendingRecovery> findManualReview(int limit);
 
     record PendingRecovery(
-            TopUpId topUpId,
-            TopUpStatus status,
-            int attemptCount,
-            int notFoundCount,
-            boolean requiresManualReview) {}
+            TopUpId topUpId, TopUpStatus status, int attemptCount, int notFoundCount, boolean requiresManualReview) {}
 }

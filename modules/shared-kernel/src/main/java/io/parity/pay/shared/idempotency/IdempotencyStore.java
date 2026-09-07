@@ -16,14 +16,9 @@ public interface IdempotencyStore {
      * @return 이미 존재하던 기록이면 그 기록을, 이번에 새로 만든 요청이면 {@code PROCESSING} 기록을
      *     반환합니다. 호출자는 {@link IdempotencyRecord#status()}로 재사용 여부를 판단합니다.
      */
-    IdempotencyRecord beginOrGet(
-            UUID principalId, String operation, IdempotencyKey key, String requestHash);
+    IdempotencyRecord beginOrGet(UUID principalId, String operation, IdempotencyKey key, String requestHash);
 
     /** 업무 결과가 확정되면 상태와 업무 참조를 기록합니다. */
     void settle(
-            UUID principalId,
-            String operation,
-            IdempotencyKey key,
-            IdempotencyStatus status,
-            UUID businessReferenceId);
+            UUID principalId, String operation, IdempotencyKey key, IdempotencyStatus status, UUID businessReferenceId);
 }

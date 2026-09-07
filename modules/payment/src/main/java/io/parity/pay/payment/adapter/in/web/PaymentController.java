@@ -4,10 +4,10 @@ import io.parity.pay.payment.application.port.in.ApprovePaymentUseCase;
 import io.parity.pay.payment.application.port.in.ApprovePaymentUseCase.ApprovePaymentCommand;
 import io.parity.pay.payment.application.port.in.ApprovePaymentUseCase.PaymentView;
 import io.parity.pay.payment.application.port.in.CancelPaymentUseCase;
-import io.parity.pay.payment.application.port.in.ConfirmOrderUseCase;
-import io.parity.pay.payment.application.port.in.ConfirmOrderUseCase.OrderConfirmationView;
 import io.parity.pay.payment.application.port.in.CancelPaymentUseCase.CancelPaymentCommand;
 import io.parity.pay.payment.application.port.in.CancelPaymentUseCase.CancellationView;
+import io.parity.pay.payment.application.port.in.ConfirmOrderUseCase;
+import io.parity.pay.payment.application.port.in.ConfirmOrderUseCase.OrderConfirmationView;
 import io.parity.pay.payment.application.port.in.PaymentQuery;
 import io.parity.pay.payment.domain.CancellationStatus;
 import io.parity.pay.payment.domain.PaymentMethod;
@@ -76,8 +76,8 @@ class PaymentController {
 
     @GetMapping("/{paymentId}")
     ResponseEntity<PaymentResponse> getPayment(@PathVariable UUID paymentId) {
-        return ResponseEntity.ok(PaymentResponse.from(
-                paymentQuery.getPayment(currentPrincipal.memberId(), PaymentId.of(paymentId))));
+        return ResponseEntity.ok(
+                PaymentResponse.from(paymentQuery.getPayment(currentPrincipal.memberId(), PaymentId.of(paymentId))));
     }
 
     @PostMapping("/{paymentId}/cancellations")
@@ -101,14 +101,12 @@ class PaymentController {
      */
     @PostMapping("/{paymentId}/confirmation")
     ResponseEntity<OrderConfirmationResponse> confirm(@PathVariable UUID paymentId) {
-        OrderConfirmationView view =
-                confirmOrder.confirm(currentPrincipal.memberId(), PaymentId.of(paymentId));
+        OrderConfirmationView view = confirmOrder.confirm(currentPrincipal.memberId(), PaymentId.of(paymentId));
         return ResponseEntity.ok(new OrderConfirmationResponse(
                 view.paymentId().value(), view.orderId(), view.confirmedAt(), view.newlyConfirmed()));
     }
 
-    record OrderConfirmationResponse(
-            UUID paymentId, String orderId, Instant confirmedAt, boolean newlyConfirmed) {}
+    record OrderConfirmationResponse(UUID paymentId, String orderId, Instant confirmedAt, boolean newlyConfirmed) {}
 
     record ApprovePaymentRequest(
             @NotBlank String orderId,
@@ -143,8 +141,7 @@ class PaymentController {
         }
     }
 
-    record CancelPaymentRequest(
-            @Positive long amount, @NotNull String currency, String reason) {}
+    record CancelPaymentRequest(@Positive long amount, @NotNull String currency, String reason) {}
 
     record CancellationResponse(
             UUID cancellationId,

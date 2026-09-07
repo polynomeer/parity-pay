@@ -29,17 +29,15 @@ class MemberApprovalAuthority implements ApprovalAuthority {
         }
         if (approverId.equalsIgnoreCase(requesterId)) {
             throw new BusinessException(
-                    ErrorCode.INVALID_REQUEST,
-                    "an adjustment must be approved by someone other than the requester");
+                    ErrorCode.INVALID_REQUEST, "an adjustment must be approved by someone other than the requester");
         }
 
         MemberAccount approver = memberAccountRepository
                 .findByEmail(approverId)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.INVALID_REQUEST, "the approver is not a known operator"));
+                .orElseThrow(
+                        () -> new BusinessException(ErrorCode.INVALID_REQUEST, "the approver is not a known operator"));
         if (!approver.roles().contains(Role.OPS_APPROVER)) {
-            throw new BusinessException(
-                    ErrorCode.RISK_BLOCKED, "the approver does not have approval authority");
+            throw new BusinessException(ErrorCode.RISK_BLOCKED, "the approver does not have approval authority");
         }
         if (!approver.isActive()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "the approver account is not active");

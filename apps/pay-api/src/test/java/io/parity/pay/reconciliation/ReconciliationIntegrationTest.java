@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.parity.pay.api.mockbank.MockBankBehavior;
 import io.parity.pay.api.onboarding.OnboardingService;
 import io.parity.pay.api.security.OperatorBootstrap;
-import io.parity.pay.support.ApiAuth;
 import io.parity.pay.ledger.domain.AccountCode;
 import io.parity.pay.reconciliation.application.service.MismatchResolutionService;
 import io.parity.pay.reconciliation.application.service.ReconciliationService;
@@ -20,6 +19,7 @@ import io.parity.pay.shared.id.WalletId;
 import io.parity.pay.shared.idempotency.IdempotencyKey;
 import io.parity.pay.shared.money.Money;
 import io.parity.pay.support.AbstractIntegrationTest;
+import io.parity.pay.support.ApiAuth;
 import io.parity.pay.wallet.application.port.in.RequestTopUpUseCase;
 import io.parity.pay.wallet.application.port.in.RequestTopUpUseCase.TopUpCommand;
 import io.parity.pay.wallet.application.port.in.RequestTopUpUseCase.TopUpView;
@@ -90,8 +90,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
                 onboardingService.registerMember("recon@example.com", "password1234");
         memberId = registered.memberId();
         walletId = WalletId.of(registered.walletId());
-        bankAccountId = onboardingService.linkBankAccount(
-                memberId, "004", "110-1111-0000", Money.krw(1_000_000));
+        bankAccountId = onboardingService.linkBankAccount(memberId, "004", "110-1111-0000", Money.krw(1_000_000));
     }
 
     @Test
@@ -99,8 +98,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     void cleanLedgerProducesNoMismatch() {
         topUp("recon-key-000001", 100_000);
 
-        ReconciliationService.ReconciliationSummary summary =
-                reconciliationService.runTopUpReconciliation();
+        ReconciliationService.ReconciliationSummary summary = reconciliationService.runTopUpReconciliation();
 
         assertThat(summary.internalCount()).isEqualTo(1);
         assertThat(summary.externalCount()).isEqualTo(1);
@@ -227,8 +225,8 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
         reconciliationService.runTopUpReconciliation();
         UUID mismatchId = openMismatches().get(0).mismatchId();
 
-        ReconciliationMismatch resolved = resolutionService.resolveWithoutAdjustment(
-                mismatchId, "ops-1", "기관 지연으로 판단", false);
+        ReconciliationMismatch resolved =
+                resolutionService.resolveWithoutAdjustment(mismatchId, "ops-1", "기관 지연으로 판단", false);
 
         assertThat(resolved.resolutionStatus()).isEqualTo(ResolutionStatus.RESOLVED);
         assertThat(resolved.resolvedBy()).isEqualTo("ops-1");
@@ -262,9 +260,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(resolved.resolutionStatus()).isEqualTo(ResolutionStatus.RESOLVED);
         assertThat(resolved.adjustmentLedgerTransactionId()).isNotNull();
-        assertThat(resolved.resolvedBy())
-                .contains(ApiAuth.OPS_OPERATOR)
-                .contains(ApiAuth.OPS_APPROVER);
+        assertThat(resolved.resolvedBy()).contains(ApiAuth.OPS_OPERATOR).contains(ApiAuth.OPS_APPROVER);
         // 기존 원장은 그대로 있고 보정 분개가 새로 추가됩니다.
         assertThat(ledgerTransactionCount()).isEqualTo(ledgerCountBefore + 1);
         assertThat(jdbcTemplate.queryForObject(
@@ -345,8 +341,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
         UUID mismatchId = openMismatches().get(0).mismatchId();
         resolutionService.resolveWithoutAdjustment(mismatchId, "ops-1", "확인 완료", true);
 
-        assertThatThrownBy(() ->
-                        resolutionService.resolveWithoutAdjustment(mismatchId, "ops-2", "다시", false))
+        assertThatThrownBy(() -> resolutionService.resolveWithoutAdjustment(mismatchId, "ops-2", "다시", false))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("already IGNORED");
     }
@@ -366,8 +361,8 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     }
 
     private TopUpView topUp(String key, long amount) {
-        return requestTopUp.requestTopUp(new TopUpCommand(
-                memberId, walletId, bankAccountId, Money.krw(amount), IdempotencyKey.of(key)));
+        return requestTopUp.requestTopUp(
+                new TopUpCommand(memberId, walletId, bankAccountId, Money.krw(amount), IdempotencyKey.of(key)));
     }
 
     private List<ReconciliationMismatch> openMismatches() {
@@ -375,8 +370,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     }
 
     private long mismatchCount() {
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM reconciliation_mismatch", Long.class);
+        Long count = jdbcTemplate.queryForObject("SELECT count(*) FROM reconciliation_mismatch", Long.class);
         return count == null ? 0L : count;
     }
 

@@ -7,18 +7,18 @@ import io.parity.pay.ledger.domain.JournalFactory;
 import io.parity.pay.ledger.domain.LedgerAccount;
 import io.parity.pay.ledger.domain.LedgerTransaction;
 import io.parity.pay.shared.error.BusinessException;
-import io.parity.pay.shared.event.OutboxAppender;
 import io.parity.pay.shared.error.ErrorCode;
+import io.parity.pay.shared.event.OutboxAppender;
 import io.parity.pay.shared.id.MemberId;
 import io.parity.pay.shared.id.TopUpId;
 import io.parity.pay.shared.idempotency.IdempotencyRecord;
 import io.parity.pay.shared.idempotency.IdempotencyStatus;
 import io.parity.pay.shared.idempotency.IdempotencyStore;
+import io.parity.pay.wallet.application.event.WalletEvents;
 import io.parity.pay.wallet.application.port.in.RequestTopUpUseCase.TopUpCommand;
 import io.parity.pay.wallet.application.port.out.TopUpRepository;
 import io.parity.pay.wallet.application.port.out.WalletBalanceRepository;
 import io.parity.pay.wallet.application.port.out.WalletRepository;
-import io.parity.pay.wallet.application.event.WalletEvents;
 import io.parity.pay.wallet.domain.TopUp;
 import io.parity.pay.wallet.domain.Wallet;
 import java.time.Clock;
@@ -91,9 +91,7 @@ class TopUpTransactions {
                     "the same Idempotency-Key was used with a different request body");
         }
 
-        Optional<TopUp> existing = record.businessReference()
-                .map(TopUpId::of)
-                .flatMap(topUpRepository::findById);
+        Optional<TopUp> existing = record.businessReference().map(TopUpId::of).flatMap(topUpRepository::findById);
         if (existing.isPresent()) {
             return new Started(existing.get(), false);
         }
@@ -133,9 +131,8 @@ class TopUpTransactions {
         TopUp succeeded = current.succeed(externalReferenceId, clock.instant());
         topUpRepository.save(succeeded);
 
-        LedgerAccount bankDeposit =
-                resolveLedgerAccount.resolveCorporate(
-                        AccountCode.BANK_DEPOSIT, succeeded.requestedAmount().currency());
+        LedgerAccount bankDeposit = resolveLedgerAccount.resolveCorporate(
+                AccountCode.BANK_DEPOSIT, succeeded.requestedAmount().currency());
         LedgerAccount userPayMoney = resolveLedgerAccount.resolve(
                 AccountCode.USER_PAY_MONEY,
                 succeeded.walletId().value(),
@@ -148,8 +145,7 @@ class TopUpTransactions {
                 succeeded.requestedAmount(),
                 succeeded.completedAt()));
 
-        int updated = walletBalanceRepository.increaseAvailable(
-                succeeded.walletId(), succeeded.requestedAmount());
+        int updated = walletBalanceRepository.increaseAvailable(succeeded.walletId(), succeeded.requestedAmount());
         if (updated != 1) {
             throw new BusinessException(
                     ErrorCode.INTERNAL_ERROR, "wallet balance row missing for " + succeeded.walletId());
@@ -210,8 +206,8 @@ class TopUpTransactions {
     private TopUp reload(TopUp topUp) {
         return topUpRepository
                 .findById(topUp.id())
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.RESOURCE_NOT_FOUND, "top-up not found: " + topUp.id()));
+                .orElseThrow(
+                        () -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "top-up not found: " + topUp.id()));
     }
 
     record Started(TopUp topUp, boolean isNew) {}

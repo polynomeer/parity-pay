@@ -41,16 +41,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * <p>근거: docs/03-mvp-scope.md §7, docs/10-test-strategy.md §8·§11
  */
-@SpringBootTest(
-        classes = ParityPayApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = ParityPayApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OpenApiSnapshotTest extends AbstractIntegrationTest {
 
     private static final Path SNAPSHOT = Path.of("..", "..", "docs", "api", "openapi.json");
     private static final String UPDATE_FLAG = "updateOpenApiSnapshot";
 
-    private final ObjectMapper objectMapper =
-            new ObjectMapper().enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
+    private final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -73,7 +70,9 @@ class OpenApiSnapshotTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("명세는 인증된 운영자만 볼 수 있다")
     void apiDocsRequireOperatorRole() {
-        assertThat(restTemplate.getForEntity("/v3/api-docs/customer", String.class).getStatusCode())
+        assertThat(restTemplate
+                        .getForEntity("/v3/api-docs/customer", String.class)
+                        .getStatusCode())
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
 
         ApiAuth.Session customer =
@@ -90,7 +89,8 @@ class OpenApiSnapshotTest extends AbstractIntegrationTest {
         if (System.getProperty(UPDATE_FLAG) != null || System.getenv("UPDATE_OPENAPI_SNAPSHOT") != null) {
             Files.createDirectories(SNAPSHOT.getParent());
             Files.writeString(SNAPSHOT, generated);
-            System.out.println("OpenAPI 스냅샷을 갱신했습니다: " + SNAPSHOT.toAbsolutePath().normalize());
+            System.out.println(
+                    "OpenAPI 스냅샷을 갱신했습니다: " + SNAPSHOT.toAbsolutePath().normalize());
             return;
         }
 
@@ -151,9 +151,7 @@ class OpenApiSnapshotTest extends AbstractIntegrationTest {
     private Object toSortedStructure(JsonNode node) {
         if (node.isObject()) {
             Map<String, Object> sorted = new TreeMap<>();
-            node.fields()
-                    .forEachRemaining(entry ->
-                            sorted.put(entry.getKey(), toSortedStructure(entry.getValue())));
+            node.fields().forEachRemaining(entry -> sorted.put(entry.getKey(), toSortedStructure(entry.getValue())));
             return sorted;
         }
         if (node.isArray()) {

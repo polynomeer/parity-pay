@@ -31,9 +31,7 @@ public class MemberAccountRepository {
 
     public Optional<MemberAccount> findByEmail(String email) {
         List<MemberAccount> rows = jdbcTemplate.query(
-                "SELECT member_id, email, password_hash, status, roles FROM member WHERE email = ?",
-                ROW_MAPPER,
-                email);
+                "SELECT member_id, email, password_hash, status, roles FROM member WHERE email = ?", ROW_MAPPER, email);
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
 

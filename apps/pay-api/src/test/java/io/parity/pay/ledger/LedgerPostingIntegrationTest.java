@@ -54,8 +54,7 @@ class LedgerPostingIntegrationTest extends AbstractIntegrationTest {
     void setUp() {
         // 원장은 append-only이므로 DELETE가 트리거에 막힙니다(INV-006). 테스트 격리에는 TRUNCATE만
         // 사용하며, 운영 코드와 운영 절차에서는 어떤 경우에도 사용하지 않습니다.
-        jdbcTemplate.execute(
-                "TRUNCATE ledger_entry, ledger_transaction, ledger_account CASCADE");
+        jdbcTemplate.execute("TRUNCATE ledger_entry, ledger_transaction, ledger_account CASCADE");
 
         bankAccount = resolveAccount.resolveCorporate(AccountCode.BANK_DEPOSIT, CurrencyCode.KRW);
         userAccount = resolveAccount.resolve(
@@ -116,8 +115,8 @@ class LedgerPostingIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("INV-006: 확정 원장 항목은 UPDATE·DELETE할 수 없다")
     void postedEntriesAreImmutable() {
-        LedgerTransaction posted = transactionTemplate.execute(
-                status -> postJournal.post(topUpJournal(TopUpId.generate(), 100_000)));
+        LedgerTransaction posted =
+                transactionTemplate.execute(status -> postJournal.post(topUpJournal(TopUpId.generate(), 100_000)));
 
         assertThatThrownBy(() -> jdbcTemplate.update(
                         "UPDATE ledger_entry SET amount = amount + 1 WHERE transaction_id = ?",
@@ -125,11 +124,13 @@ class LedgerPostingIntegrationTest extends AbstractIntegrationTest {
                 .hasStackTraceContaining("INV-006");
 
         assertThatThrownBy(() -> jdbcTemplate.update(
-                        "DELETE FROM ledger_entry WHERE transaction_id = ?", posted.id().value()))
+                        "DELETE FROM ledger_entry WHERE transaction_id = ?",
+                        posted.id().value()))
                 .hasStackTraceContaining("INV-006");
 
         assertThatThrownBy(() -> jdbcTemplate.update(
-                        "DELETE FROM ledger_transaction WHERE transaction_id = ?", posted.id().value()))
+                        "DELETE FROM ledger_transaction WHERE transaction_id = ?",
+                        posted.id().value()))
                 .hasStackTraceContaining("INV-006");
     }
 
@@ -189,11 +190,7 @@ class LedgerPostingIntegrationTest extends AbstractIntegrationTest {
 
     private Journal topUpJournal(TopUpId topUpId, long amount) {
         return JournalFactory.topUpCompleted(
-                topUpId,
-                bankAccount.id(),
-                userAccount.id(),
-                Money.krw(amount),
-                Instant.parse("2026-09-05T00:00:00Z"));
+                topUpId, bankAccount.id(), userAccount.id(), Money.krw(amount), Instant.parse("2026-09-05T00:00:00Z"));
     }
 
     private Long countTransactions() {

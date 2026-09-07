@@ -73,14 +73,14 @@ class OutboxSchedulerTest extends AbstractIntegrationTest {
     }
 
     private long pendingCount() {
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM outbox_event WHERE status = 'PENDING'", Long.class);
+        Long count =
+                jdbcTemplate.queryForObject("SELECT count(*) FROM outbox_event WHERE status = 'PENDING'", Long.class);
         return count == null ? 0L : count;
     }
 
     private long publishedCount() {
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM outbox_event WHERE status = 'PUBLISHED'", Long.class);
+        Long count =
+                jdbcTemplate.queryForObject("SELECT count(*) FROM outbox_event WHERE status = 'PUBLISHED'", Long.class);
         return count == null ? 0L : count;
     }
 }

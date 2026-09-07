@@ -37,9 +37,7 @@ interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UUID> {
                    <= p.approvedAmount
             """)
     int reserveCancellation(
-            @Param("paymentId") UUID paymentId,
-            @Param("amount") long amount,
-            @Param("now") Instant now);
+            @Param("paymentId") UUID paymentId, @Param("amount") long amount, @Param("now") Instant now);
 
     /** 예약을 확정 취소액으로 옮기고, 전액 취소가 되면 상태를 CANCELED로 바꿉니다. */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
@@ -58,9 +56,7 @@ interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UUID> {
                and p.processingCancellationAmount >= :amount
             """)
     int completeCancellation(
-            @Param("paymentId") UUID paymentId,
-            @Param("amount") long amount,
-            @Param("now") Instant now);
+            @Param("paymentId") UUID paymentId, @Param("amount") long amount, @Param("now") Instant now);
 
     /** 취소가 실패했을 때 예약만 되돌립니다. 결제 상태는 바꾸지 않습니다. */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
@@ -74,7 +70,5 @@ interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UUID> {
                and p.processingCancellationAmount >= :amount
             """)
     int releaseCancellation(
-            @Param("paymentId") UUID paymentId,
-            @Param("amount") long amount,
-            @Param("now") Instant now);
+            @Param("paymentId") UUID paymentId, @Param("amount") long amount, @Param("now") Instant now);
 }
