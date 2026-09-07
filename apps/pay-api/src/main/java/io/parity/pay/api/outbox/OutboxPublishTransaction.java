@@ -2,7 +2,6 @@ package io.parity.pay.api.outbox;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -139,17 +138,17 @@ class OutboxPublishTransaction {
     /** 저장된 payload에 봉투 필드를 씌워 브로커로 보낼 JSON을 만듭니다. */
     private String toEnvelopeJson(OutboxRecord record) {
         try {
-            ObjectNode envelope = objectMapper.createObjectNode();
-            envelope.put("eventId", record.eventId().toString());
-            envelope.put("eventType", record.eventType());
-            envelope.put("eventVersion", record.eventVersion());
-            envelope.put("aggregateType", record.aggregateType());
-            envelope.put("aggregateId", record.aggregateId());
-            envelope.put("partitionKey", record.partitionKey());
-            envelope.put("occurredAt", record.occurredAt().toString());
-            envelope.put("traceId", record.traceId());
-            envelope.set("payload", objectMapper.readTree(record.payloadJson()));
-            return objectMapper.writeValueAsString(envelope);
+            return objectMapper.writeValueAsString(EventEnvelopeJson.build(
+                    objectMapper,
+                    record.eventId(),
+                    record.eventType(),
+                    record.eventVersion(),
+                    record.aggregateType(),
+                    record.aggregateId(),
+                    record.partitionKey(),
+                    record.occurredAt(),
+                    record.traceId(),
+                    objectMapper.readTree(record.payloadJson())));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("failed to build event envelope for " + record.eventId(), e);
         }

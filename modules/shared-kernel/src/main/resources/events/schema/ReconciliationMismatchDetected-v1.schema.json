@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paritypay.io/events/ReconciliationMismatchDetected-v1.schema.json",
+  "title": "대사 불일치 발견",
+  "allOf": [{ "$ref": "https://paritypay.io/events/envelope.schema.json" }],
+  "properties": {
+    "eventType": { "const": "ReconciliationMismatchDetected" },
+    "eventVersion": { "const": 1 },
+    "payload": {
+      "type": "object",
+      "required": ["mismatchId", "runId", "type", "referenceType", "referenceId", "amountDifference", "currency"],
+      "properties": {
+        "mismatchId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "runId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "type": {
+          "type": "string",
+          "enum": ["INTERNAL_ONLY", "EXTERNAL_ONLY", "STATUS_MISMATCH", "AMOUNT_MISMATCH", "DUPLICATE", "LEDGER_MISSING"]
+        },
+        "referenceType": { "type": "string", "minLength": 1, "maxLength": 30 },
+        "referenceId": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "amountDifference": {
+          "description": "내부 - 외부입니다. 방향이 의미를 가지므로 음수를 허용합니다.",
+          "type": "integer"
+        },
+        "currency": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/currency" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

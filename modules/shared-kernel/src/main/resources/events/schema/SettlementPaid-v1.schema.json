@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paritypay.io/events/SettlementPaid-v1.schema.json",
+  "title": "정산 지급 완료",
+  "allOf": [{ "$ref": "https://paritypay.io/events/envelope.schema.json" }],
+  "properties": {
+    "eventType": { "const": "SettlementPaid" },
+    "eventVersion": { "const": 1 },
+    "payload": {
+      "type": "object",
+      "required": ["settlementId", "merchantId", "netAmount", "currency", "externalReferenceId"],
+      "properties": {
+        "settlementId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "merchantId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "netAmount": { "type": "integer", "minimum": 0 },
+        "currency": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/currency" },
+        "externalReferenceId": {
+          "description": "INV-009: 지급 완료 정산은 외부 지급 참조를 가집니다.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -23,11 +23,20 @@ class JdbcOutboxAppender implements OutboxAppender {
 
     private final OutboxRepository outboxRepository;
     private final ObjectMapper objectMapper;
+    private final EventSchemaValidator schemaValidator;
+    private final OutboxProperties properties;
     private final Clock clock;
 
-    JdbcOutboxAppender(OutboxRepository outboxRepository, ObjectMapper objectMapper, Clock clock) {
+    JdbcOutboxAppender(
+            OutboxRepository outboxRepository,
+            ObjectMapper objectMapper,
+            EventSchemaValidator schemaValidator,
+            OutboxProperties properties,
+            Clock clock) {
         this.outboxRepository = outboxRepository;
         this.objectMapper = objectMapper;
+        this.schemaValidator = schemaValidator;
+        this.properties = properties;
         this.clock = clock;
     }
 
@@ -43,6 +52,22 @@ class JdbcOutboxAppender implements OutboxAppender {
         }
 
         String traceId = envelope.traceId() != null ? envelope.traceId() : MDC.get("traceId");
+
+        if (properties.validateSchema()) {
+            // 계약 위반이면 이벤트를 기록하지 않고 업무 트랜잭션까지 되돌립니다. 깨진 이벤트를
+            // 남기고 발행 단계에서 막으면 이미 커밋된 업무와 발행할 수 없는 이벤트가 남습니다.
+            schemaValidator.validate(EventEnvelopeJson.build(
+                    objectMapper,
+                    envelope.eventId().value(),
+                    envelope.eventType(),
+                    envelope.eventVersion(),
+                    envelope.aggregateType(),
+                    envelope.aggregateId(),
+                    envelope.partitionKey(),
+                    envelope.occurredAt(),
+                    traceId,
+                    objectMapper.valueToTree(envelope.payload())));
+        }
 
         outboxRepository.append(
                 envelope.eventId().value(),

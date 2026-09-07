@@ -114,7 +114,14 @@ Testcontainers로 실제 PostgreSQL과 Kafka/Redpanda를 실행합니다.
 ## 8. 계약 테스트
 
 - OpenAPI 요청·응답 예시와 구현을 검증합니다.
-- 소비자 주도 계약 또는 JSON Schema로 이벤트 호환성을 검사합니다.
+- 이벤트는 타입·버전마다 JSON Schema를 두고
+  (`modules/shared-kernel/src/main/resources/events/schema/`) 기록 시점에 봉투 전체를 검사합니다.
+  검사는 테스트·로컬 프로필에서만 켜므로, 계약을 어긴 이벤트를 만드는 흐름은 그 흐름의 테스트가
+  실패합니다. 스키마를 일부러 깨고 돌려 보면 15개 테스트 클래스가 실패합니다(빈 게이트가 아님).
+- payload에 선언하지 않은 필드는 거부합니다. 필드가 조용히 늘어나면 소비자 계약이 바뀐 것을
+  아무도 보지 못한 채 배포됩니다.
+- 코드의 이벤트 타입 상수, 스키마 파일, 명세서 카탈로그 표가 일치하는지 `EventCatalogTest`가
+  검사합니다.
 - Mock Bank·PG의 성공, 명시 실패, 타임아웃, 조회 응답 계약을 고정합니다.
 - 이벤트 필드 삭제·타입 변경은 CI에서 차단합니다.
 
@@ -157,6 +164,8 @@ Testcontainers로 실제 PostgreSQL과 Kafka/Redpanda를 실행합니다.
 | 문서 링크 | `scripts/check-docs-links.py` |
 | 요구사항 추적 (INV) | `scripts/check-invariant-coverage.py` |
 | OpenAPI 명세와 구현 일치 | `OpenApiSnapshotTest` (`docs/api/openapi.json` 스냅샷 비교) |
+| 이벤트 스키마 계약 | 테스트 프로필에서 모든 이벤트를 JSON Schema로 검사 + `EventSchemaContractTest` |
+| 이벤트 카탈로그 일치 (코드·스키마·명세서) | `EventCatalogTest` |
 | 커밋된 비밀값 | gitleaks |
 | 의존성 갱신 | Dependabot (Gradle·Actions·Docker) |
 
@@ -165,7 +174,6 @@ Testcontainers로 실제 PostgreSQL과 Kafka/Redpanda를 실행합니다.
 | 게이트 | 이유 |
 |---|---|
 | 정적 분석(포매터·린터) | 도구를 도입하지 않았습니다. 전체 코드 포매팅 변경이 따라오므로 별도 작업으로 다룹니다. |
-| 이벤트 스키마 계약 검사 | JSON Schema를 아직 만들지 않았습니다. |
 | 이전 버전 DB 업그레이드 | 릴리스된 버전이 없어 비교 대상이 없습니다. |
 | 성능 회귀 검사 | 기준선을 측정하지 않았습니다. 벤치마크는 주간 실행으로 결과만 남깁니다. |
 | 컨테이너 이미지 취약점 | 이미지를 아직 빌드·배포하지 않습니다. |

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paritypay.io/events/SettlementCreated-v1.schema.json",
+  "title": "정산 생성",
+  "allOf": [{ "$ref": "https://paritypay.io/events/envelope.schema.json" }],
+  "properties": {
+    "eventType": { "const": "SettlementCreated" },
+    "eventVersion": { "const": 1 },
+    "payload": {
+      "type": "object",
+      "required": ["settlementId", "merchantId", "periodStart", "periodEnd", "netAmount", "currency"],
+      "properties": {
+        "settlementId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "merchantId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "periodStart": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/localDate" },
+        "periodEnd": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/localDate" },
+        "netAmount": {
+          "description": "순액은 음수가 될 수 없습니다. 회수액이 더 큰 회차는 만들지 않습니다.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "currency": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/currency" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

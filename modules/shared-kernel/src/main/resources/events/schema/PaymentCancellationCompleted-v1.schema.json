@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paritypay.io/events/PaymentCancellationCompleted-v1.schema.json",
+  "title": "결제 취소 완료",
+  "allOf": [{ "$ref": "https://paritypay.io/events/envelope.schema.json" }],
+  "properties": {
+    "eventType": { "const": "PaymentCancellationCompleted" },
+    "eventVersion": { "const": 1 },
+    "payload": {
+      "type": "object",
+      "required": ["cancellationId", "paymentId", "walletId", "merchantId", "amount", "currency", "ledgerTransactionId"],
+      "properties": {
+        "cancellationId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "paymentId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "walletId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "merchantId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "amount": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/positiveAmount" },
+        "currency": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/currency" },
+        "ledgerTransactionId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

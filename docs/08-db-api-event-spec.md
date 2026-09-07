@@ -243,18 +243,26 @@ POST /api/v1/admin/adjustments
 
 ## 7. 이벤트 카탈로그
 
-| 이벤트 | 파티션 키 | 주요 payload | 소비자 |
-|---|---|---|---|
-| WalletCreated v1 | walletId | walletId, memberId, currency | projection |
-| TopUpCompleted v1 | walletId | topUpId, walletId, amount, currency, ledgerTransactionId | notification, projection |
-| PaymentApproved v1 | paymentId | paymentId, orderId, merchantId, walletId, amount, currency, ledgerTransactionId | order, settlement, notification, projection |
-| PaymentFailed v1 | paymentId | paymentId, orderId, failureCode | order, notification |
-| PaymentResultUnknown v1 | paymentId | paymentId, externalRequestId, nextCheckAt | recovery |
-| PaymentCancellationCompleted v1 | paymentId | cancellationId, paymentId, walletId, merchantId, amount, currency, ledgerTransactionId | order, settlement, projection |
-| OrderConfirmed v1 | paymentId | orderId, paymentId, merchantId, settleableAmount, currency, confirmedAt | settlement |
-| SettlementCreated v1 | settlementId | settlementId, merchantId, period, netAmount | operations |
-| SettlementPaid v1 | settlementId | settlementId, netAmount, externalReferenceId | notification, reconciliation |
-| ReconciliationMismatchDetected v1 | mismatchId | mismatchId, runId, type, referenceType, referenceId, amountDifference, currency | operations |
+| 이벤트 | 파티션 키 | 주요 payload | 소비자 | 상태 |
+|---|---|---|---|---|
+| WalletCreated v1 | walletId | walletId, memberId, currency | projection | 구현 |
+| TopUpCompleted v1 | walletId | topUpId, walletId, amount, currency, ledgerTransactionId | notification, projection | 구현 |
+| PaymentApproved v1 | paymentId | paymentId, orderId, merchantId, walletId, amount, currency, ledgerTransactionId | order, settlement, notification, projection | 구현 |
+| PaymentFailed v1 | paymentId | paymentId, orderId, failureCode | order, notification | 미구현 |
+| PaymentResultUnknown v1 | paymentId | paymentId, externalRequestId, nextCheckAt | recovery | 미구현 |
+| PaymentCancellationCompleted v1 | paymentId | cancellationId, paymentId, walletId, merchantId, amount, currency, ledgerTransactionId | order, settlement, projection | 구현 |
+| OrderConfirmed v1 | paymentId | orderId, paymentId, merchantId, settleableAmount, currency, confirmedAt | settlement | 구현 |
+| SettlementCreated v1 | settlementId | settlementId, merchantId, periodStart, periodEnd, netAmount, currency | operations | 구현 |
+| SettlementPaid v1 | settlementId | settlementId, merchantId, netAmount, currency, externalReferenceId | notification, reconciliation | 구현 |
+| ReconciliationMismatchDetected v1 | mismatchId | mismatchId, runId, type, referenceType, referenceId, amountDifference, currency | operations | 구현 |
+
+`구현`인 이벤트는 필드 단위 계약이 JSON Schema로 있습니다
+(`modules/shared-kernel/src/main/resources/events/schema/<이벤트>-v<버전>.schema.json`).
+
+- 이 표, 스키마 파일, 코드의 이벤트 타입 상수 셋이 일치해야 합니다. `EventCatalogTest`가 강제합니다.
+- 검사는 봉투 전체를 대상으로 하고 payload에 선언하지 않은 필드를 거부합니다. 필드를 추가하려면
+  스키마를 함께 고쳐야 하며, 그것이 곧 소비자 계약 변경입니다(§8).
+- `미구현`은 설계상 정의만 있고 생산자가 없는 이벤트입니다. 스키마도 아직 두지 않습니다.
 
 ### 전달 구조
 

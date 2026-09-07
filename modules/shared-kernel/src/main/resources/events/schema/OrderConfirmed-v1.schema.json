@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paritypay.io/events/OrderConfirmed-v1.schema.json",
+  "title": "구매 확정",
+  "allOf": [{ "$ref": "https://paritypay.io/events/envelope.schema.json" }],
+  "properties": {
+    "eventType": { "const": "OrderConfirmed" },
+    "eventVersion": { "const": 1 },
+    "payload": {
+      "type": "object",
+      "required": ["orderId", "paymentId", "merchantId", "settleableAmount", "currency", "confirmedAt"],
+      "properties": {
+        "orderId": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "paymentId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "merchantId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "settleableAmount": {
+          "description": "확정 시점 기준 승인액에서 취소 완료액을 뺀 값입니다. 전액 취소 후 확정이면 0일 수 있습니다.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "currency": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/currency" },
+        "confirmedAt": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/instant" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

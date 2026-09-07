@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paritypay.io/events/WalletCreated-v1.schema.json",
+  "title": "지갑 생성",
+  "allOf": [{ "$ref": "https://paritypay.io/events/envelope.schema.json" }],
+  "properties": {
+    "eventType": { "const": "WalletCreated" },
+    "eventVersion": { "const": 1 },
+    "payload": {
+      "type": "object",
+      "required": ["walletId", "memberId", "currency"],
+      "properties": {
+        "walletId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "memberId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "currency": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/currency" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

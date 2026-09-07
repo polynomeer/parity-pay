@@ -48,6 +48,8 @@ paritypay:
     # 중간 상태를 관찰할 수 없습니다. 필요한 테스트는 OutboxPublisher를 직접 호출합니다.
     publisher-enabled: false
     poll-interval-ms: 100
+    # 모든 통합 테스트가 만드는 실제 이벤트를 계약으로 검사합니다.
+    validate-schema: true
 
 management:
   tracing:

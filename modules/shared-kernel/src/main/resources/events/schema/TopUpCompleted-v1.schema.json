@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paritypay.io/events/TopUpCompleted-v1.schema.json",
+  "title": "충전 완료",
+  "allOf": [{ "$ref": "https://paritypay.io/events/envelope.schema.json" }],
+  "properties": {
+    "eventType": { "const": "TopUpCompleted" },
+    "eventVersion": { "const": 1 },
+    "payload": {
+      "type": "object",
+      "required": ["topUpId", "walletId", "amount", "currency", "ledgerTransactionId"],
+      "properties": {
+        "topUpId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "walletId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "amount": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/positiveAmount" },
+        "currency": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/currency" },
+        "ledgerTransactionId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

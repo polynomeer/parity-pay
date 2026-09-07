@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paritypay.io/events/PaymentApproved-v1.schema.json",
+  "title": "결제 승인",
+  "allOf": [{ "$ref": "https://paritypay.io/events/envelope.schema.json" }],
+  "properties": {
+    "eventType": { "const": "PaymentApproved" },
+    "eventVersion": { "const": 1 },
+    "payload": {
+      "type": "object",
+      "required": ["paymentId", "orderId", "merchantId", "walletId", "amount", "currency", "ledgerTransactionId"],
+      "properties": {
+        "paymentId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "orderId": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "merchantId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "walletId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" },
+        "amount": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/positiveAmount" },
+        "currency": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/currency" },
+        "ledgerTransactionId": { "$ref": "https://paritypay.io/events/envelope.schema.json#/$defs/uuid" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paritypay.io/events/envelope.schema.json",
+  "title": "이벤트 봉투",
+  "description": "모든 이벤트가 공유하는 필드입니다. 근거: docs/08-db-api-event-spec.md §6",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "eventVersion",
+    "aggregateType",
+    "aggregateId",
+    "partitionKey",
+    "occurredAt",
+    "payload"
+  ],
+  "properties": {
+    "eventId": { "$ref": "#/$defs/uuid" },
+    "eventType": { "type": "string", "minLength": 1, "maxLength": 60 },
+    "eventVersion": { "type": "integer", "minimum": 1 },
+    "aggregateType": { "type": "string", "minLength": 1, "maxLength": 30 },
+    "aggregateId": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "partitionKey": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "occurredAt": { "$ref": "#/$defs/instant" },
+    "traceId": { "type": ["string", "null"], "maxLength": 64 },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "instant": {
+      "description": "UTC ISO-8601. 업무 사실이 일어난 시각이며 발행 시각이 아닙니다.",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+    },
+    "localDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "currency": { "type": "string", "enum": ["KRW"] },
+    "positiveAmount": {
+      "description": "원 단위 정수입니다. 부동소수점을 쓰지 않습니다.",
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}
