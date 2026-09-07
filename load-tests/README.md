@@ -3,6 +3,11 @@
 k6로 실행합니다. 설치 없이 컨테이너로도 돌릴 수 있습니다.
 
 ```bash
+# 발행 처리량만 재는 실험 (애플리케이션과 postgres 컨테이너가 떠 있어야 합니다)
+EVENTS=20000 RUNS=3 load-tests/outbox-drain-benchmark.sh
+```
+
+```bash
 # 애플리케이션과 의존성을 먼저 띄웁니다.
 docker compose up -d
 ./gradlew :apps:pay-api:bootRun
@@ -24,6 +29,7 @@ docker run --rm -i --add-host=host.docker.internal:host-gateway \
 | `payment-baseline.js` | 서로 다른 지갑 결제 처리량 기준선 | P-001 |
 | `payment-baseline.js` (`SAME_WALLET=true`) | 동일 지갑 경합 | P-002 |
 | `topup-outbox-backlog.js` | 충전 부하 후 Outbox 적체 해소 | P-003 |
+| `outbox-drain-benchmark.sh` | 발행 경로만 떼어낸 적체 해소율 (k6 없이 SQL로 적체 생성) | P-005 |
 
 ## 결과를 기록할 때
 
