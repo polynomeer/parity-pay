@@ -10,6 +10,7 @@ import io.parity.pay.shared.id.MemberId;
 import io.parity.pay.shared.id.WalletId;
 import io.parity.pay.shared.money.CurrencyCode;
 import io.parity.pay.shared.money.Money;
+import io.parity.pay.wallet.application.port.in.RebuildBalanceUseCase;
 import io.parity.pay.wallet.application.port.in.WalletFundsUseCase;
 import io.parity.pay.wallet.application.port.in.WalletQuery;
 import io.parity.pay.wallet.application.port.out.WalletBalanceRepository;
@@ -22,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** 지갑 조회와 원장 대사. 근거: FR-004, INV-010 */
 @Service
-public class WalletService implements WalletQuery, WalletFundsUseCase {
+public class WalletService implements WalletQuery, WalletFundsUseCase, RebuildBalanceUseCase {
 
     private final WalletRepository walletRepository;
     private final WalletBalanceRepository walletBalanceRepository;
@@ -67,6 +68,63 @@ public class WalletService implements WalletQuery, WalletFundsUseCase {
         Money snapshotTotal = snapshot.ledgerEquivalent();
 
         return new BalanceVerification(walletId, snapshotTotal, ledgerBalance, snapshotTotal.equals(ledgerBalance));
+    }
+
+    /**
+     * 스냅샷을 원장 계산값으로 되돌립니다.
+     *
+     * <p>원장은 읽기만 합니다. 여기서 고치는 것은 파생 데이터 한 줄입니다.
+     *
+     * <p>가용 잔액에만 대입합니다. 처리중 금액은 원장에 아직 반영되지 않은 진행 중 업무의 것이라
+     * 원장으로 계산할 수 없습니다. 그래서 목표는 `가용 = 원장 - 처리중`이고, 이 값이 음수가 되는
+     * 경우에는 맞추지 않고 거부합니다. 음수 잔액을 만들지 않기 위해서이며(INV-003), 그런 상태는
+     * 스냅샷만의 문제가 아니라 진행 중 업무까지 조사해야 하는 상황입니다.
+     */
+    @Override
+    @Transactional
+    public RebuildOutcome rebuildFromLedger(WalletId walletId) {
+        Wallet wallet = loadWallet(walletId);
+        WalletBalance snapshot = loadBalance(walletId);
+        LedgerAccount userPayMoney =
+                resolveLedgerAccount.resolve(AccountCode.USER_PAY_MONEY, walletId.value(), wallet.currency());
+        Money ledgerBalance = ledgerBalanceQuery.balanceOf(userPayMoney.id());
+        Money before = snapshot.ledgerEquivalent();
+
+        if (before.equals(ledgerBalance)) {
+            return new RebuildOutcome(
+                    walletId,
+                    before,
+                    ledgerBalance,
+                    before,
+                    RebuildStatus.ALREADY_CONSISTENT,
+                    "snapshot already matches the ledger");
+        }
+
+        if (ledgerBalance.isLessThan(snapshot.pending())) {
+            return new RebuildOutcome(
+                    walletId,
+                    before,
+                    ledgerBalance,
+                    before,
+                    RebuildStatus.REFUSED,
+                    "ledger balance is below the pending amount; rebuilding would make the available balance negative");
+        }
+
+        Money target = ledgerBalance.minus(snapshot.pending());
+        int updated = walletBalanceRepository.restoreAvailable(walletId, target, snapshot.version());
+        if (updated == 0) {
+            return new RebuildOutcome(
+                    walletId,
+                    before,
+                    ledgerBalance,
+                    before,
+                    RebuildStatus.REFUSED,
+                    "snapshot changed while rebuilding; retry");
+        }
+
+        Money after = target.plus(snapshot.pending());
+        return new RebuildOutcome(
+                walletId, before, ledgerBalance, after, RebuildStatus.REBUILT, "snapshot restored from the ledger");
     }
 
     @Override

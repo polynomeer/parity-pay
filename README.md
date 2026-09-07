@@ -223,3 +223,18 @@ curl -s -X POST "localhost:8080/api/v1/admin/top-ups/$TOP_UP_ID/resolve" \
   -H 'X-Operator-Id: ops-1' -H 'Content-Type: application/json' \
   -d '{"reason":"고객 문의"}'
 ```
+
+잔액 스냅샷이 원장과 어긋났을 때는 스냅샷을 원장으로 되돌립니다. 원장은 진실이므로 읽기만 합니다.
+
+```bash
+# 1. 차이 확인 (지표로도 보입니다: paritypay_invariant_balance_snapshot_drift)
+curl -s "localhost:8080/api/v1/wallets/$WALLET_ID/ledger-verification" -H "$AUTH"
+
+# 2. 원인을 먼저 조사한 뒤 재구축합니다. 요청자와 다른 OPS_APPROVER의 승인이 필요합니다.
+curl -s -X POST "localhost:8080/api/v1/admin/wallets/$WALLET_ID/balance-rebuild" \
+  -H "Authorization: Bearer $OPS" -H 'X-Approver-Id: ops-approver@paritypay.local' \
+  -H 'Content-Type: application/json' -d '{"reason":"스냅샷 드리프트 복구"}'
+```
+
+쓸 수 있는 값은 원장 계산값 하나뿐이라 이 경로로 없는 돈을 만들 수 없고, 자동으로 돌지 않습니다.
+절차는 [docs/09-consistency-recovery.md](docs/09-consistency-recovery.md) §12에 있습니다.

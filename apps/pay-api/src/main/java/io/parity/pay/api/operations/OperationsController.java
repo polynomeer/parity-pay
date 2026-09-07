@@ -1,7 +1,11 @@
 package io.parity.pay.api.operations;
 
 import io.parity.pay.shared.id.TopUpId;
+import io.parity.pay.shared.id.WalletId;
+import io.parity.pay.shared.security.ApprovalAuthority;
 import io.parity.pay.shared.security.CurrentPrincipal;
+import io.parity.pay.wallet.application.port.in.RebuildBalanceUseCase;
+import io.parity.pay.wallet.application.port.in.RebuildBalanceUseCase.RebuildOutcome;
 import io.parity.pay.wallet.application.port.out.TopUpRecoveryRepository;
 import io.parity.pay.wallet.application.service.TopUpRecoveryService;
 import io.parity.pay.wallet.application.service.TopUpRecoveryService.RecoveryOutcome;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +42,8 @@ class OperationsController {
     private final TopUpRecoveryService recoveryService;
     private final TransactionTimelineService timelineService;
     private final TopUpRecoveryRepository recoveryRepository;
+    private final RebuildBalanceUseCase rebuildBalance;
+    private final ApprovalAuthority approvalAuthority;
     private final AuditLogWriter auditLogWriter;
     private final JdbcTemplate jdbcTemplate;
     private final CurrentPrincipal currentPrincipal;
@@ -45,12 +52,16 @@ class OperationsController {
             TopUpRecoveryService recoveryService,
             TransactionTimelineService timelineService,
             TopUpRecoveryRepository recoveryRepository,
+            RebuildBalanceUseCase rebuildBalance,
+            ApprovalAuthority approvalAuthority,
             AuditLogWriter auditLogWriter,
             JdbcTemplate jdbcTemplate,
             CurrentPrincipal currentPrincipal) {
         this.recoveryService = recoveryService;
         this.timelineService = timelineService;
         this.recoveryRepository = recoveryRepository;
+        this.rebuildBalance = rebuildBalance;
+        this.approvalAuthority = approvalAuthority;
         this.auditLogWriter = auditLogWriter;
         this.jdbcTemplate = jdbcTemplate;
         this.currentPrincipal = currentPrincipal;
@@ -138,6 +149,46 @@ class OperationsController {
                 new RecoveryOutcomeResponse(topUpId, outcome.status(), outcome.changed(), outcome.detail()));
     }
 
+    /**
+     * 잔액 스냅샷을 원장으로 재구축합니다. 근거: INV-010, ADR-008, reports/11 F-010
+     *
+     * <p>고치는 것은 스냅샷 한 줄이고 원장은 읽기만 합니다. 쓸 수 있는 값도 원장 계산값 하나뿐이라
+     * 이 경로로 없는 돈을 만들 수 없습니다.
+     *
+     * <p>그래도 승인자를 요구합니다. 재구축은 어긋난 값을 사라지게 만들어 원인 조사의 증거를
+     * 지웁니다. 무엇을 왜 지웠는지 두 사람이 알고 있어야 하고, 감사 로그에 전후 값이 남습니다.
+     */
+    @PostMapping("/wallets/{walletId}/balance-rebuild")
+    ResponseEntity<BalanceRebuildResponse> rebuildBalance(
+            @RequestHeader("X-Approver-Id") String approvedBy,
+            @PathVariable UUID walletId,
+            @Valid @RequestBody RebuildRequest request) {
+        String operatorId = currentPrincipal.actorId();
+        approvalAuthority.requireDistinctApprover(operatorId, approvedBy);
+
+        RebuildOutcome outcome = rebuildBalance.rebuildFromLedger(WalletId.of(walletId));
+
+        auditLogWriter.record(
+                operatorId,
+                "WALLET_BALANCE_REBUILD",
+                "WALLET",
+                walletId.toString(),
+                request.reason(),
+                "snapshot=" + outcome.snapshotBefore().amount() + " ledger="
+                        + outcome.ledger().amount(),
+                "snapshot=" + outcome.snapshotAfter().amount(),
+                outcome.changed() ? AuditLogWriter.Result.SUCCEEDED : AuditLogWriter.Result.NO_CHANGE,
+                "approvedBy=" + approvedBy + " " + outcome.detail());
+
+        return ResponseEntity.ok(new BalanceRebuildResponse(
+                walletId,
+                outcome.snapshotBefore().amount(),
+                outcome.ledger().amount(),
+                outcome.snapshotAfter().amount(),
+                outcome.status().name(),
+                outcome.detail()));
+    }
+
     private String currentStatus(UUID topUpId) {
         List<String> rows =
                 jdbcTemplate.queryForList("SELECT status FROM top_up WHERE top_up_id = ?", String.class, topUpId);
@@ -145,6 +196,11 @@ class OperationsController {
     }
 
     record ResolveRequest(@NotBlank String reason) {}
+
+    record RebuildRequest(@NotBlank String reason) {}
+
+    record BalanceRebuildResponse(
+            UUID walletId, long snapshotBefore, long ledgerBalance, long snapshotAfter, String status, String detail) {}
 
     record UnresolvedTopUpResponse(
             UUID topUpId,

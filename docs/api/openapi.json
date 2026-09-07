@@ -872,6 +872,33 @@
           "required" : [ "creditAccount", "debitAccount", "reason" ],
           "type" : "object"
         },
+        "BalanceRebuildResponse" : {
+          "properties" : {
+            "detail" : {
+              "type" : "string"
+            },
+            "ledgerBalance" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "snapshotAfter" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "snapshotBefore" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "status" : {
+              "type" : "string"
+            },
+            "walletId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "CalculateRequest" : {
           "properties" : {
             "merchantId" : {
@@ -961,6 +988,16 @@
               "type" : "string"
             }
           },
+          "type" : "object"
+        },
+        "RebuildRequest" : {
+          "properties" : {
+            "reason" : {
+              "minLength" : 1,
+              "type" : "string"
+            }
+          },
+          "required" : [ "reason" ],
           "type" : "object"
         },
         "RecoveryOutcomeResponse" : {
@@ -1632,6 +1669,50 @@
                 "*/*" : {
                   "schema" : {
                     "$ref" : "#/components/schemas/Timeline"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
+      "/api/v1/admin/wallets/{walletId}/balance-rebuild" : {
+        "post" : {
+          "operationId" : "rebuildBalance",
+          "parameters" : [ {
+            "in" : "header",
+            "name" : "X-Approver-Id",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }, {
+            "in" : "path",
+            "name" : "walletId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RebuildRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/BalanceRebuildResponse"
                   }
                 }
               },

@@ -107,6 +107,12 @@ class WalletPersistenceAdapter implements WalletRepository, WalletBalanceReposit
         return balanceJpaRepository.increaseAvailable(walletId.value(), amount.amount(), clock.instant());
     }
 
+    @Override
+    public int restoreAvailable(WalletId walletId, Money available, long expectedVersion) {
+        return balanceJpaRepository.restoreAvailable(
+                walletId.value(), available.amount(), expectedVersion, clock.instant());
+    }
+
     /**
      * 잔액 차감. 두 전략 중 하나로 수행합니다.
      *

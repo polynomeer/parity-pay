@@ -25,6 +25,19 @@ public interface WalletBalanceRepository {
     int increaseAvailable(WalletId walletId, Money amount);
 
     /**
+     * 스냅샷의 가용 잔액을 주어진 값으로 되돌립니다. 재구축 전용입니다.
+     *
+     * <p>증감이 아니라 대입이므로 업무 경로에서 쓰면 안 됩니다. 호출자는 원장에서 계산한 값만
+     * 넘겨야 하며, 그 규칙은 {@code RebuildBalanceUseCase} 구현이 지킵니다.
+     *
+     * <p>{@code expectedVersion}으로 낙관적 잠금을 겁니다. 읽은 뒤 쓰기 전에 정상 업무가 잔액을
+     * 바꿨다면 그 결과를 덮어써서는 안 됩니다.
+     *
+     * @return 갱신된 행 수. 0이면 버전이 달라졌다는 뜻이며 재구축을 다시 시도해야 합니다.
+     */
+    int restoreAvailable(WalletId walletId, Money available, long expectedVersion);
+
+    /**
      * 가용 잔액이 충분할 때만 차감합니다.
      *
      * @return 갱신된 행 수. 0이면 잔액 부족 또는 경합입니다. 근거: INV-003
