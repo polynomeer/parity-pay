@@ -47,6 +47,10 @@ subprojects {
     tasks.withType<Test>().configureEach {
         useJUnitPlatform {
             includeEngines("junit-jupiter", "jqwik", "archunit")
+            // 벤치마크는 오래 걸리고 실행 환경에 민감합니다. 기본 실행에서 빼고 필요할 때만 켭니다.
+            if (!project.hasProperty("includeBenchmarks")) {
+                excludeTags("benchmark")
+            }
         }
         testLogging {
             events("failed")

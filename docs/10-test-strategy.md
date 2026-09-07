@@ -139,20 +139,43 @@ Testcontainers로 실제 PostgreSQL과 Kafka/Redpanda를 실행합니다.
 
 ## 11. CI 품질 게이트
 
-### Pull Request
+파이프라인은 [.github/workflows/ci.yml](../.github/workflows/ci.yml)에 있습니다. 아래 표는
+**지금 실제로 강제되는 것**과 아직 아닌 것을 구분합니다. 계획만 적어두면 통과했다고 착각하게
+됩니다.
 
-- 컴파일, 정적 분석, 단위·통합·계약 테스트
-- Flyway 빈 DB 마이그레이션
-- 원장 불변조건과 권한 테스트
-- OpenAPI·이벤트 스키마 변경 검사
+### Pull Request와 main 푸시에서 강제되는 것
 
-### Main / Release
+| 게이트 | 방법 |
+|---|---|
+| 컴파일과 전체 테스트 | `./gradlew build` (Testcontainers로 실제 PostgreSQL·Redpanda 사용) |
+| 모듈 경계와 계층 규칙 | ArchUnit 12개 규칙 |
+| 원장 불변조건 | DB 제약·트리거 검증 테스트 |
+| 권한과 인증 | 역할별 접근 차단 테스트 |
+| Flyway 빈 DB 마이그레이션 | 통합 테스트가 매번 빈 DB에 적용 |
+| 마이그레이션 체크섬·버전 연속성 | `MigrationTest` (적용된 파일 수정 방지) |
+| 불변조건 트리거 설치 여부 | `MigrationTest` |
+| 문서 링크 | `scripts/check-docs-links.py` |
+| 요구사항 추적 (INV) | `scripts/check-invariant-coverage.py` |
+| 커밋된 비밀값 | gitleaks |
+| 의존성 갱신 | Dependabot (Gradle·Actions·Docker) |
 
-- 전체 E2E와 필수 장애 테스트
-- 이전 버전 DB 업그레이드 테스트
-- 기준 성능 대비 회귀 검사
-- 컨테이너 취약점·비밀값 검사
-- 문서 링크와 요구사항 추적 검사
+### 아직 강제하지 않는 것
+
+| 게이트 | 이유 |
+|---|---|
+| 정적 분석(포매터·린터) | 도구를 도입하지 않았습니다. 전체 코드 포매팅 변경이 따라오므로 별도 작업으로 다룹니다. |
+| OpenAPI 변경 검사 | springdoc 미도입. 명세 생성이 먼저입니다. |
+| 이벤트 스키마 계약 검사 | JSON Schema를 아직 만들지 않았습니다. |
+| 이전 버전 DB 업그레이드 | 릴리스된 버전이 없어 비교 대상이 없습니다. |
+| 성능 회귀 검사 | 기준선을 측정하지 않았습니다. 벤치마크는 주간 실행으로 결과만 남깁니다. |
+| 컨테이너 이미지 취약점 | 이미지를 아직 빌드·배포하지 않습니다. |
+
+### 벤치마크
+
+`BalanceStrategyBenchmarkTest`는 `@Tag("benchmark")`로 기본 실행에서 제외합니다. 여러 라운드를
+돌아 몇 분이 걸리고 결과가 실행 환경에 민감해 PR 게이트로 적합하지 않습니다. 주 1회
+[benchmark 워크플로](../.github/workflows/benchmark.yml)가 실행하고 원본 결과를 아티팩트로
+남깁니다. 로컬에서는 `./gradlew test -PincludeBenchmarks`로 켭니다.
 
 커버리지 100%를 목표로 삼기보다 핵심 금융 분기와 상태 전이를 100% 검증 대상으로 삼습니다. 전체 커버리지 수치는 보조 지표로 공개합니다.
 

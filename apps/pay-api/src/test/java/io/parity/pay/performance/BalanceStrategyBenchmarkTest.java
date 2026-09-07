@@ -33,6 +33,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,8 +47,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * 처리 시간은 부수적으로 얻는 참고값이며, 개발 노트북에서 컨테이너와 함께 측정한 값이므로 운영
  * 성능이 아닙니다. 실행 환경과 함께 reports/11에 기록합니다.
  *
+ * <p>기본 테스트 실행에서는 제외합니다. 여러 라운드를 돌아 몇 분이 걸리고, 결과가 실행 환경에
+ * 민감해 PR 게이트로 쓰기에 적합하지 않습니다. 실행하려면:
+ * {@code ./gradlew test -PincludeBenchmarks --tests "*BalanceStrategyBenchmarkTest"}
+ *
  * <p>근거: ADR-004, docs/10-test-strategy.md §7, docs/11 P-002
  */
+@Tag("benchmark")
 class BalanceStrategyBenchmarkTest extends AbstractIntegrationTest {
 
     private static final int THREADS = 8;

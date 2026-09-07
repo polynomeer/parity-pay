@@ -1,0 +1,31 @@
+# 의존성 취약점 대응입니다. 금융 시스템에서 오래된 의존성은 조용한 위험입니다.
+# 근거: docs/10-test-strategy.md §11 (컨테이너 취약점·비밀값 검사)
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # 스프링 계열은 함께 올려야 버전이 어긋나지 않습니다.
+      spring:
+        patterns:
+          - "org.springframework*"
+          - "io.micrometer*"
+      test:
+        patterns:
+          - "org.testcontainers*"
+          - "org.junit*"
+          - "net.jqwik*"
+          - "com.tngtech.archunit*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
