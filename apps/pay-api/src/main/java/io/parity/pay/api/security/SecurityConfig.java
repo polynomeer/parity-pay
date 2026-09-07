@@ -54,6 +54,13 @@ class SecurityConfig {
                         .permitAll()
                         // 헬스와 지표는 내부 수집 대상입니다. 운영에서는 네트워크로 제한합니다.
                         .requestMatchers("/actuator/health/**", "/actuator/prometheus").permitAll()
+                        // API 문서는 내부 도구입니다. 공개하면 공격자에게 전체 표면을 알려주는
+                        // 것이므로 운영자 권한으로 제한합니다.
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                        .hasAnyRole(
+                                Role.OPS_VIEWER.name(),
+                                Role.OPS_OPERATOR.name(),
+                                Role.OPS_APPROVER.name())
                         .requestMatchers("/actuator/**").hasRole(Role.OPS_VIEWER.name())
                         // 장애 주입은 운영 환경에 존재하면 안 되는 기능입니다. 최소한 운영자로 제한합니다.
                         .requestMatchers("/api/v1/admin/mock-bank/**")

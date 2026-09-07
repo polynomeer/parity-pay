@@ -113,6 +113,19 @@ SPRING_PROFILES_ACTIVE=local ./gradlew :apps:pay-api:bootRun
 
 테스트는 Testcontainers로 PostgreSQL과 Redpanda를 직접 띄우므로 `docker compose` 없이도 실행됩니다.
 
+### API 명세
+
+명세는 손으로 쓰지 않고 구현에서 생성합니다. 저장소의 [docs/api/openapi.json](docs/api/openapi.json)이
+스냅샷이며, API를 바꾸면 `OpenApiSnapshotTest`가 차이를 알려줍니다.
+
+```bash
+# 스냅샷 갱신 (API를 의도적으로 바꿨을 때)
+./gradlew :apps:pay-api:test -PupdateOpenApiSnapshot --tests "*OpenApiSnapshotTest"
+```
+
+실행 중인 서버에서는 Swagger UI로 볼 수 있습니다. 전체 API 표면을 드러내므로 운영자 권한이
+필요합니다: `http://localhost:8080/swagger-ui.html`
+
 ### 관측
 
 `docker compose up -d`에 관측성 스택이 포함되어 있습니다.

@@ -91,6 +91,17 @@ server:
     include-message: never
     include-stacktrace: never
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    # 그룹과 태그 순서를 고정합니다. 순서가 흔들리면 스냅샷 비교가 의미 없는 차이를 냅니다.
+    tags-sorter: alpha
+    operations-sorter: alpha
+  writer-with-order-by-keys: true
+  writer-with-default-pretty-printer: true
+
 management:
   endpoints:
     web:

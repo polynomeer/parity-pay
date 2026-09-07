@@ -156,6 +156,7 @@ Testcontainers로 실제 PostgreSQL과 Kafka/Redpanda를 실행합니다.
 | 불변조건 트리거 설치 여부 | `MigrationTest` |
 | 문서 링크 | `scripts/check-docs-links.py` |
 | 요구사항 추적 (INV) | `scripts/check-invariant-coverage.py` |
+| OpenAPI 명세와 구현 일치 | `OpenApiSnapshotTest` (`docs/api/openapi.json` 스냅샷 비교) |
 | 커밋된 비밀값 | gitleaks |
 | 의존성 갱신 | Dependabot (Gradle·Actions·Docker) |
 
@@ -164,7 +165,6 @@ Testcontainers로 실제 PostgreSQL과 Kafka/Redpanda를 실행합니다.
 | 게이트 | 이유 |
 |---|---|
 | 정적 분석(포매터·린터) | 도구를 도입하지 않았습니다. 전체 코드 포매팅 변경이 따라오므로 별도 작업으로 다룹니다. |
-| OpenAPI 변경 검사 | springdoc 미도입. 명세 생성이 먼저입니다. |
 | 이벤트 스키마 계약 검사 | JSON Schema를 아직 만들지 않았습니다. |
 | 이전 버전 DB 업그레이드 | 릴리스된 버전이 없어 비교 대상이 없습니다. |
 | 성능 회귀 검사 | 기준선을 측정하지 않았습니다. 벤치마크는 주간 실행으로 결과만 남깁니다. |

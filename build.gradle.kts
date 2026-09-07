@@ -52,6 +52,10 @@ subprojects {
                 excludeTags("benchmark")
             }
         }
+        // 스냅샷 갱신 플래그를 테스트 JVM으로 넘깁니다.
+        if (project.hasProperty("updateOpenApiSnapshot")) {
+            systemProperty("updateOpenApiSnapshot", "true")
+        }
         testLogging {
             events("failed")
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL

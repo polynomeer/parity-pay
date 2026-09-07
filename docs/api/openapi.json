@@ -1,0 +1,1651 @@
+{
+  "customer" : {
+    "components" : {
+      "schemas" : {
+        "ApprovePaymentRequest" : {
+          "properties" : {
+            "amount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "merchantId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "method" : {
+              "type" : "string"
+            },
+            "orderId" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "walletId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "required" : [ "currency", "merchantId", "method", "orderId", "walletId" ],
+          "type" : "object"
+        },
+        "BalanceVerificationResponse" : {
+          "properties" : {
+            "ledgerBalance" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "matches" : {
+              "type" : "boolean"
+            },
+            "snapshotBalance" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "walletId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "CancelPaymentRequest" : {
+          "properties" : {
+            "amount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "reason" : {
+              "type" : "string"
+            }
+          },
+          "required" : [ "currency" ],
+          "type" : "object"
+        },
+        "CancellationResponse" : {
+          "properties" : {
+            "cancellationId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "completedAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "completedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "paymentCanceledAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "paymentId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "requestedAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "status" : {
+              "enum" : [ "REQUESTED", "PROCESSING", "COMPLETED", "FAILED", "UNKNOWN" ],
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "LinkBankAccountRequest" : {
+          "properties" : {
+            "accountNumber" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "bankCode" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "initialBalance" : {
+              "format" : "int64",
+              "type" : "integer"
+            }
+          },
+          "required" : [ "accountNumber", "bankCode" ],
+          "type" : "object"
+        },
+        "LinkBankAccountResponse" : {
+          "properties" : {
+            "bankAccountId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "LoginRequest" : {
+          "properties" : {
+            "email" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "password" : {
+              "minLength" : 1,
+              "type" : "string"
+            }
+          },
+          "required" : [ "email", "password" ],
+          "type" : "object"
+        },
+        "OrderConfirmationResponse" : {
+          "properties" : {
+            "confirmedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "newlyConfirmed" : {
+              "type" : "boolean"
+            },
+            "orderId" : {
+              "type" : "string"
+            },
+            "paymentId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "PaymentResponse" : {
+          "properties" : {
+            "approvedAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "approvedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "canceledAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "cancellableAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "orderId" : {
+              "type" : "string"
+            },
+            "paymentId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "requestedAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "status" : {
+              "enum" : [ "READY", "PROCESSING", "APPROVED", "PARTIALLY_CANCELED", "CANCELED", "FAILED", "UNKNOWN" ],
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "RefreshRequest" : {
+          "properties" : {
+            "refreshToken" : {
+              "minLength" : 1,
+              "type" : "string"
+            }
+          },
+          "required" : [ "refreshToken" ],
+          "type" : "object"
+        },
+        "RegisterMemberRequest" : {
+          "properties" : {
+            "email" : {
+              "format" : "email",
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "password" : {
+              "maxLength" : 72,
+              "minLength" : 8,
+              "type" : "string"
+            }
+          },
+          "required" : [ "email", "password" ],
+          "type" : "object"
+        },
+        "RegisterMemberResponse" : {
+          "properties" : {
+            "memberId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "walletId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "TokenResponse" : {
+          "properties" : {
+            "accessToken" : {
+              "type" : "string"
+            },
+            "expiresIn" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "memberId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "refreshToken" : {
+              "type" : "string"
+            },
+            "roles" : {
+              "items" : {
+                "type" : "string"
+              },
+              "type" : "array"
+            },
+            "tokenType" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "TopUpRequest" : {
+          "properties" : {
+            "amount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "bankAccountId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "walletId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "required" : [ "bankAccountId", "currency", "walletId" ],
+          "type" : "object"
+        },
+        "TopUpResponse" : {
+          "properties" : {
+            "completedAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "completedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "requestedAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "requestedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "status" : {
+              "enum" : [ "REQUESTED", "PROCESSING", "SUCCEEDED", "FAILED", "UNKNOWN" ],
+              "type" : "string"
+            },
+            "topUpId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "TransactionPageResponse" : {
+          "properties" : {
+            "nextCursor" : {
+              "type" : "string"
+            },
+            "transactions" : {
+              "items" : {
+                "$ref" : "#/components/schemas/TransactionResponse"
+              },
+              "type" : "array"
+            }
+          },
+          "type" : "object"
+        },
+        "TransactionResponse" : {
+          "properties" : {
+            "amount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "direction" : {
+              "type" : "string"
+            },
+            "occurredAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "referenceId" : {
+              "type" : "string"
+            },
+            "referenceType" : {
+              "type" : "string"
+            },
+            "transactionId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "WalletBalanceResponse" : {
+          "properties" : {
+            "asOf" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "available" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "pending" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "walletId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        }
+      },
+      "securitySchemes" : {
+        "bearerAuth" : {
+          "bearerFormat" : "JWT",
+          "description" : "POST /api/v1/auth/tokens 로 발급받은 액세스 토큰",
+          "scheme" : "bearer",
+          "type" : "http"
+        }
+      }
+    },
+    "info" : {
+      "description" : "플랫폼 내장형 페이머니 결제·원장 백엔드입니다.\n\n금융 쓰기 요청은 `Idempotency-Key` 헤더를 요구합니다. 같은 키와 같은\n본문은 저장된 결과를 돌려주고, 같은 키에 다른 본문은\n`IDEMPOTENCY_KEY_REUSED`로 거절합니다.\n\n외부 결과를 알 수 없는 요청은 실패가 아니라 `202 Accepted`로 응답하고\n조회 위치를 알려줍니다. 타임아웃을 실패로 단정하지 않습니다.\n",
+      "license" : {
+        "name" : "Portfolio project"
+      },
+      "title" : "ParityPay API",
+      "version" : "v1"
+    },
+    "openapi" : "3.1.0",
+    "paths" : {
+      "/api/v1/auth/logout" : {
+        "post" : {
+          "operationId" : "logout",
+          "responses" : {
+            "200" : {
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "auth-controller" ]
+        }
+      },
+      "/api/v1/auth/tokens" : {
+        "post" : {
+          "operationId" : "issue",
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LoginRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/TokenResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "auth-controller" ]
+        }
+      },
+      "/api/v1/auth/tokens/refresh" : {
+        "post" : {
+          "operationId" : "refresh",
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RefreshRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/TokenResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "auth-controller" ]
+        }
+      },
+      "/api/v1/bank-accounts" : {
+        "post" : {
+          "operationId" : "linkBankAccount",
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LinkBankAccountRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/LinkBankAccountResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "onboarding-controller" ]
+        }
+      },
+      "/api/v1/members" : {
+        "post" : {
+          "operationId" : "registerMember",
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RegisterMemberRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/RegisterMemberResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "onboarding-controller" ]
+        }
+      },
+      "/api/v1/payments" : {
+        "post" : {
+          "operationId" : "approve",
+          "parameters" : [ {
+            "in" : "header",
+            "name" : "Idempotency-Key",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApprovePaymentRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/PaymentResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "payment-controller" ]
+        }
+      },
+      "/api/v1/payments/{paymentId}" : {
+        "get" : {
+          "operationId" : "getPayment",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "paymentId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/PaymentResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "payment-controller" ]
+        }
+      },
+      "/api/v1/payments/{paymentId}/cancellations" : {
+        "post" : {
+          "operationId" : "cancel",
+          "parameters" : [ {
+            "in" : "header",
+            "name" : "Idempotency-Key",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }, {
+            "in" : "path",
+            "name" : "paymentId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CancelPaymentRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/CancellationResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "payment-controller" ]
+        }
+      },
+      "/api/v1/payments/{paymentId}/confirmation" : {
+        "post" : {
+          "operationId" : "confirm",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "paymentId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/OrderConfirmationResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "payment-controller" ]
+        }
+      },
+      "/api/v1/top-ups" : {
+        "post" : {
+          "operationId" : "requestTopUp",
+          "parameters" : [ {
+            "in" : "header",
+            "name" : "Idempotency-Key",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopUpRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/TopUpResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "top-up-controller" ]
+        }
+      },
+      "/api/v1/top-ups/{topUpId}" : {
+        "get" : {
+          "operationId" : "getTopUp",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "topUpId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/TopUpResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "top-up-controller" ]
+        }
+      },
+      "/api/v1/wallets/{walletId}" : {
+        "get" : {
+          "operationId" : "getBalance",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "walletId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/WalletBalanceResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "wallet-controller" ]
+        }
+      },
+      "/api/v1/wallets/{walletId}/ledger-verification" : {
+        "get" : {
+          "operationId" : "verify",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "walletId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/BalanceVerificationResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "wallet-controller" ]
+        }
+      },
+      "/api/v1/wallets/{walletId}/transactions" : {
+        "get" : {
+          "operationId" : "getTransactions",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "walletId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          }, {
+            "in" : "query",
+            "name" : "cursor",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          }, {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 20,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/TransactionPageResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "wallet-controller" ]
+        }
+      }
+    },
+    "security" : [ {
+      "bearerAuth" : [ ]
+    } ],
+    "servers" : [ {
+      "description" : "이 명세를 제공한 서버",
+      "url" : "/"
+    } ]
+  },
+  "operations" : {
+    "components" : {
+      "schemas" : {
+        "AdjustmentRequest" : {
+          "properties" : {
+            "amount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "creditAccount" : {
+              "enum" : [ "BANK_DEPOSIT", "PG_RECEIVABLE", "MERCHANT_RECEIVABLE", "USER_PAY_MONEY", "PAYMENT_HOLDING", "MERCHANT_PAYABLE", "POINT_LIABILITY", "UNIDENTIFIED_DEPOSIT", "EQUITY_ADJUSTMENT", "PLATFORM_FEE_REVENUE", "PROVIDER_FEE_EXPENSE", "SETTLEMENT_CLEARING" ],
+              "type" : "string"
+            },
+            "creditOwnerId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "debitAccount" : {
+              "enum" : [ "BANK_DEPOSIT", "PG_RECEIVABLE", "MERCHANT_RECEIVABLE", "USER_PAY_MONEY", "PAYMENT_HOLDING", "MERCHANT_PAYABLE", "POINT_LIABILITY", "UNIDENTIFIED_DEPOSIT", "EQUITY_ADJUSTMENT", "PLATFORM_FEE_REVENUE", "PROVIDER_FEE_EXPENSE", "SETTLEMENT_CLEARING" ],
+              "type" : "string"
+            },
+            "debitOwnerId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "reason" : {
+              "minLength" : 1,
+              "type" : "string"
+            }
+          },
+          "required" : [ "creditAccount", "debitAccount", "reason" ],
+          "type" : "object"
+        },
+        "CalculateRequest" : {
+          "properties" : {
+            "merchantId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "periodEnd" : {
+              "format" : "date",
+              "type" : "string"
+            },
+            "periodStart" : {
+              "format" : "date",
+              "type" : "string"
+            }
+          },
+          "required" : [ "merchantId", "periodEnd", "periodStart" ],
+          "type" : "object"
+        },
+        "HoldRequest" : {
+          "properties" : {
+            "reason" : {
+              "minLength" : 1,
+              "type" : "string"
+            }
+          },
+          "required" : [ "reason" ],
+          "type" : "object"
+        },
+        "MismatchResponse" : {
+          "properties" : {
+            "adjustmentLedgerTransactionId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "amountDifference" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "detail" : {
+              "type" : "string"
+            },
+            "detectedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "externalAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "internalAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "mismatchId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "referenceId" : {
+              "type" : "string"
+            },
+            "referenceType" : {
+              "type" : "string"
+            },
+            "resolutionReason" : {
+              "type" : "string"
+            },
+            "resolutionStatus" : {
+              "type" : "string"
+            },
+            "resolvedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "resolvedBy" : {
+              "type" : "string"
+            },
+            "type" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "MockBankModeRequest" : {
+          "properties" : {
+            "mode" : {
+              "enum" : [ "NORMAL", "EXPLICIT_FAILURE", "TIMEOUT_BEFORE_WITHDRAWAL", "TIMEOUT_AFTER_WITHDRAWAL" ],
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "RecoveryOutcomeResponse" : {
+          "properties" : {
+            "changed" : {
+              "type" : "boolean"
+            },
+            "detail" : {
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            },
+            "topUpId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "ResolveRequest" : {
+          "properties" : {
+            "reason" : {
+              "minLength" : 1,
+              "type" : "string"
+            }
+          },
+          "required" : [ "reason" ],
+          "type" : "object"
+        },
+        "RunResponse" : {
+          "properties" : {
+            "externalCount" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "internalCount" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "mismatchCount" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "runId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "SettlementResponse" : {
+          "properties" : {
+            "adjustmentAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "cancellationAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "externalReferenceId" : {
+              "type" : "string"
+            },
+            "feeAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "grossAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "merchantId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "netAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "paidAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "periodEnd" : {
+              "format" : "date",
+              "type" : "string"
+            },
+            "periodStart" : {
+              "format" : "date",
+              "type" : "string"
+            },
+            "settlementId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "Timeline" : {
+          "properties" : {
+            "entries" : {
+              "items" : {
+                "$ref" : "#/components/schemas/TimelineEntry"
+              },
+              "type" : "array"
+            },
+            "referenceId" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "TimelineEntry" : {
+          "properties" : {
+            "amount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "detail" : {
+              "type" : "string"
+            },
+            "id" : {
+              "type" : "string"
+            },
+            "kind" : {
+              "type" : "string"
+            },
+            "occurredAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "UnresolvedTopUpResponse" : {
+          "properties" : {
+            "attemptCount" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "lastError" : {
+              "type" : "string"
+            },
+            "requestedAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "requestedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "requiresManualReview" : {
+              "type" : "boolean"
+            },
+            "status" : {
+              "type" : "string"
+            },
+            "topUpId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "walletId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        }
+      },
+      "securitySchemes" : {
+        "bearerAuth" : {
+          "bearerFormat" : "JWT",
+          "description" : "POST /api/v1/auth/tokens 로 발급받은 액세스 토큰",
+          "scheme" : "bearer",
+          "type" : "http"
+        }
+      }
+    },
+    "info" : {
+      "description" : "플랫폼 내장형 페이머니 결제·원장 백엔드입니다.\n\n금융 쓰기 요청은 `Idempotency-Key` 헤더를 요구합니다. 같은 키와 같은\n본문은 저장된 결과를 돌려주고, 같은 키에 다른 본문은\n`IDEMPOTENCY_KEY_REUSED`로 거절합니다.\n\n외부 결과를 알 수 없는 요청은 실패가 아니라 `202 Accepted`로 응답하고\n조회 위치를 알려줍니다. 타임아웃을 실패로 단정하지 않습니다.\n",
+      "license" : {
+        "name" : "Portfolio project"
+      },
+      "title" : "ParityPay API",
+      "version" : "v1"
+    },
+    "openapi" : "3.1.0",
+    "paths" : {
+      "/api/v1/admin/mock-bank/mode" : {
+        "post" : {
+          "operationId" : "setMockBankMode",
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MockBankModeRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "onboarding-controller" ]
+        }
+      },
+      "/api/v1/admin/reconciliation/mismatches" : {
+        "get" : {
+          "operationId" : "listOpen",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "type",
+            "required" : false,
+            "schema" : {
+              "enum" : [ "INTERNAL_ONLY", "EXTERNAL_ONLY", "STATUS_MISMATCH", "AMOUNT_MISMATCH", "DUPLICATE", "LEDGER_MISSING" ],
+              "type" : "string"
+            }
+          }, {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 50,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "$ref" : "#/components/schemas/MismatchResponse"
+                    },
+                    "type" : "array"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "reconciliation-controller" ]
+        }
+      },
+      "/api/v1/admin/reconciliation/mismatches/{mismatchId}/adjustments" : {
+        "post" : {
+          "operationId" : "adjust",
+          "parameters" : [ {
+            "in" : "header",
+            "name" : "X-Approver-Id",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }, {
+            "in" : "path",
+            "name" : "mismatchId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdjustmentRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/MismatchResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "reconciliation-controller" ]
+        }
+      },
+      "/api/v1/admin/reconciliation/mismatches/{mismatchId}/resolve" : {
+        "post" : {
+          "operationId" : "resolve_1",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "mismatchId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResolveRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/MismatchResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "reconciliation-controller" ]
+        }
+      },
+      "/api/v1/admin/reconciliation/runs" : {
+        "post" : {
+          "operationId" : "run",
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/RunResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "reconciliation-controller" ]
+        }
+      },
+      "/api/v1/admin/recovery/manual-review" : {
+        "get" : {
+          "operationId" : "listManualReview",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 50,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "additionalProperties" : { },
+                      "type" : "object"
+                    },
+                    "type" : "array"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
+      "/api/v1/admin/settlements" : {
+        "get" : {
+          "operationId" : "listByMerchant",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "merchantId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          }, {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 20,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "$ref" : "#/components/schemas/SettlementResponse"
+                    },
+                    "type" : "array"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "settlement-controller" ]
+        },
+        "post" : {
+          "operationId" : "calculate",
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CalculateRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SettlementResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "settlement-controller" ]
+        }
+      },
+      "/api/v1/admin/settlements/{settlementId}" : {
+        "get" : {
+          "operationId" : "get",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "settlementId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SettlementResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "settlement-controller" ]
+        }
+      },
+      "/api/v1/admin/settlements/{settlementId}/hold" : {
+        "post" : {
+          "operationId" : "hold",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "settlementId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HoldRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SettlementResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "settlement-controller" ]
+        }
+      },
+      "/api/v1/admin/settlements/{settlementId}/payouts" : {
+        "post" : {
+          "operationId" : "pay",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "settlementId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SettlementResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "settlement-controller" ]
+        }
+      },
+      "/api/v1/admin/settlements/{settlementId}/release" : {
+        "post" : {
+          "operationId" : "release",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "settlementId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SettlementResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "settlement-controller" ]
+        }
+      },
+      "/api/v1/admin/top-ups" : {
+        "get" : {
+          "operationId" : "listUnresolved",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "status",
+            "required" : false,
+            "schema" : {
+              "default" : "UNKNOWN",
+              "type" : "string"
+            }
+          }, {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 50,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "$ref" : "#/components/schemas/UnresolvedTopUpResponse"
+                    },
+                    "type" : "array"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
+      "/api/v1/admin/top-ups/{topUpId}/resolve" : {
+        "post" : {
+          "operationId" : "resolve",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "topUpId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResolveRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/RecoveryOutcomeResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
+      "/api/v1/admin/transactions/{referenceId}/timeline" : {
+        "get" : {
+          "operationId" : "timeline",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "referenceId",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/Timeline"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      }
+    },
+    "security" : [ {
+      "bearerAuth" : [ ]
+    } ],
+    "servers" : [ {
+      "description" : "이 명세를 제공한 서버",
+      "url" : "/"
+    } ]
+  }
+}

@@ -160,7 +160,7 @@
 - [x] 비밀값 검사(gitleaks)와 Dependabot
 - [x] 벤치마크를 PR 게이트에서 분리하고 주간 실행으로 이동
 - [ ] 정적 분석 도구 도입 (포매터·린터)
-- [ ] OpenAPI 명세 생성과 변경 검사
+- [x] OpenAPI 명세 생성과 변경 검사 (springdoc, 스냅샷 비교 테스트)
 - [ ] 이벤트 JSON Schema 계약 검사
 
 ## 전 단계에 걸쳐 남은 것
