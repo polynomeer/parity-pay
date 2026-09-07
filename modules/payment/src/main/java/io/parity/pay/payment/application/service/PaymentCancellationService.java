@@ -1,0 +1,204 @@
+package io.parity.pay.payment.application.service;
+
+import io.parity.pay.ledger.application.port.in.LedgerBalanceQuery;
+import io.parity.pay.ledger.application.port.in.PostJournalUseCase;
+import io.parity.pay.ledger.application.port.in.ResolveLedgerAccountUseCase;
+import io.parity.pay.ledger.domain.AccountCode;
+import io.parity.pay.ledger.domain.JournalFactory;
+import io.parity.pay.ledger.domain.LedgerAccount;
+import io.parity.pay.ledger.domain.LedgerTransaction;
+import io.parity.pay.payment.application.event.PaymentEvents;
+import io.parity.pay.payment.application.port.in.CancelPaymentUseCase;
+import io.parity.pay.payment.application.port.out.PaymentCancellationRepository;
+import io.parity.pay.payment.application.port.out.PaymentRepository;
+import io.parity.pay.payment.domain.Payment;
+import io.parity.pay.payment.domain.PaymentCancellation;
+import io.parity.pay.shared.error.BusinessException;
+import io.parity.pay.shared.error.ErrorCode;
+import io.parity.pay.shared.event.OutboxAppender;
+import io.parity.pay.shared.id.CancellationId;
+import io.parity.pay.shared.id.PaymentId;
+import io.parity.pay.shared.idempotency.IdempotencyRecord;
+import io.parity.pay.shared.idempotency.IdempotencyStatus;
+import io.parity.pay.shared.idempotency.IdempotencyStore;
+import io.parity.pay.shared.idempotency.RequestHasher;
+import io.parity.pay.shared.money.Money;
+import io.parity.pay.wallet.application.port.in.WalletFundsUseCase;
+import java.time.Clock;
+import java.util.Optional;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 결제 취소.
+ *
+ * <p>취소는 원결제를 참조하는 독립 Aggregate이며, 원장 원문을 수정하지 않고 상쇄 분개(JE-004)를
+ * 새로 만듭니다. 근거: ADR-009
+ *
+ * <p>동시 취소 초과는 저장소의 조건부 UPDATE로 막습니다. 예약(processing) → 확정(completed)의 두
+ * 단계를 두는 이유는, 외부 취소가 들어오는 Phase 4에서 예약과 확정 사이에 외부 호출이 끼기 때문입니다.
+ * 페이머니 취소는 외부 호출이 없어 두 단계가 같은 트랜잭션 안에서 연달아 일어납니다.
+ */
+@Service
+public class PaymentCancellationService implements CancelPaymentUseCase {
+
+    static final String OPERATION = "PAYMENT_CANCELLATION";
+
+    private final PaymentRepository paymentRepository;
+    private final PaymentCancellationRepository cancellationRepository;
+    private final WalletFundsUseCase walletFunds;
+    private final PostJournalUseCase postJournal;
+    private final ResolveLedgerAccountUseCase resolveLedgerAccount;
+    private final LedgerBalanceQuery ledgerBalanceQuery;
+    private final IdempotencyStore idempotencyStore;
+    private final OutboxAppender outboxAppender;
+    private final Clock clock;
+
+    public PaymentCancellationService(
+            PaymentRepository paymentRepository,
+            PaymentCancellationRepository cancellationRepository,
+            WalletFundsUseCase walletFunds,
+            PostJournalUseCase postJournal,
+            ResolveLedgerAccountUseCase resolveLedgerAccount,
+            LedgerBalanceQuery ledgerBalanceQuery,
+            IdempotencyStore idempotencyStore,
+            OutboxAppender outboxAppender,
+            Clock clock) {
+        this.paymentRepository = paymentRepository;
+        this.cancellationRepository = cancellationRepository;
+        this.walletFunds = walletFunds;
+        this.postJournal = postJournal;
+        this.resolveLedgerAccount = resolveLedgerAccount;
+        this.ledgerBalanceQuery = ledgerBalanceQuery;
+        this.idempotencyStore = idempotencyStore;
+        this.outboxAppender = outboxAppender;
+        this.clock = clock;
+    }
+
+    @Override
+    @Transactional
+    public CancellationView cancel(CancelPaymentCommand command) {
+        String requestHash = canonicalHash(command);
+        IdempotencyRecord record = idempotencyStore.beginOrGet(
+                command.memberId().value(), OPERATION, command.idempotencyKey(), requestHash);
+
+        if (!record.requestHash().equals(requestHash)) {
+            throw new BusinessException(
+                    ErrorCode.IDEMPOTENCY_KEY_REUSED,
+                    "the same Idempotency-Key was used with a different request body");
+        }
+
+        Optional<PaymentCancellation> existing = record.businessReference()
+                .map(CancellationId::of)
+                .flatMap(cancellationRepository::findById);
+        if (existing.isPresent()) {
+            return CancellationView.of(existing.get(), canceledAmountOf(command.paymentId()));
+        }
+
+        Payment payment = loadPayment(command.paymentId());
+        payment.requireOwnedBy(command.memberId());
+        payment.approvedAmount().requireSameCurrency(command.amount());
+
+        // 1. 취소 가능액 예약. 여러 요청이 동시에 와도 합계가 승인액을 넘지 않습니다 (INV-005).
+        if (paymentRepository.reserveCancellation(payment.id(), command.amount()) != 1) {
+            throw cancellationRejected(payment, command.amount());
+        }
+
+        PaymentCancellation cancellation = PaymentCancellation.request(
+                        payment.id(),
+                        command.amount(),
+                        command.reason(),
+                        command.idempotencyKey(),
+                        clock.instant())
+                .begin();
+        cancellationRepository.save(cancellation);
+
+        // 2. 예약을 확정 취소액으로 옮깁니다. 누적액이 승인액과 같아지면 결제는 CANCELED가 됩니다.
+        if (paymentRepository.completeCancellation(payment.id(), command.amount()) != 1) {
+            throw new BusinessException(
+                    ErrorCode.INTERNAL_ERROR, "reserved cancellation amount disappeared");
+        }
+
+        // 3. 사용자에게 금액을 되돌리고 상쇄 분개를 만듭니다.
+        walletFunds.credit(payment.walletId(), command.amount());
+
+        LedgerAccount userPayMoney = resolveLedgerAccount.resolve(
+                AccountCode.USER_PAY_MONEY, payment.walletId().value(), command.amount().currency());
+        LedgerAccount merchantPayable = resolveLedgerAccount.resolve(
+                AccountCode.MERCHANT_PAYABLE, payment.merchantId().value(), command.amount().currency());
+        LedgerAccount merchantReceivable = resolveLedgerAccount.resolve(
+                AccountCode.MERCHANT_RECEIVABLE,
+                payment.merchantId().value(),
+                command.amount().currency());
+
+        // 이미 정산이 지급되어 지급예정금이 남아 있지 않으면 부족분을 판매자 미수금으로 기록합니다.
+        // 계정의 정상 잔액 방향을 어기지 않으면서 회수해야 할 채권을 드러냅니다.
+        // 근거: docs/07-ledger-journal-catalog.md JE-009, docs/04-payment-policy.md §6
+        Money payableBalance = ledgerBalanceQuery.balanceOf(merchantPayable.id());
+        Money fromPayable = payableBalance.isGreaterThanOrEqualTo(command.amount())
+                ? command.amount()
+                : payableBalance;
+        Money fromReceivable = command.amount().minus(fromPayable);
+
+        PaymentCancellation completed = cancellation.complete(clock.instant());
+        LedgerTransaction ledgerTransaction = postJournal.post(JournalFactory.paymentCanceled(
+                completed.id(),
+                merchantPayable.id(),
+                merchantReceivable.id(),
+                userPayMoney.id(),
+                fromPayable,
+                fromReceivable,
+                completed.completedAt()));
+
+        cancellationRepository.save(completed);
+        outboxAppender.append(PaymentEvents.cancellationCompleted(
+                completed, payment.walletId(), payment.merchantId(), ledgerTransaction.id()));
+
+        idempotencyStore.settle(
+                command.memberId().value(),
+                OPERATION,
+                command.idempotencyKey(),
+                IdempotencyStatus.COMPLETED,
+                completed.id().value());
+
+        return CancellationView.of(completed, canceledAmountOf(payment.id()));
+    }
+
+    /**
+     * 예약이 실패한 이유를 구분합니다. 상태 때문인지 금액 때문인지에 따라 사용자가 할 수 있는 행동이
+     * 다릅니다. 근거: docs/04-payment-policy.md §10
+     */
+    private BusinessException cancellationRejected(Payment payment, Money requested) {
+        Payment current = loadPayment(payment.id());
+        if (!current.status().isCancellable()) {
+            return new BusinessException(
+                    ErrorCode.INVALID_STATE_TRANSITION,
+                    "payment cannot be canceled in status " + current.status());
+        }
+        return new BusinessException(
+                ErrorCode.CANCELLATION_AMOUNT_EXCEEDED,
+                "cancellation amount exceeds the remaining cancellable amount");
+    }
+
+    private Payment loadPayment(PaymentId paymentId) {
+        return paymentRepository
+                .findById(paymentId)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
+    }
+
+    private Money canceledAmountOf(PaymentId paymentId) {
+        return loadPayment(paymentId).completedCancellationAmount();
+    }
+
+    private static String canonicalHash(CancelPaymentCommand command) {
+        String canonical = String.join(
+                "|",
+                command.memberId().toString(),
+                command.paymentId().toString(),
+                Long.toString(command.amount().amount()),
+                command.amount().currency().name(),
+                command.reason() == null ? "" : command.reason());
+        return RequestHasher.sha256(canonical);
+    }
+}
