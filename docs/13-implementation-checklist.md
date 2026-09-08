@@ -60,7 +60,9 @@
 - [x] 지수 백오프·jitter와 최대 시도 후 FAILED 전환
 - [x] Outbox 적체 메트릭 (`paritypay.outbox.pending`, `.failed`, `.oldest_pending_age_seconds`)
 - [x] 거래내역 프로젝션과 커서 조회 (FR-008)
-- [ ] consumer lag 대시보드 — spring-kafka가 노출하는 `kafka.consumer.*` 메트릭을 Phase 6 대시보드에서 사용합니다
+- [x] consumer lag 대시보드 (2026-09-08) — `kafka_consumer_fetch_manager_records_lag_max`와 재분배
+      지표를 패널·경보로 붙였습니다. 지표 이름은 실행 중인 앱의 `/actuator/prometheus`에서 확인한
+      것입니다. 소비 적체는 Outbox 적체와 다른 사고입니다
 - [x] 운영자 Outbox 조회·재처리 API (2026-09-08) — `GET /api/v1/admin/outbox-events`,
       `POST .../{eventId}/retry`. 상태만 되돌리고 발행은 발행기가 합니다. 뒤 형제가 이미 나갔으면
       순서가 뒤집힌다는 사실을 응답이 알려 줍니다

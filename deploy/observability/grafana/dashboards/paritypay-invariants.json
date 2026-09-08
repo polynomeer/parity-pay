@@ -98,6 +98,27 @@
           "legendFormat": "p99 {{uri}}"
         }
       ]
+    },
+    {
+      "type": "timeseries",
+      "title": "소비자 적체 (consumer lag / 소비 속도)",
+      "description": "Outbox 적체가 '발행이 밀리는가'라면 이것은 '소비가 밀리는가'입니다. 둘은 다른 사고입니다 \u2014 발행이 멈추면 이벤트가 브로커에 없고, 소비가 멈추면 브로커에는 있는데 프로젝션과 정산이 따라오지 못합니다. records_lag_max는 소비자별 최대 파티션 지연 건수입니다.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "targets": [
+        { "expr": "kafka_consumer_fetch_manager_records_lag_max", "legendFormat": "{{client_id}} lag" },
+        { "expr": "kafka_consumer_fetch_manager_records_consumed_rate", "legendFormat": "{{client_id}} rate" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "소비자 재분배 (rebalance)",
+      "description": "재분배는 같은 이벤트가 두 인스턴스에 걸치는 순간을 만듭니다. 소비자가 멱등하므로 결과가 두 번 생기지는 않지만(M-002), 재분배가 잦으면 소비가 계속 끊긴다는 뜻입니다.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "targets": [
+        { "expr": "kafka_consumer_coordinator_last_rebalance_seconds_ago", "legendFormat": "{{client_id}} 마지막 재분배 이후(s)" },
+        { "expr": "kafka_consumer_coordinator_failed_rebalance_total", "legendFormat": "{{client_id}} 실패한 재분배" },
+        { "expr": "kafka_consumer_coordinator_assigned_partitions", "legendFormat": "{{client_id}} 할당 파티션" }
+      ]
     }
   ]
 }
