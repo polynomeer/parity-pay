@@ -75,6 +75,12 @@ class SecurityConfig {
                         // 식별자를 넣는 자리가 없습니다.
                         .requestMatchers("/api/v1/merchant/**")
                         .hasRole(Role.MERCHANT.name())
+                        // 스냅샷과 원장을 비교하는 진단 조회입니다. 본인 지갑이라도 회원에게는 열지
+                        // 않습니다. INV-010 불일치는 회원이 다룰 수 있는 문제가 아니고, 확인·재구축이
+                        // 모두 운영자 절차이므로 진입점도 같은 권한이어야 합니다.
+                        // 근거: docs/09-consistency-recovery.md §13
+                        .requestMatchers(HttpMethod.GET, "/api/v1/wallets/*/ledger-verification")
+                        .hasAnyRole(Role.OPS_VIEWER.name(), Role.OPS_OPERATOR.name(), Role.OPS_APPROVER.name())
                         .anyRequest()
                         .authenticated())
                 .oauth2ResourceServer(

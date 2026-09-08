@@ -198,7 +198,7 @@ sequenceDiagram
 
 스냅샷과 원장이 어긋났을 때 고치는 것은 **스냅샷**입니다. 원장은 진실이므로 읽기만 합니다.
 
-1. `GET /api/v1/wallets/{walletId}/ledger-verification`으로 차이를 확인합니다. 지표
+1. `GET /api/v1/wallets/{walletId}/ledger-verification`으로 차이를 확인합니다(운영자 권한). 지표
    `paritypay.invariant.balance_snapshot_drift`가 몇 개 지갑에서 벌어졌는지 알려줍니다.
 2. **먼저 원인을 조사합니다.** 재구축은 증상을 지웁니다. 어떤 거래에서 벌어졌는지 타임라인 API로
    확인하기 전에는 실행하지 않습니다.

@@ -191,16 +191,16 @@ curl -s -X POST "localhost:8080/api/v1/payments/$PAYMENT_ID/cancellations" \
   -H "$AUTH" -H 'Idempotency-Key: demo-cancel-0001' -H 'Content-Type: application/json' \
   -d '{"amount":10000,"currency":"KRW","reason":"PARTIAL_RETURN"}'
 
-# 5. 잔액·거래내역·원장 검증
+# 5. 잔액과 거래내역
 curl -s "localhost:8080/api/v1/wallets/$WALLET_ID" -H "$AUTH"
 curl -s "localhost:8080/api/v1/wallets/$WALLET_ID/transactions?limit=10" -H "$AUTH"
-curl -s "localhost:8080/api/v1/wallets/$WALLET_ID/ledger-verification" -H "$AUTH"
 
-# 6. 운영자로 로그인하면 타임라인과 미확정 거래를 볼 수 있습니다.
+# 6. 운영자로 로그인하면 타임라인, 미확정 거래, 원장 검증을 볼 수 있습니다.
 OPS=$(curl -s -X POST localhost:8080/api/v1/auth/tokens \
   -H 'Content-Type: application/json' \
   -d '{"email":"ops-operator@paritypay.local","password":"local-ops-password"}' | jq -r .accessToken)
 curl -s "localhost:8080/api/v1/admin/transactions/$PAYMENT_ID/timeline" -H "Authorization: Bearer $OPS"
+curl -s "localhost:8080/api/v1/wallets/$WALLET_ID/ledger-verification" -H "Authorization: Bearer $OPS"
 ```
 
 외부 승인 후 응답 유실을 재현하고 복구되는 과정을 볼 수 있습니다.
@@ -228,7 +228,7 @@ curl -s -X POST "localhost:8080/api/v1/admin/top-ups/$TOP_UP_ID/resolve" \
 
 ```bash
 # 1. 차이 확인 (지표로도 보입니다: paritypay_invariant_balance_snapshot_drift)
-curl -s "localhost:8080/api/v1/wallets/$WALLET_ID/ledger-verification" -H "$AUTH"
+curl -s "localhost:8080/api/v1/wallets/$WALLET_ID/ledger-verification" -H "Authorization: Bearer $OPS"
 
 # 2. 원인을 먼저 조사한 뒤 재구축합니다. 요청자와 다른 OPS_APPROVER의 승인이 필요합니다.
 curl -s -X POST "localhost:8080/api/v1/admin/wallets/$WALLET_ID/balance-rebuild" \

@@ -233,13 +233,15 @@ class BalanceSnapshotRebuildTest extends AbstractIntegrationTest {
                 Map.class);
     }
 
+    /** 검증 조회는 운영자 권한입니다. 회원 토큰으로는 403입니다. */
     @SuppressWarnings("unchecked")
     private Map<String, Object> verification() {
+        String viewerToken = ApiAuth.login(restTemplate, ApiAuth.OPS_VIEWER, ApiAuth.OPS_PASSWORD);
         return restTemplate
                 .exchange(
                         "/api/v1/wallets/" + walletId + "/ledger-verification",
                         HttpMethod.GET,
-                        new HttpEntity<>(ApiAuth.bearer(accessToken)),
+                        new HttpEntity<>(ApiAuth.bearer(viewerToken)),
                         Map.class)
                 .getBody();
     }

@@ -207,6 +207,30 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("원장 검증 조회는 본인 지갑이라도 회원에게 열려 있지 않다")
+    void ledgerVerificationIsOperatorOnly() {
+        ApiAuth.Session session = ApiAuth.registerAndLogin(restTemplate, "auth-verify@example.com", "password1234");
+
+        // 회원 경로(/api/v1/wallets) 아래에 있고 자기 지갑인데도 막혀야 합니다. 경로만 보고
+        // 권한을 짐작하면 놓치는 자리라, 계약으로 고정합니다.
+        ResponseEntity<Map> asMember = restTemplate.exchange(
+                "/api/v1/wallets/" + session.walletId() + "/ledger-verification",
+                HttpMethod.GET,
+                new HttpEntity<>(ApiAuth.bearer(session.accessToken())),
+                Map.class);
+        assertThat(asMember.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        // 같은 지갑을 운영자는 볼 수 있어야 합니다. 앞의 단언만 있으면 경로 오타로도 통과합니다.
+        String viewerToken = ApiAuth.login(restTemplate, ApiAuth.OPS_VIEWER, ApiAuth.OPS_PASSWORD);
+        ResponseEntity<Map> asOperator = restTemplate.exchange(
+                "/api/v1/wallets/" + session.walletId() + "/ledger-verification",
+                HttpMethod.GET,
+                new HttpEntity<>(ApiAuth.bearer(viewerToken)),
+                Map.class);
+        assertThat(asOperator.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
     @DisplayName("인증된 호출자의 잘못된 경로는 404이며 500으로 부풀리지 않는다")
     void unknownPathReturnsNotFound() {
         ApiAuth.Session session = ApiAuth.registerAndLogin(restTemplate, "auth-404@example.com", "password1234");

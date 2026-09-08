@@ -61,7 +61,9 @@ class WalletController {
 
     /**
      * 스냅샷과 원장 재생값을 비교합니다. 운영자가 INV-010 위반을 확인하는 진입점입니다.
-     * 인증 도입 시 운영자 권한으로 제한합니다.
+     *
+     * <p>회원 경로 아래 있지만 운영자 권한을 요구합니다({@code SecurityConfig}). 본인 지갑이라도
+     * 열지 않는 이유는 불일치를 다루는 절차가 전부 운영자 몫이기 때문입니다.
      */
     @GetMapping("/{walletId}/ledger-verification")
     ResponseEntity<BalanceVerificationResponse> verify(@PathVariable UUID walletId) {
