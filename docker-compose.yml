@@ -56,6 +56,26 @@ services:
       timeout: 3s
       retries: 10
 
+  # 외부 금융기관 대역입니다. 별도 프로세스여야 죽이고·늦추고·끊는 실험을 할 수 있습니다.
+  # 근거: docs/05-technical-design.md §10
+  mock-bank:
+    image: eclipse-temurin:21-jre
+    container_name: paritypay-mock-bank
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MOCK_BANK_DB_URL: jdbc:postgresql://postgres:5432/paritypay
+      MOCK_BANK_DB_USERNAME: paritypay
+      MOCK_BANK_DB_PASSWORD: paritypay
+      MOCK_BANK_PORT: 8090
+    ports:
+      - "${PARITYPAY_MOCK_BANK_PORT:-8090}:8090"
+    volumes:
+      # 먼저 빌드해야 합니다: ./gradlew :apps:mock-bank:bootJar
+      - ./apps/mock-bank/build/libs:/app:ro
+    command: ["java", "-jar", "/app/mock-bank-0.1.0-SNAPSHOT.jar"]
+
   # 관측성 스택입니다. 근거: docs/05-technical-design.md §12, Phase 6
   prometheus:
     image: prom/prometheus:v3.1.0

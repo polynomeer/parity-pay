@@ -105,13 +105,25 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 docker compose up -d
 ./gradlew test
 
+# 외부 은행은 별도 프로세스입니다. 먼저 띄워야 충전·정산 지급이 동작합니다.
+./gradlew :apps:mock-bank:bootJar && docker compose up -d mock-bank
+# (또는 직접: MOCK_BANK_PORT=8090 ./gradlew :apps:mock-bank:bootRun)
+
 # 로컬 실행에는 local 프로필이 필요합니다. 서명 키가 없으면 애플리케이션이 뜨지 않습니다.
 SPRING_PROFILES_ACTIVE=local ./gradlew :apps:pay-api:bootRun
 ```
 
 운영 환경에서는 `PARITYPAY_JWT_SECRET`을 주입하고 `paritypay.security.bootstrap-operators`를 비웁니다.
 
-테스트는 Testcontainers로 PostgreSQL과 Redpanda를 직접 띄우므로 `docker compose` 없이도 실행됩니다.
+테스트는 Testcontainers로 PostgreSQL과 Redpanda를 띄우고, 외부 은행도 별도 Spring 컨텍스트로 실제로
+띄웁니다. 그래서 `docker compose` 없이도 실행되며, 타임아웃은 흉내가 아니라 진짜 읽기 타임아웃입니다.
+
+은행을 죽여 연결 거부를 만들려면:
+
+```bash
+docker compose stop mock-bank    # 충전 요청이 UNKNOWN으로 보존되는지 확인
+docker compose start mock-bank   # 복구 작업이 조회로 확정합니다
+```
 
 ### 코드 스타일
 

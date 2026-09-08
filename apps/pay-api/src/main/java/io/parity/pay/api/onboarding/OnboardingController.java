@@ -66,6 +66,9 @@ class OnboardingController {
     /**
      * 장애 시나리오 주입입니다. 운영 환경에는 존재하면 안 되는 기능이며, 최소한 운영자 권한으로
      * 막아 둡니다.
+     *
+     * <p>기관이 다른 프로세스에 있으므로 이 호출은 기관에게 전달됩니다. 우리 안의 스위치를
+     * 바꾸는 것이 아닙니다.
      */
     @PostMapping("/admin/mock-bank/mode")
     ResponseEntity<Void> setMockBankMode(@RequestBody MockBankModeRequest request) {

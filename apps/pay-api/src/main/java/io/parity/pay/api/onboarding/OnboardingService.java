@@ -1,6 +1,6 @@
 package io.parity.pay.api.onboarding;
 
-import io.parity.pay.api.mockbank.MockBankLedger;
+import io.parity.pay.api.mockbank.MockBankClient;
 import io.parity.pay.ledger.application.port.in.ResolveLedgerAccountUseCase;
 import io.parity.pay.ledger.domain.AccountCode;
 import io.parity.pay.shared.error.BusinessException;
@@ -43,7 +43,7 @@ public class OnboardingService {
     private final WalletRepository walletRepository;
     private final WalletBalanceRepository walletBalanceRepository;
     private final ResolveLedgerAccountUseCase resolveLedgerAccount;
-    private final MockBankLedger mockBankLedger;
+    private final MockBankClient mockBankClient;
     private final OutboxAppender outboxAppender;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
@@ -53,7 +53,7 @@ public class OnboardingService {
             WalletRepository walletRepository,
             WalletBalanceRepository walletBalanceRepository,
             ResolveLedgerAccountUseCase resolveLedgerAccount,
-            MockBankLedger mockBankLedger,
+            MockBankClient mockBankClient,
             OutboxAppender outboxAppender,
             PasswordEncoder passwordEncoder,
             Clock clock) {
@@ -61,7 +61,7 @@ public class OnboardingService {
         this.walletRepository = walletRepository;
         this.walletBalanceRepository = walletBalanceRepository;
         this.resolveLedgerAccount = resolveLedgerAccount;
-        this.mockBankLedger = mockBankLedger;
+        this.mockBankClient = mockBankClient;
         this.outboxAppender = outboxAppender;
         this.passwordEncoder = passwordEncoder;
         this.clock = clock;
@@ -120,7 +120,13 @@ public class OnboardingService {
                 mask(accountNumber),
                 java.sql.Timestamp.from(clock.instant()));
 
-        mockBankLedger.openAccount(bankAccountId, token, initialBalance);
+        // 계좌 개설도 기관 호출입니다. 여기서 실패하면 연결 기록만 남고 기관에는 계좌가 없으므로,
+        // 예외를 그대로 올려 트랜잭션을 되돌립니다. 충전 때 "없는 계좌"로 실패하는 것보다 낫습니다.
+        mockBankClient.openAccount(
+                bankAccountId.value(),
+                token,
+                initialBalance.amount(),
+                initialBalance.currency().name());
         return bankAccountId;
     }
 

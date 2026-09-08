@@ -35,4 +35,7 @@ dependencies {
     testImplementation("org.testcontainers:redpanda")
     testImplementation("org.awaitility:awaitility")
     testImplementation(testFixtures(project(":modules:ledger")))
+    // 통합 테스트는 기관을 진짜로 띄웁니다. 같은 JVM의 별도 Spring 컨텍스트로 뜨고 HTTP로
+    // 호출되므로, 타임아웃과 연결 오류가 실제로 재현됩니다.
+    testImplementation(project(":apps:mock-bank"))
 }

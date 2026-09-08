@@ -19,7 +19,7 @@
 - [x] ledger_account, ledger_transaction, ledger_entry 스키마 (`V2__ledger.sql`)
 - [x] 원장 불변조건의 DB 강제 (`V3__ledger_invariants.sql`: INV-001 지연 제약 트리거, INV-006 append-only 트리거)
 - [x] 원장 전기 서비스와 분개 카탈로그 테스트 — JE-001·역분개까지. JE-003 이후는 Phase 2
-- [x] Mock Bank 계좌·출금 API — 현재는 pay-api 내부 대역이며 프로세스 분리는 Phase 4
+- [x] Mock Bank 계좌·출금 API — 2026-09-08에 `apps/mock-bank` 별도 프로세스로 분리했습니다
 - [x] 충전 유스케이스와 멱등성 (`TopUpService`, `JdbcIdempotencyStore`, 동시 20건 테스트 통과)
 - [x] 원장 재생 잔액과 스냅샷 검증 (`WalletService.verifyAgainstLedger`, INV-010)
 - [x] 충전 UNKNOWN 복구 작업 (Phase 4에서 완료: `TopUpRecoveryService`)
@@ -28,7 +28,8 @@
 
 - ~~인증·인가가 없습니다~~: Phase 7(2026-09-07)에서 해소했습니다. `X-Member-Id` 헤더를 제거했고
   사용자 식별은 서명된 토큰에서만 옵니다.
-- Mock Bank가 같은 프로세스 안에 있어 실제 네트워크 지연·연결 끊김을 주입할 수 없습니다(Phase 4).
+- ~~Mock Bank가 같은 프로세스 안에 있어 실제 네트워크 지연·연결 끊김을 주입할 수 없습니다~~:
+  2026-09-08에 분리했습니다. Mock PG는 아직 같은 프로세스입니다.
 - ~~거래내역 조회(FR-008)와 Outbox(FR-010)는 아직 없습니다~~: 둘 다 Phase 3에서 구현했습니다.
 
 ## Phase 2. 결제와 취소
@@ -79,8 +80,9 @@
       유실은 202와 `UNKNOWN`으로 보존되고, 복구가 조회로 확정합니다(`PaymentRecoveryService`)
 - [x] Cancellation UNKNOWN (2026-09-08) — 외부 PG 환불(JE-014)로 도달 경로가 생겼습니다.
       미확정 환불은 예약을 유지한 채 보존되고 `CancellationRecoveryService`가 조회로 확정합니다
-- [ ] Mock Bank 프로세스 분리 (`apps/mock-bank`) — 현재는 같은 프로세스 대역이라 실제 네트워크
-      지연·연결 끊김을 재현하지 못합니다. 부하·장애 실험을 하는 Phase 6에서 분리합니다.
+- [x] Mock Bank 프로세스 분리 (2026-09-08) — `apps/mock-bank`로 떼어내고 HTTP로 호출합니다.
+      타임아웃이 우리가 던지는 예외가 아니라 실제 읽기 타임아웃이 되었고, 프로세스를 죽여 연결
+      거부도 만들 수 있습니다. 통합 테스트도 기관을 실제로 띄웁니다. Mock PG는 아직 대역입니다
 
 ### 복구 규칙 요약
 
@@ -175,7 +177,8 @@
 
 ## 전 단계에 걸쳐 남은 것
 
-- **Mock Bank 프로세스 분리**: 같은 프로세스 대역이라 실제 네트워크 지연·단절을 재현하지 못합니다.
+- ~~**Mock Bank 프로세스 분리**~~: 완료(2026-09-08). 남은 것은 **Mock PG 분리**와, 기관이 아직 우리
+  데이터베이스를 공유한다는 결합입니다(docs/05 §10).
 - ~~**외부 PG 결제·환불**~~: 승인(JE-013)·환불(JE-014)과 두 복구 작업을 붙였습니다(2026-09-08).
   결제·취소의 `UNKNOWN` 경로와 F-006·F-007이 열렸습니다.
 - ~~**P-004 부하 시나리오**~~: 실행했습니다(2026-09-08). 지속 가능한 부하에서는 배치가 API 지연을

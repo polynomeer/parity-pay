@@ -8,4 +8,5 @@ include(
     "modules:settlement",
     "modules:reconciliation",
     "apps:pay-api",
+    "apps:mock-bank",
 )

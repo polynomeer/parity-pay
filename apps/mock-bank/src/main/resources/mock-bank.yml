@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: mock-bank
+  datasource:
+    # 스키마는 pay-api의 Flyway가 만듭니다. 기관이 우리와 DB를 공유하는 것은 현실과 다르지만,
+    # 이 실험의 목적은 **호출 경계**를 진짜 네트워크로 만드는 것입니다. 대사·타임라인이 아직
+    # 이 표를 직접 읽는다는 사실은 docs/05 §10에 남겨 두었습니다.
+    url: ${MOCK_BANK_DB_URL:jdbc:postgresql://localhost:5432/paritypay}
+    username: ${MOCK_BANK_DB_USERNAME:paritypay}
+    password: ${MOCK_BANK_DB_PASSWORD:paritypay}
+    hikari:
+      pool-name: mock-bank-pool
+      maximum-pool-size: 10
+
+  flyway:
+    # 스키마는 pay-api가 만듭니다. 기관이 우리 마이그레이션을 함께 돌리면 두 앱이 같은 스키마를
+    # 두고 경쟁합니다.
+    enabled: false
+  jpa:
+    # 테스트에서는 두 앱이 클래스패스를 공유합니다. 기관은 JPA를 쓰지 않습니다.
+    open-in-view: false
+
+server:
+  port: ${MOCK_BANK_PORT:8090}
+  error:
+    include-message: never
+
+logging:
+  level:
+    io.parity.mockbank: INFO

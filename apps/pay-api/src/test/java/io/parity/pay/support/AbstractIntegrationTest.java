@@ -1,9 +1,14 @@
 package io.parity.pay.support;
 
 import io.parity.pay.ParityPayApplication;
+import io.parity.pay.api.mockbank.MockBankBehavior;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.redpanda.RedpandaContainer;
 
@@ -34,5 +39,37 @@ public abstract class AbstractIntegrationTest {
     static {
         POSTGRES.start();
         REDPANDA.start();
+    }
+
+    /**
+     * 외부 기관을 띄우고 그 주소를 알려 줍니다.
+     *
+     * <p>기관은 pay-api의 Flyway가 만든 표를 씁니다. 기관이 우리와 DB를 공유하는 것은 현실과
+     * 다르지만, 이 단계의 목적은 호출 경계를 진짜 네트워크로 만드는 것입니다.
+     */
+    @Autowired
+    private MockBankBehavior externalBank;
+
+    /**
+     * 외부 기관의 상태를 되돌립니다.
+     *
+     * <p>기관이 같은 프로세스의 빈이었을 때는 컨텍스트마다 스위치가 따로였습니다. 지금은 **모든
+     * 테스트가 하나의 기관을 공유**하므로, 한 테스트가 켜 둔 장애 모드가 다음 테스트로 넘어갑니다.
+     * 실제 외부 기관도 그렇습니다 — 우리 테스트가 끝났다고 기관이 초기화되지 않습니다.
+     *
+     * <p>하위 클래스의 {@code @BeforeEach}는 이 뒤에 돌므로, 시나리오가 필요로 하는 모드는 그대로
+     * 유지됩니다.
+     */
+    @BeforeEach
+    void resetExternalInstitution() {
+        externalBank.reset();
+    }
+
+    @DynamicPropertySource
+    static void mockBank(DynamicPropertyRegistry registry) {
+        registry.add(
+                "paritypay.mock-bank.base-url",
+                () -> "http://localhost:"
+                        + MockBankProcess.start(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
     }
 }

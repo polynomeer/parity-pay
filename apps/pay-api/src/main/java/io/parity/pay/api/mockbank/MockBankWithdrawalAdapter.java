@@ -10,77 +10,59 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * Mock Bank 출금 어댑터.
+ * 외부 은행 출금 어댑터.
  *
- * <p>현재는 같은 프로세스 안의 대역입니다. 실제 네트워크 지연·연결 끊김을 주입하려면 Phase 4에서
- * {@code apps/mock-bank}로 분리하고 HTTP 클라이언트로 교체합니다.
- * 근거: docs/13-implementation-checklist.md Phase 4
+ * <p>기관은 이제 다른 프로세스에 있고, 이 어댑터는 HTTP로 부릅니다. 응답을 받지 못하면 결과를
+ * 모르는 것이며, 그 판단은 {@link MockBankClient}가 예외 하나로 모아 줍니다. 여기서는 그 예외를
+ * 잡지 않습니다 — 호출하는 서비스가 `UNKNOWN` 보존을 담당합니다. 근거: ADR-007
  */
 @Component
 class MockBankWithdrawalAdapter implements BankWithdrawalPort {
 
-    private final MockBankLedger mockBankLedger;
-    private final MockBankBehavior behavior;
+    private final MockBankClient client;
     private final JdbcTemplate jdbcTemplate;
 
-    MockBankWithdrawalAdapter(MockBankLedger mockBankLedger, MockBankBehavior behavior, JdbcTemplate jdbcTemplate) {
-        this.mockBankLedger = mockBankLedger;
-        this.behavior = behavior;
+    MockBankWithdrawalAdapter(MockBankClient client, JdbcTemplate jdbcTemplate) {
+        this.client = client;
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public BankWithdrawalResult withdraw(BankAccountId bankAccountId, Money amount, TopUpId externalIdempotencyKey) {
-        String accountNumberToken = accountNumberTokenOf(bankAccountId);
-        String externalKey = externalIdempotencyKey.toString();
-
-        return switch (behavior.mode()) {
-            case NORMAL -> toResult(mockBankLedger.withdraw(accountNumberToken, amount, externalKey));
-            case EXPLICIT_FAILURE -> BankWithdrawalResult.failed("MOCK_BANK_DECLINED");
-            case TIMEOUT_BEFORE_WITHDRAWAL ->
-            // 외부는 아무것도 하지 않았지만 내부는 그 사실을 알 수 없습니다.
-            throw new MockBankTimeoutException("mock bank timed out before processing");
-            case TIMEOUT_AFTER_WITHDRAWAL -> {
-                mockBankLedger.withdraw(accountNumberToken, amount, externalKey);
-                // 외부는 출금을 마쳤지만 응답이 유실됩니다(F-006).
-                throw new MockBankTimeoutException("mock bank timed out after processing");
-            }
-        };
+        MockBankClient.TransferResponse response = client.withdraw(
+                externalIdempotencyKey.toString(), accountNumberTokenOf(bankAccountId), amount.amount());
+        return response.succeeded()
+                ? BankWithdrawalResult.succeeded(response.externalReferenceId())
+                : BankWithdrawalResult.failed(response.failureReason());
     }
 
     @Override
     public WithdrawalStatus getStatus(TopUpId externalIdempotencyKey) {
-        if (!behavior.statusQueryAvailable()) {
-            // 조회 API 자체가 응답하지 않습니다. 결과를 "없음"으로 단정하면 안 됩니다.
+        try {
+            return client.withdrawalStatus(externalIdempotencyKey.toString())
+                    .map(status -> "SUCCEEDED".equals(status) ? WithdrawalStatus.SUCCEEDED : WithdrawalStatus.FAILED)
+                    .orElse(WithdrawalStatus.NOT_FOUND);
+        } catch (BankUnknownResultException e) {
+            // 물어보지 못한 것과 "기록이 없다"는 다릅니다. 후자로 취급하면 조회 장애가 곧
+            // "돈이 안 나갔다"는 결론이 됩니다. 근거: docs/09-consistency-recovery.md §7
             return WithdrawalStatus.UNAVAILABLE;
         }
-        return mockBankLedger
-                .findWithdrawalStatus(externalIdempotencyKey.toString())
-                .map(status -> "SUCCEEDED".equals(status) ? WithdrawalStatus.SUCCEEDED : WithdrawalStatus.FAILED)
-                .orElse(WithdrawalStatus.NOT_FOUND);
     }
 
-    private static BankWithdrawalResult toResult(MockBankLedger.WithdrawalOutcome outcome) {
-        return outcome.succeeded()
-                ? BankWithdrawalResult.succeeded(outcome.externalReferenceId())
-                : BankWithdrawalResult.failed(outcome.failureReason());
-    }
-
+    /**
+     * 계좌번호 원문 대신 토큰을 기관에 보냅니다.
+     *
+     * <p>토큰은 우리 DB에 있습니다. 기관이 그것을 자기 계좌와 맞추는 것은 대역의 단순화이며, 실제
+     * 기관이라면 기관이 발급한 식별자를 씁니다.
+     */
     private String accountNumberTokenOf(BankAccountId bankAccountId) {
         try {
             return jdbcTemplate.queryForObject(
-                    "SELECT account_number_token FROM bank_account WHERE bank_account_id = ? AND status = 'ACTIVE'",
+                    "SELECT account_number_token FROM bank_account WHERE bank_account_id = ?",
                     String.class,
                     bankAccountId.value());
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
             throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "bank account not found");
-        }
-    }
-
-    /** 네트워크 타임아웃을 흉내 냅니다. 실패가 아니라 결과 불명확입니다. 근거: ADR-007 */
-    static class MockBankTimeoutException extends RuntimeException {
-        MockBankTimeoutException(String message) {
-            super(message);
         }
     }
 }

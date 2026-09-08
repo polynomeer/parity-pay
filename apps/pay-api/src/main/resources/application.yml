@@ -51,6 +51,13 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 paritypay:
+  # 외부 기관(Mock Bank)은 별도 프로세스입니다. 근거: docs/05-technical-design.md §10
+  mock-bank:
+    base-url: ${PARITYPAY_MOCK_BANK_URL:http://localhost:8090}
+    connect-timeout: 2s
+    # 읽기 타임아웃이 곧 "결과를 모르는 상태"로 가는 시간입니다. 길게 잡으면 그동안 스레드와
+    # 커넥션이 묶이고, 짧게 잡으면 정상 응답도 미확정이 됩니다. 복구가 있으므로 짧게 둡니다.
+    read-timeout: 3s
   events:
     topic: paritypay.events
     consumer-group: paritypay-wallet-projection
@@ -179,6 +186,13 @@ spring:
         format_sql: true
 
 paritypay:
+  # 외부 기관(Mock Bank)은 별도 프로세스입니다. 근거: docs/05-technical-design.md §10
+  mock-bank:
+    base-url: ${PARITYPAY_MOCK_BANK_URL:http://localhost:8090}
+    connect-timeout: 2s
+    # 읽기 타임아웃이 곧 "결과를 모르는 상태"로 가는 시간입니다. 길게 잡으면 그동안 스레드와
+    # 커넥션이 묶이고, 짧게 잡으면 정상 응답도 미확정이 됩니다. 복구가 있으므로 짧게 둡니다.
+    read-timeout: 3s
   events:
     validate-schema: true
   security:
