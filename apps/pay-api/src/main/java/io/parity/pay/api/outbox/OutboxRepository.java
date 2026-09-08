@@ -76,21 +76,42 @@ class OutboxRepository {
     /**
      * 발행 대상을 선점합니다. 호출자의 트랜잭션이 끝날 때까지 잠금이 유지됩니다.
      *
-     * <p>같은 Aggregate의 순서를 지키려면 파티션 키 단위 순서가 필요하지만, 여기서는 발생 순서로
-     * 정렬해 가져오고 브로커 파티션 키로 순서를 보장합니다.
+     * <p>파티션 키마다 <b>가장 앞선 미발행 이벤트 하나만</b> 집어갑니다. 앞선 형제가 아직 PENDING이면
+     * 뒤 이벤트는 후보에서 빠집니다.
+     *
+     * <p>발행기가 한 대일 때는 발생 순서 정렬만으로 충분했습니다. 여러 대가 되면 같은 결제의 승인과
+     * 취소가 서로 다른 발행기의 배치로 나뉘고, 어느 쪽이 먼저 브로커에 닿을지는 경쟁으로 정해집니다.
+     * 실제로 400건 중 18건이 역전됐습니다(M-001). 설계는 이 순서에 의존합니다 — 정산 소비자는
+     * 취소를 받았을 때 그 결제의 판매 항목이 있는지로 처리 방식을 가르므로, 순서가 뒤집히면 판매자에게
+     * 나가는 금액이 달라집니다.
+     *
+     * <p>앞선 형제가 PENDING인 동안은 그 형제를 잡은 발행기가 아직 커밋하지 않았다는 뜻입니다.
+     * 커밋은 브로커 ACK 뒤에 일어나므로, 뒤 이벤트가 후보가 되는 시점에는 앞 이벤트가 이미 브로커에
+     * 들어가 있습니다. 발행기가 몇 대든 한 Aggregate 안의 순서가 유지됩니다.
+     *
+     * <p>대가는 head-of-line 대기입니다. 한 이벤트가 계속 실패하면 같은 Aggregate의 뒤 이벤트가
+     * 함께 멈춥니다. 순서를 지키려면 그래야 하고, 멈춘 사실은 적체 지표로 드러납니다.
+     *
+     * <p>근거: ADR-005, reports/11 M-001, docs/05-technical-design.md §9
      */
     @Transactional(propagation = Propagation.MANDATORY)
     List<OutboxRecord> claimBatch(int batchSize, Instant now) {
         return jdbcTemplate.query(
                 """
-                SELECT event_id, event_type, event_version, aggregate_type, aggregate_id,
-                       partition_key, payload::text AS payload, trace_id, attempt_count, occurred_at
-                  FROM outbox_event
-                 WHERE status = 'PENDING'
-                   AND next_attempt_at <= ?
-                 ORDER BY occurred_at, event_id
+                SELECT o.event_id, o.event_type, o.event_version, o.aggregate_type, o.aggregate_id,
+                       o.partition_key, o.payload::text AS payload, o.trace_id, o.attempt_count, o.occurred_at
+                  FROM outbox_event o
+                 WHERE o.status = 'PENDING'
+                   AND o.next_attempt_at <= ?
+                   AND NOT EXISTS (
+                       SELECT 1
+                         FROM outbox_event earlier
+                        WHERE earlier.partition_key = o.partition_key
+                          AND earlier.status = 'PENDING'
+                          AND (earlier.occurred_at, earlier.event_id) < (o.occurred_at, o.event_id))
+                 ORDER BY o.occurred_at, o.event_id
                  LIMIT ?
-                 FOR UPDATE SKIP LOCKED
+                 FOR UPDATE OF o SKIP LOCKED
                 """,
                 ROW_MAPPER,
                 Timestamp.from(now),

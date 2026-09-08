@@ -325,7 +325,7 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
      * 배치가 모두 처리된 것입니다.
      */
     private void deliverEvents() {
-        outboxPublisher.publishBatch();
+        drainOutbox();
         await().atMost(Duration.ofSeconds(20))
                 .until(() -> outboxPendingCount() == 0L
                         && publishedCount() == consumedCount(SettlementItemConsumer.CONSUMER_NAME));
@@ -411,5 +411,24 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
 
     private List<String> outboxEventTypes() {
         return jdbcTemplate.queryForList("SELECT event_type FROM outbox_event", String.class);
+    }
+
+    /**
+     * Outbox가 빌 때까지 배치를 반복합니다. 발행한 총 건수를 돌려줍니다.
+     *
+     * <p>선점 쿼리는 파티션 키마다 선두 하나만 집어갑니다(순서 보장). 같은 지갑의 이벤트 두 건은
+     * 배치 두 번에 나뉘어 나가므로, 한 번만 호출하면 남는 것이 있습니다. 운영에서 발행기가 하는
+     * 것과 같은 방식으로 비웁니다. 근거: reports/11 M-001
+     */
+    private int drainOutbox() {
+        int published = 0;
+        for (int round = 0; round < 100; round++) {
+            int batch = outboxPublisher.publishBatch();
+            if (batch == 0) {
+                return published;
+            }
+            published += batch;
+        }
+        return published;
     }
 }

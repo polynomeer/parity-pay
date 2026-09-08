@@ -128,7 +128,7 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
         assertThat(outboxCount("PENDING")).isEqualTo(2L);
 
         // 발행기가 없는 동안에도 이벤트는 DB에 남아 있습니다. 이제 발행기를 돌립니다.
-        int published = outboxPublisher.publishBatch();
+        int published = drainOutbox();
 
         assertThat(published).isEqualTo(2);
         assertThat(outboxCount("PENDING")).isZero();
@@ -143,7 +143,7 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("F-004/T-008: 같은 이벤트가 다시 전달되어도 거래내역은 한 줄이다")
     void duplicateDeliveryProducesSingleRow() throws Exception {
         topUp("outbox-topup-00004", 100_000);
-        outboxPublisher.publishBatch();
+        drainOutbox();
         await().atMost(Duration.ofSeconds(20))
                 .untilAsserted(() -> assertThat(projectionCount()).isEqualTo(1L));
 
@@ -168,7 +168,7 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("DoD-06: 소비 이력이 지워져도 업무 유니크 키가 중복을 막는다")
     void businessUniqueKeyIsTheSecondDefence() throws Exception {
         topUp("outbox-topup-00005", 100_000);
-        outboxPublisher.publishBatch();
+        drainOutbox();
         await().atMost(Duration.ofSeconds(20))
                 .untilAsserted(() -> assertThat(projectionCount()).isEqualTo(1L));
 
@@ -195,7 +195,7 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
                 "PARTIAL_RETURN",
                 IdempotencyKey.of("outbox-cancel-00001")));
 
-        outboxPublisher.publishBatch();
+        drainOutbox();
 
         await().atMost(Duration.ofSeconds(20))
                 .untilAsserted(() -> assertThat(projectionCount()).isEqualTo(3L));
@@ -216,7 +216,7 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
         pay("order-page-1", "outbox-payment-00003", 10_000);
         pay("order-page-2", "outbox-payment-00004", 10_000);
         pay("order-page-3", "outbox-payment-00005", 10_000);
-        outboxPublisher.publishBatch();
+        drainOutbox();
         await().atMost(Duration.ofSeconds(20))
                 .untilAsserted(() -> assertThat(projectionCount()).isEqualTo(4L));
 
@@ -306,5 +306,24 @@ class OutboxIntegrationTest extends AbstractIntegrationTest {
         Long count = jdbcTemplate.queryForObject(
                 "SELECT count(*) FROM consumed_event WHERE consumer_name = ?", Long.class, consumerName);
         return count == null ? 0L : count;
+    }
+
+    /**
+     * Outbox가 빌 때까지 배치를 반복합니다. 발행한 총 건수를 돌려줍니다.
+     *
+     * <p>선점 쿼리는 파티션 키마다 선두 하나만 집어갑니다(순서 보장). 같은 지갑의 이벤트 두 건은
+     * 배치 두 번에 나뉘어 나가므로, 한 번만 호출하면 남는 것이 있습니다. 운영에서 발행기가 하는
+     * 것과 같은 방식으로 비웁니다. 근거: reports/11 M-001
+     */
+    private int drainOutbox() {
+        int published = 0;
+        for (int round = 0; round < 100; round++) {
+            int batch = outboxPublisher.publishBatch();
+            if (batch == 0) {
+                return published;
+            }
+            published += batch;
+        }
+        return published;
     }
 }

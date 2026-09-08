@@ -32,7 +32,11 @@ public abstract class AbstractIntegrationTest {
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17-alpine")
             .withDatabaseName("paritypay")
             .withUsername("paritypay")
-            .withPassword("paritypay");
+            .withPassword("paritypay")
+            // 테스트 컨텍스트마다 커넥션 풀이 따로 생기고, 컨텍스트는 캐시되어 닫히지 않습니다.
+            // 기본 상한 100은 컨텍스트가 늘면 "too many clients already"로 터집니다. 애플리케이션
+            // 설정이 아니라 시험 환경의 한계이므로 컨테이너 쪽에서 올립니다.
+            .withCommand("postgres", "-c", "max_connections=400");
 
     @ServiceConnection
     static final RedpandaContainer REDPANDA = new RedpandaContainer("redpandadata/redpanda:v24.3.6");
