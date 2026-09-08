@@ -12,6 +12,7 @@ import io.parity.pay.shared.id.PaymentId;
 import io.parity.pay.shared.id.SettlementId;
 import io.parity.pay.shared.money.CurrencyCode;
 import io.parity.pay.shared.money.Money;
+import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Instant;
@@ -186,21 +187,37 @@ class SettlementPersistenceAdapter implements SettlementRepository, SettlementIt
                 settlementId.value());
     }
 
+    /**
+     * 항목을 회차에 묶습니다.
+     *
+     * <p>한 문장으로 묶습니다. 항목마다 UPDATE를 보내면 회차 하나에 최대 1,000번의 왕복이 생기고,
+     * 그 시간 동안 트랜잭션이 열린 채 커넥션을 붙잡습니다. P-004에서 정산 계산 한 건이 16초
+     * 걸렸고 그동안 API가 커넥션 풀을 기다리다 실패했습니다.
+     *
+     * <p>조건({@code status = 'ELIGIBLE'})은 그대로입니다. 다른 배치가 이미 가져간 항목이 있으면
+     * 갱신된 행 수가 모자라고, 그러면 이 회차 전체를 되돌립니다. 같은 금액이 두 회차에 들어가는
+     * 것보다 회차를 다시 계산하는 편이 낫습니다. 근거: INV-008, reports/11 P-004
+     */
     @Override
     public void assignToSettlement(List<SettlementItem> items, SettlementId settlementId) {
-        for (SettlementItem item : items) {
-            int updated = jdbcTemplate.update(
+        if (items.isEmpty()) {
+            return;
+        }
+        UUID[] itemIds = items.stream().map(SettlementItem::itemId).toArray(UUID[]::new);
+        int updated = jdbcTemplate.update(connection -> {
+            PreparedStatement statement = connection.prepareStatement(
                     """
                     UPDATE settlement_item
                        SET settlement_id = ?, status = 'SETTLED'
-                     WHERE item_id = ? AND status = 'ELIGIBLE'
-                    """,
-                    settlementId.value(),
-                    item.itemId());
-            if (updated != 1) {
-                // 다른 회차가 이미 가져간 항목입니다. 같은 금액이 두 정산에 들어가면 안 됩니다.
-                throw new IllegalStateException("settlement item " + item.itemId() + " was already assigned");
-            }
+                     WHERE item_id = ANY (?) AND status = 'ELIGIBLE'
+                    """);
+            statement.setObject(1, settlementId.value());
+            statement.setArray(2, connection.createArrayOf("uuid", itemIds));
+            return statement;
+        });
+        if (updated != items.size()) {
+            throw new IllegalStateException("expected to assign " + items.size() + " settlement items but updated "
+                    + updated + "; some were already assigned");
         }
     }
 }
