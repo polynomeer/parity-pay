@@ -95,6 +95,7 @@ UNIQUE (member_id, idempotency_key)
 | consumed_event | 소비 중복 방지 | UNIQUE(consumer_name, event_id) |
 | external_request | 외부 요청·응답·조회 기록 | external id index |
 | merchant | 판매자와 계정 주인 | UNIQUE(owner_member_id) |
+| mock_pg_approval | Mock PG의 승인 기록(외부기관 대역) | UNIQUE(external_key) |
 | password_reset_token | 재설정 토큰(해시) | UNIQUE(token_hash), 미사용 토큰 부분 index |
 | audit_log | 운영자 작업 감사 | append-only |
 | reconciliation_run | 대사 실행 단위 | 날짜·기관·유형 index |
@@ -167,6 +168,14 @@ Header: `Idempotency-Key: <unique-key>`
   "approvedAt": "2026-09-03T00:00:01Z"
 }
 ```
+
+외부 PG 결제(`method: "EXTERNAL_PG"`)는 결과가 불명확할 수 있습니다. 그때는 `202 Accepted`와
+`Location` 헤더로 조회 위치를 주고, 본문의 `status`는 `UNKNOWN`입니다. 실패가 아니므로 클라이언트는
+재시도하지 않고 조회합니다. 승인·거절이 확정되면 `201`입니다.
+
+`payment` 행에는 외부 승인 참조(`external_reference_id`)와 거절 사유(`failure_reason`)가 남습니다.
+승인 참조는 유니크합니다 — 같은 외부 승인을 두 결제가 참조하면 이중 청구를 우리 쪽에서 알아볼 수
+없습니다.
 
 ### GET /api/v1/payments/{paymentId}
 

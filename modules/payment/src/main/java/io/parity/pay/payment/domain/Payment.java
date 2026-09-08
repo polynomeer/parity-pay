@@ -36,6 +36,10 @@ public record Payment(
         PaymentMethod method,
         PaymentStatus status,
         IdempotencyKey idempotencyKey,
+        /** 외부 PG가 준 승인 참조입니다. 페이머니 결제는 외부 호출이 없어 null입니다. */
+        String externalReferenceId,
+        /** 외부가 거절한 이유입니다. 사용자에게 그대로 보여 주지 않습니다. */
+        String failureReason,
         Instant createdAt,
         Instant approvedAt,
         Instant updatedAt) {
@@ -91,6 +95,8 @@ public record Payment(
                 method,
                 PaymentStatus.READY,
                 idempotencyKey,
+                null,
+                null,
                 now,
                 null,
                 now);
@@ -105,6 +111,48 @@ public record Payment(
     public Payment approve(Instant now) {
         requireTransitionTo(PaymentStatus.APPROVED);
         return withStatus(PaymentStatus.APPROVED, requestedAmount, now, now);
+    }
+
+    /**
+     * 외부 PG가 승인했습니다.
+     *
+     * <p>외부 참조를 함께 기록합니다. 이 값이 없으면 나중에 무엇을 조회해 대사할지 알 수 없습니다.
+     * 근거: docs/09-consistency-recovery.md §7
+     */
+    public Payment approveExternally(String externalReferenceId, Instant now) {
+        requireTransitionTo(PaymentStatus.APPROVED);
+        if (externalReferenceId == null || externalReferenceId.isBlank()) {
+            throw new BusinessException(
+                    ErrorCode.INTERNAL_ERROR, "an externally approved payment must carry the provider reference");
+        }
+        return withExternal(PaymentStatus.APPROVED, requestedAmount, externalReferenceId, null, now, now);
+    }
+
+    /** 외부가 명시적으로 거절했습니다. 결과를 아는 실패이므로 UNKNOWN이 아닙니다. */
+    public Payment declineExternally(String failureReason, Instant now) {
+        requireTransitionTo(PaymentStatus.FAILED);
+        return withExternal(
+                PaymentStatus.FAILED,
+                Money.zero(requestedAmount.currency()),
+                externalReferenceId,
+                failureReason,
+                approvedAt,
+                now);
+    }
+
+    /**
+     * 외부 결과를 모릅니다.
+     *
+     * <p>타임아웃을 실패로 단정하지 않습니다. 돈이 움직였을 수도 있으므로 상태를 보존하고 조회로
+     * 확정합니다. 근거: ADR-007, CLAUDE.md §3
+     */
+    public Payment markUnknown(String externalReferenceId, Instant now) {
+        requireTransitionTo(PaymentStatus.UNKNOWN);
+        return withExternal(PaymentStatus.UNKNOWN, approvedAmount, externalReferenceId, failureReason, approvedAt, now);
+    }
+
+    public boolean isUnknown() {
+        return status == PaymentStatus.UNKNOWN;
     }
 
     public Payment fail(Instant now) {
@@ -134,6 +182,8 @@ public record Payment(
                 method,
                 status,
                 idempotencyKey,
+                externalReferenceId,
+                failureReason,
                 createdAt,
                 approvedAt,
                 now);
@@ -162,6 +212,8 @@ public record Payment(
                 method,
                 next,
                 idempotencyKey,
+                externalReferenceId,
+                failureReason,
                 createdAt,
                 approvedAt,
                 now);
@@ -182,6 +234,8 @@ public record Payment(
                 method,
                 status,
                 idempotencyKey,
+                externalReferenceId,
+                failureReason,
                 createdAt,
                 approvedAt,
                 now);
@@ -220,6 +274,16 @@ public record Payment(
     }
 
     private Payment withStatus(PaymentStatus next, Money approved, Instant approvedAt, Instant updatedAt) {
+        return withExternal(next, approved, externalReferenceId, failureReason, approvedAt, updatedAt);
+    }
+
+    private Payment withExternal(
+            PaymentStatus next,
+            Money approved,
+            String externalReferenceId,
+            String failureReason,
+            Instant approvedAt,
+            Instant updatedAt) {
         return new Payment(
                 id,
                 orderId,
@@ -233,6 +297,8 @@ public record Payment(
                 method,
                 next,
                 idempotencyKey,
+                externalReferenceId,
+                failureReason,
                 createdAt,
                 approvedAt,
                 updatedAt);

@@ -54,6 +54,12 @@ class PaymentJpaEntity {
     @Column(name = "idempotency_key", nullable = false, length = 100, updatable = false)
     private String idempotencyKey;
 
+    @Column(name = "external_reference_id", length = 100)
+    private String externalReferenceId;
+
+    @Column(name = "failure_reason", length = 200)
+    private String failureReason;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -82,6 +88,8 @@ class PaymentJpaEntity {
             String method,
             String status,
             String idempotencyKey,
+            String externalReferenceId,
+            String failureReason,
             Instant createdAt,
             Instant approvedAt,
             Instant updatedAt) {
@@ -98,6 +106,8 @@ class PaymentJpaEntity {
         this.method = method;
         this.status = status;
         this.idempotencyKey = idempotencyKey;
+        this.externalReferenceId = externalReferenceId;
+        this.failureReason = failureReason;
         this.createdAt = createdAt;
         this.approvedAt = approvedAt;
         this.updatedAt = updatedAt;
@@ -109,6 +119,29 @@ class PaymentJpaEntity {
         this.approvedAmount = approvedAmount;
         this.approvedAt = approvedAt;
         this.updatedAt = updatedAt;
+    }
+
+    /** 외부 결과를 함께 반영합니다. 외부 참조는 한 번 받으면 지우지 않습니다. */
+    void applyExternalStatus(
+            String status,
+            long approvedAmount,
+            String externalReferenceId,
+            String failureReason,
+            Instant approvedAt,
+            Instant updatedAt) {
+        applyStatus(status, approvedAmount, approvedAt, updatedAt);
+        if (externalReferenceId != null) {
+            this.externalReferenceId = externalReferenceId;
+        }
+        this.failureReason = failureReason;
+    }
+
+    String externalReferenceId() {
+        return externalReferenceId;
+    }
+
+    String failureReason() {
+        return failureReason;
     }
 
     UUID paymentId() {

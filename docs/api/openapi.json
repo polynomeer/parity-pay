@@ -1254,6 +1254,18 @@
           },
           "type" : "object"
         },
+        "MockPgModeRequest" : {
+          "properties" : {
+            "mode" : {
+              "enum" : [ "NORMAL", "EXPLICIT_DECLINE", "TIMEOUT_BEFORE_APPROVAL", "TIMEOUT_AFTER_APPROVAL" ],
+              "type" : "string"
+            },
+            "statusQueryAvailable" : {
+              "type" : "boolean"
+            }
+          },
+          "type" : "object"
+        },
         "RebuildRequest" : {
           "properties" : {
             "reason" : {
@@ -1521,6 +1533,27 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/MockBankModeRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "onboarding-controller" ]
+        }
+      },
+      "/api/v1/admin/mock-pg/mode" : {
+        "post" : {
+          "operationId" : "setMockPgMode",
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MockPgModeRequest"
                 }
               }
             },

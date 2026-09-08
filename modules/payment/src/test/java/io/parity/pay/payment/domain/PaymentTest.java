@@ -118,6 +118,8 @@ class PaymentTest {
                         approved.method(),
                         PaymentStatus.PARTIALLY_CANCELED,
                         approved.idempotencyKey(),
+                        approved.externalReferenceId(),
+                        approved.failureReason(),
                         approved.createdAt(),
                         approved.approvedAt(),
                         NOW))

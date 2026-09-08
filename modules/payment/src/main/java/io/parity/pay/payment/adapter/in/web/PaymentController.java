@@ -23,6 +23,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.net.URI;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -71,6 +72,13 @@ class PaymentController {
                 Money.of(request.amount(), CurrencyCode.valueOf(request.currency())),
                 PaymentMethod.valueOf(request.method()),
                 IdempotencyKey.of(idempotencyKey)));
+        // 결과를 모르는 결제는 실패가 아닙니다. 202와 조회 위치를 주고 복구에 맡깁니다.
+        // 여기서 4xx·5xx를 주면 클라이언트가 재시도해 이중 청구를 만듭니다. 근거: ADR-007
+        if (view.status() == PaymentStatus.UNKNOWN) {
+            return ResponseEntity.accepted()
+                    .location(URI.create("/api/v1/payments/" + view.paymentId().value()))
+                    .body(PaymentResponse.from(view));
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(PaymentResponse.from(view));
     }
 

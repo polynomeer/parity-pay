@@ -70,14 +70,18 @@ class PaymentPersistenceAdapter implements PaymentRepository, PaymentCancellatio
                     payment.method().name(),
                     payment.status().name(),
                     payment.idempotencyKey().value(),
+                    payment.externalReferenceId(),
+                    payment.failureReason(),
                     payment.createdAt(),
                     payment.approvedAt(),
                     payment.updatedAt()));
         } else {
             // 취소 금액은 조건부 UPDATE만 변경합니다. 여기서는 상태·승인액만 반영합니다.
-            existing.applyStatus(
+            existing.applyExternalStatus(
                     payment.status().name(),
                     payment.approvedAmount().amount(),
+                    payment.externalReferenceId(),
+                    payment.failureReason(),
                     payment.approvedAt(),
                     payment.updatedAt());
         }
@@ -146,6 +150,8 @@ class PaymentPersistenceAdapter implements PaymentRepository, PaymentCancellatio
                 PaymentMethod.valueOf(entity.method()),
                 PaymentStatus.valueOf(entity.status()),
                 IdempotencyKey.of(entity.idempotencyKey()),
+                entity.externalReferenceId(),
+                entity.failureReason(),
                 entity.createdAt(),
                 entity.approvedAt(),
                 entity.updatedAt());

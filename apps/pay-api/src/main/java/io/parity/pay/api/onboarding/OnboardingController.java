@@ -1,6 +1,7 @@
 package io.parity.pay.api.onboarding;
 
 import io.parity.pay.api.mockbank.MockBankBehavior;
+import io.parity.pay.api.mockpg.MockPgBehavior;
 import io.parity.pay.shared.id.BankAccountId;
 import io.parity.pay.shared.money.Money;
 import io.parity.pay.shared.security.CurrentPrincipal;
@@ -28,12 +29,17 @@ class OnboardingController {
 
     private final OnboardingService onboardingService;
     private final MockBankBehavior mockBankBehavior;
+    private final MockPgBehavior mockPgBehavior;
     private final CurrentPrincipal currentPrincipal;
 
     OnboardingController(
-            OnboardingService onboardingService, MockBankBehavior mockBankBehavior, CurrentPrincipal currentPrincipal) {
+            OnboardingService onboardingService,
+            MockBankBehavior mockBankBehavior,
+            MockPgBehavior mockPgBehavior,
+            CurrentPrincipal currentPrincipal) {
         this.onboardingService = onboardingService;
         this.mockBankBehavior = mockBankBehavior;
+        this.mockPgBehavior = mockPgBehavior;
         this.currentPrincipal = currentPrincipal;
     }
 
@@ -67,6 +73,16 @@ class OnboardingController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Mock PG의 장애 주입입니다. Mock Bank와 같은 이유로 운영자 권한 아래 둡니다. */
+    @PostMapping("/admin/mock-pg/mode")
+    ResponseEntity<Void> setMockPgMode(@RequestBody MockPgModeRequest request) {
+        mockPgBehavior.setMode(request.mode());
+        if (request.statusQueryAvailable() != null) {
+            mockPgBehavior.setStatusQueryAvailable(request.statusQueryAvailable());
+        }
+        return ResponseEntity.noContent().build();
+    }
+
     record RegisterMemberRequest(@Email @NotBlank String email, @NotBlank @Size(min = 8, max = 72) String password) {}
 
     record RegisterMemberResponse(UUID memberId, UUID walletId) {}
@@ -80,4 +96,6 @@ class OnboardingController {
     record LinkBankAccountResponse(UUID bankAccountId) {}
 
     record MockBankModeRequest(MockBankBehavior.Mode mode) {}
+
+    record MockPgModeRequest(MockPgBehavior.Mode mode, Boolean statusQueryAvailable) {}
 }

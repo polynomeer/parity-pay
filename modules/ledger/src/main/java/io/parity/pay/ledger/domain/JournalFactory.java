@@ -70,6 +70,31 @@ public final class JournalFactory {
     }
 
     /**
+     * JE-013 외부 PG 결제 승인.
+     *
+     * <p>페이머니 결제(JE-003)와 다릅니다. 돈이 지갑에서 나가지 않으므로 사용자 부채는 그대로이고,
+     * PG에게 받을 돈(자산)이 늘면서 판매자에게 줄 의무(부채)가 생깁니다.
+     *
+     * <p>근거: docs/07-ledger-journal-catalog.md JE-013
+     */
+    public static Journal pgPaymentApproved(
+            PaymentId paymentId,
+            LedgerAccountId pgReceivableAccountId,
+            LedgerAccountId merchantPayableAccountId,
+            Money amount,
+            Instant effectiveAt) {
+        return new Journal(
+                ReferenceType.PAYMENT,
+                paymentId.value(),
+                TransactionType.PAYMENT_APPROVED,
+                amount.currency(),
+                effectiveAt,
+                List.of(
+                        JournalLine.debit(pgReceivableAccountId, amount),
+                        JournalLine.credit(merchantPayableAccountId, amount)));
+    }
+
+    /**
      * JE-004 결제 취소 + JE-009 정산 후 환불.
      *
      * <p>취소 시점에 판매자 지급예정금이 남아 있으면 거기에서 차감합니다. 이미 정산이 지급되어
