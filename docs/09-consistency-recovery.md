@@ -138,7 +138,7 @@ sequenceDiagram
 | 작업 | 대상 | 주기 | 종료 조건 |
 |---|---|---|---|
 | UnknownPaymentResolver | 오래된 Payment UNKNOWN·PROCESSING (외부 PG) | 짧은 주기 | APPROVED/FAILED 또는 수동 검토 |
-| UnknownCancellationResolver | Cancellation UNKNOWN | 짧은 주기 | COMPLETED/FAILED 또는 수동 검토 |
+| UnknownCancellationResolver | Cancellation UNKNOWN·PROCESSING (외부 PG 환불) | 짧은 주기 | COMPLETED/FAILED 또는 수동 검토 |
 | OutboxPublisher | PENDING/재시도 가능 Outbox | 연속 또는 짧은 폴링 | PUBLISHED/FAILED |
 | StaleIdempotencyResolver | 오래된 PROCESSING | 중간 주기 | 업무 결과 기반 확정 |
 | BalanceVerifier | 원장·스냅샷 차이 | 일별·수동 | 일치 또는 불일치 티켓 |
@@ -158,6 +158,9 @@ POST /api/v1/admin/payments/{paymentId}/resolve  즉시 재조회 (사유 필수
 ```
 
 재조회는 **조회만** 합니다. 외부에 승인을 다시 보내지 않으므로 이중 청구 위험이 없습니다.
+
+환불도 같습니다(`CancellationRecoveryService`). 환불 재요청은 이중 환불이 되므로 조회로만
+확정하고, 결과를 모르는 동안에는 예약한 취소 금액을 풀지 않습니다.
 
 ## 9. 장애 시나리오와 기대 결과
 

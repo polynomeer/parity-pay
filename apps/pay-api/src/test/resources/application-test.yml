@@ -34,6 +34,14 @@ paritypay:
     recovery-max-attempts: 3
     recovery-not-found-confirm-threshold: 2
   recovery:
+    cancellation:
+      enabled: false
+      grace: 0s
+      lease: 5s
+      base-backoff: 1ms
+      max-backoff: 10ms
+      max-attempts: 3
+      not-found-confirm-threshold: 2
     payment:
       # 배경 스케줄러가 돌면 UNKNOWN 상태를 관찰할 수 없습니다. 테스트가 직접 호출합니다.
       enabled: false

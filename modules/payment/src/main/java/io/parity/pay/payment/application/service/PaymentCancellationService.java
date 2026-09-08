@@ -11,6 +11,8 @@ import io.parity.pay.payment.application.event.PaymentEvents;
 import io.parity.pay.payment.application.port.in.CancelPaymentUseCase;
 import io.parity.pay.payment.application.port.out.PaymentCancellationRepository;
 import io.parity.pay.payment.application.port.out.PaymentRepository;
+import io.parity.pay.payment.application.port.out.PgRefundPort;
+import io.parity.pay.payment.application.port.out.PgRefundPort.PgRefundResult;
 import io.parity.pay.payment.domain.Payment;
 import io.parity.pay.payment.domain.PaymentCancellation;
 import io.parity.pay.shared.error.BusinessException;
@@ -26,6 +28,8 @@ import io.parity.pay.shared.money.Money;
 import io.parity.pay.wallet.application.port.in.WalletFundsUseCase;
 import java.time.Clock;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,7 +49,11 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
     static final String OPERATION = "PAYMENT_CANCELLATION";
 
     private final PaymentRepository paymentRepository;
+    private static final Logger log = LoggerFactory.getLogger(PaymentCancellationService.class);
+
     private final PaymentCancellationRepository cancellationRepository;
+    private final CancellationTransactions cancellationTransactions;
+    private final PgRefundPort pgRefundPort;
     private final WalletFundsUseCase walletFunds;
     private final PostJournalUseCase postJournal;
     private final ResolveLedgerAccountUseCase resolveLedgerAccount;
@@ -57,6 +65,8 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
     public PaymentCancellationService(
             PaymentRepository paymentRepository,
             PaymentCancellationRepository cancellationRepository,
+            CancellationTransactions cancellationTransactions,
+            PgRefundPort pgRefundPort,
             WalletFundsUseCase walletFunds,
             PostJournalUseCase postJournal,
             ResolveLedgerAccountUseCase resolveLedgerAccount,
@@ -66,6 +76,8 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
             Clock clock) {
         this.paymentRepository = paymentRepository;
         this.cancellationRepository = cancellationRepository;
+        this.cancellationTransactions = cancellationTransactions;
+        this.pgRefundPort = pgRefundPort;
         this.walletFunds = walletFunds;
         this.postJournal = postJournal;
         this.resolveLedgerAccount = resolveLedgerAccount;
@@ -97,6 +109,12 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
         Payment payment = loadPayment(command.paymentId());
         payment.requireOwnedBy(command.memberId());
         payment.approvedAmount().requireSameCurrency(command.amount());
+
+        // 환불은 결제한 곳으로 돌아갑니다. 카드로 받았으면 카드로 돌려주므로 아래 페이머니
+        // 역분개 경로를 쓰면 안 됩니다. 근거: docs/04-payment-policy.md §6, JE-014
+        if (payment.method().callsExternalProvider()) {
+            return refundThroughProvider(command, payment);
+        }
 
         // 1. 취소 가능액 예약. 여러 요청이 동시에 와도 합계가 승인액을 넘지 않습니다 (INV-005).
         if (paymentRepository.reserveCancellation(payment.id(), command.amount()) != 1) {
@@ -158,6 +176,35 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
                 completed.id().value());
 
         return CancellationView.of(completed, canceledAmountOf(payment.id()));
+    }
+
+    /**
+     * 외부 PG 환불.
+     *
+     * <p>예약을 먼저 커밋하고, 외부 호출을 트랜잭션 밖에서 하고, 결과를 따로 확정합니다. 예외를
+     * 실패로 단정하지 않습니다 — 환불은 이미 나갔을 수 있습니다. 근거: ADR-007
+     */
+    private CancellationView refundThroughProvider(CancelPaymentCommand command, Payment payment) {
+        PaymentCancellation cancellation = cancellationTransactions.begin(command, payment);
+
+        PgRefundResult result;
+        try {
+            result = pgRefundPort.refund(cancellation.id(), payment.id(), command.amount());
+        } catch (RuntimeException e) {
+            log.warn("pg refund outcome is unknown for cancellation {}", cancellation.id(), e);
+            result = PgRefundResult.unknown(null);
+        }
+
+        PaymentCancellation settled =
+                switch (result.outcome()) {
+                    case REFUNDED -> cancellationTransactions.completeRefunded(
+                            command.memberId(), cancellation, payment, result.externalReferenceId());
+                    case DECLINED -> cancellationTransactions.completeDeclined(
+                            command.memberId(), cancellation, payment, result.failureReason());
+                    case UNKNOWN -> cancellationTransactions.markUnknown(
+                            command.memberId(), cancellation, result.externalReferenceId());
+                };
+        return CancellationView.of(settled, canceledAmountOf(payment.id()));
     }
 
     /**

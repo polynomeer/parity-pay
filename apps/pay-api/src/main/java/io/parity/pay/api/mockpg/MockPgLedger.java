@@ -80,6 +80,58 @@ public class MockPgLedger {
                 Timestamp.from(clock.instant()));
     }
 
+    /** 환불을 기록합니다. 같은 외부 키로 다시 오면 새로 환불하지 않습니다. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public String refund(String externalKey, String paymentKey, Money amount) {
+        Optional<String> existing = findRefundId(externalKey);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        jdbcTemplate.update(
+                """
+                INSERT INTO mock_pg_refund (refund_id, external_key, payment_key, amount, status, created_at)
+                VALUES (?, ?, ?, ?, 'REFUNDED', ?)
+                ON CONFLICT (external_key) DO NOTHING
+                """,
+                UUID.randomUUID(),
+                externalKey,
+                paymentKey,
+                amount.amount(),
+                Timestamp.from(clock.instant()));
+        return findRefundId(externalKey).orElseThrow();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void declineRefund(String externalKey, String paymentKey, Money amount) {
+        jdbcTemplate.update(
+                """
+                INSERT INTO mock_pg_refund (refund_id, external_key, payment_key, amount, status, created_at)
+                VALUES (?, ?, ?, ?, 'DECLINED', ?)
+                ON CONFLICT (external_key) DO NOTHING
+                """,
+                UUID.randomUUID(),
+                externalKey,
+                paymentKey,
+                amount.amount(),
+                Timestamp.from(clock.instant()));
+    }
+
+    public Optional<String> refundStatusOf(String externalKey) {
+        List<Map<String, Object>> rows =
+                jdbcTemplate.queryForList("SELECT status FROM mock_pg_refund WHERE external_key = ?", externalKey);
+        return rows.isEmpty()
+                ? Optional.empty()
+                : Optional.of((String) rows.get(0).get("status"));
+    }
+
+    public Optional<String> findRefundId(String externalKey) {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT refund_id FROM mock_pg_refund WHERE external_key = ? AND status = 'REFUNDED'", externalKey);
+        return rows.isEmpty()
+                ? Optional.empty()
+                : Optional.of(rows.get(0).get("refund_id").toString());
+    }
+
     /** 외부에 남은 기록입니다. 없으면 비어 있습니다. */
     public Optional<String> statusOf(String externalKey) {
         List<Map<String, Object>> rows =

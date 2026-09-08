@@ -103,6 +103,47 @@ public record PaymentCancellation(
                 now);
     }
 
+    /**
+     * 외부 환불이 확인되어 완료합니다. 외부 참조를 함께 남깁니다.
+     *
+     * <p>이 값이 없으면 나중에 무엇을 조회해 대사할지 알 수 없습니다.
+     */
+    public PaymentCancellation completeExternally(String externalReferenceId, Instant now) {
+        requireTransitionTo(CancellationStatus.COMPLETED);
+        return new PaymentCancellation(
+                id,
+                paymentId,
+                requestedAmount,
+                requestedAmount,
+                reason,
+                CancellationStatus.COMPLETED,
+                idempotencyKey,
+                externalReferenceId == null ? this.externalReferenceId : externalReferenceId,
+                requestedAt,
+                now);
+    }
+
+    /**
+     * 환불 결과를 모릅니다.
+     *
+     * <p>실패로 적지 않습니다. 돈이 이미 돌아갔을 수 있고, 실패로 적으면 같은 금액을 다시 환불할
+     * 수 있게 됩니다. 근거: ADR-007
+     */
+    public PaymentCancellation markUnknown(String externalReferenceId, Instant now) {
+        requireTransitionTo(CancellationStatus.UNKNOWN);
+        return new PaymentCancellation(
+                id,
+                paymentId,
+                requestedAmount,
+                completedAmount,
+                reason,
+                CancellationStatus.UNKNOWN,
+                idempotencyKey,
+                externalReferenceId == null ? this.externalReferenceId : externalReferenceId,
+                requestedAt,
+                now);
+    }
+
     public boolean isCompleted() {
         return status == CancellationStatus.COMPLETED;
     }

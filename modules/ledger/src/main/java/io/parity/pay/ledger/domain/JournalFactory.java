@@ -132,6 +132,44 @@ public final class JournalFactory {
     }
 
     /**
+     * JE-014 외부 PG 결제 환불.
+     *
+     * <p>환불은 결제한 곳으로 돌아갑니다. 카드로 받았으면 카드로 돌려주므로 사용자 페이머니는
+     * 늘지 않고, PG에게 받을 돈이 줄어듭니다.
+     *
+     * <p>차변 쪽은 JE-004와 같습니다. 판매자 지급예정금이 남아 있으면 거기서 빼고, 이미 정산이
+     * 나갔으면 부족분이 판매자 미수금이 됩니다.
+     *
+     * <p>근거: docs/07-ledger-journal-catalog.md JE-014
+     */
+    public static Journal pgPaymentRefunded(
+            CancellationId cancellationId,
+            LedgerAccountId merchantPayableAccountId,
+            LedgerAccountId merchantReceivableAccountId,
+            LedgerAccountId pgReceivableAccountId,
+            Money fromPayable,
+            Money fromReceivable,
+            Instant effectiveAt) {
+        Money total = fromPayable.plus(fromReceivable);
+        List<JournalLine> lines = new ArrayList<>();
+        if (fromPayable.isPositive()) {
+            lines.add(JournalLine.debit(merchantPayableAccountId, fromPayable));
+        }
+        if (fromReceivable.isPositive()) {
+            lines.add(JournalLine.debit(merchantReceivableAccountId, fromReceivable));
+        }
+        lines.add(JournalLine.credit(pgReceivableAccountId, total));
+
+        return new Journal(
+                ReferenceType.PAYMENT_CANCELLATION,
+                cancellationId.value(),
+                TransactionType.PAYMENT_CANCELED,
+                total.currency(),
+                effectiveAt,
+                lines);
+    }
+
+    /**
      * JE-007 플랫폼 수수료 인식.
      *
      * <p>판매자에게 줄 의무 일부가 우리 수익으로 바뀝니다.

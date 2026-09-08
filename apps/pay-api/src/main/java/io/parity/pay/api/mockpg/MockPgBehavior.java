@@ -16,9 +16,9 @@ public class MockPgBehavior {
         NORMAL,
         /** 외부가 명시적으로 거절합니다. 결과를 아는 실패입니다. */
         EXPLICIT_DECLINE,
-        /** 승인을 처리하기 전에 응답이 끊깁니다. 청구는 일어나지 않았습니다. */
+        /** 처리 전에 응답이 끊깁니다. 외부에서는 아무 일도 일어나지 않았습니다. */
         TIMEOUT_BEFORE_APPROVAL,
-        /** 승인을 처리한 뒤 응답이 유실됩니다. 청구는 일어났습니다(F-006). */
+        /** 처리한 뒤 응답이 유실됩니다. 청구 또는 환불은 이미 일어났습니다(F-006·F-007). */
         TIMEOUT_AFTER_APPROVAL
     }
 
@@ -30,6 +30,11 @@ public class MockPgBehavior {
      * <p>결과를 모르는 상태에서 조회까지 실패하는 상황(F-009)을 만들기 위해 필요합니다.
      */
     private volatile boolean statusQueryAvailable = true;
+
+    /** 환불의 동작입니다. 승인과 독립적으로 제어합니다(F-007). */
+    private volatile Mode refundMode = Mode.NORMAL;
+
+    private volatile boolean refundStatusQueryAvailable = true;
 
     public Mode mode() {
         return mode;
@@ -47,8 +52,26 @@ public class MockPgBehavior {
         this.statusQueryAvailable = statusQueryAvailable;
     }
 
+    public Mode refundMode() {
+        return refundMode;
+    }
+
+    public void setRefundMode(Mode refundMode) {
+        this.refundMode = refundMode;
+    }
+
+    public boolean refundStatusQueryAvailable() {
+        return refundStatusQueryAvailable;
+    }
+
+    public void setRefundStatusQueryAvailable(boolean refundStatusQueryAvailable) {
+        this.refundStatusQueryAvailable = refundStatusQueryAvailable;
+    }
+
     public void reset() {
         this.mode = Mode.NORMAL;
         this.statusQueryAvailable = true;
+        this.refundMode = Mode.NORMAL;
+        this.refundStatusQueryAvailable = true;
     }
 }

@@ -96,6 +96,9 @@ UNIQUE (member_id, idempotency_key)
 | external_request | 외부 요청·응답·조회 기록 | external id index |
 | merchant | 판매자와 계정 주인 | UNIQUE(owner_member_id) |
 | mock_pg_approval | Mock PG의 승인 기록(외부기관 대역) | UNIQUE(external_key) |
+| mock_pg_refund | Mock PG의 환불 기록(외부기관 대역) | UNIQUE(external_key) |
+| payment_recovery | 미확정 결제의 복구 스케줄 | 만기·수동검토 부분 index |
+| cancellation_recovery | 미확정 환불의 복구 스케줄 | 만기·수동검토 부분 index |
 | password_reset_token | 재설정 토큰(해시) | UNIQUE(token_hash), 미사용 토큰 부분 index |
 | audit_log | 운영자 작업 감사 | append-only |
 | reconciliation_run | 대사 실행 단위 | 날짜·기관·유형 index |
