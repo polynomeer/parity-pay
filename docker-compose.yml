@@ -28,6 +28,10 @@ services:
       - start
       - --smp=1
       - --overprovisioned
+      # 로컬 개발용 상한입니다. 지정하지 않으면 Redpanda가 호스트 메모리를 기준으로 잡으려 하고,
+      # Docker Desktop에 다른 컨테이너가 많으면 OOM으로 죽습니다(F-001 실험 중에 겪었습니다).
+      - --memory=1G
+      - --reserve-memory=0M
       - --node-id=0
       - --check=false
       - --kafka-addr=PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092

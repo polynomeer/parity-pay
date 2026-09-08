@@ -8,6 +8,14 @@ EVENTS=20000 RUNS=3 load-tests/outbox-drain-benchmark.sh
 ```
 
 ```bash
+# 크래시 실험. 스크립트가 앱을 직접 띄우고 죽이고 다시 띄웁니다.
+# docker compose up -d 로 postgres·redpanda가 떠 있어야 하고, bootJar가 필요합니다.
+./gradlew :apps:pay-api:bootJar
+python3 load-tests/crash-recovery-experiment.py \
+  --jar apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar
+```
+
+```bash
 # 애플리케이션과 의존성을 먼저 띄웁니다.
 docker compose up -d
 ./gradlew :apps:pay-api:bootRun
@@ -30,6 +38,7 @@ docker run --rm -i --add-host=host.docker.internal:host-gateway \
 | `payment-baseline.js` (`SAME_WALLET=true`) | 동일 지갑 경합 | P-002 |
 | `topup-outbox-backlog.js` | 충전 부하 후 Outbox 적체 해소 | P-003 |
 | `outbox-drain-benchmark.sh` | 발행 경로만 떼어낸 적체 해소율 (k6 없이 SQL로 적체 생성) | P-005 |
+| `crash-recovery-experiment.py` | 트래픽 중 `SIGKILL` 후 재시작·재전송으로 "정확히 1회" 확인 | F-001·F-002 |
 
 ## 결과를 기록할 때
 
