@@ -4,7 +4,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.5.16" apply false
     id("com.diffplug.spotless") version "7.0.2"
-    id("net.ltgt.errorprone") version "4.1.0" apply false
+    id("net.ltgt.errorprone") version "5.1.1" apply false
 }
 
 val springBootVersion = "3.5.16"
