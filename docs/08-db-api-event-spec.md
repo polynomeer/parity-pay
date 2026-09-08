@@ -94,6 +94,7 @@ UNIQUE (member_id, idempotency_key)
 | outbox_event | 발행할 이벤트 저장 | PK(event_id), status index |
 | consumed_event | 소비 중복 방지 | UNIQUE(consumer_name, event_id) |
 | external_request | 외부 요청·응답·조회 기록 | external id index |
+| merchant | 판매자와 계정 주인 | UNIQUE(owner_member_id) |
 | audit_log | 운영자 작업 감사 | append-only |
 | reconciliation_run | 대사 실행 단위 | 날짜·기관·유형 index |
 | reconciliation_mismatch | 불일치 상세 | 상태·유형 index |
@@ -192,6 +193,23 @@ Header: `Idempotency-Key: <unique-key>`
 }
 ```
 
+### 판매자 API
+
+```text
+GET /api/v1/merchant/me
+GET /api/v1/merchant/settlements?limit=20
+GET /api/v1/merchant/settlements/{settlementId}
+```
+
+- `MERCHANT` 역할이 필요하고, 조회 대상 판매자는 **토큰의 회원으로 결정됩니다.** 요청에 판매자
+  식별자를 넣는 자리가 없습니다.
+- 다른 판매자의 정산 식별자를 지정하면 `404 RESOURCE_NOT_FOUND`입니다. 403으로 답하면 그 정산이
+  존재한다는 사실을 알려주게 됩니다.
+- 응답에 외부 지급 참조(`externalReferenceId`)를 넣지 않습니다. 우리 은행 거래 식별자입니다.
+- 역할만 있고 `merchant` 등록이 없으면 거부합니다(`RISK_BLOCKED`). 역할은 문이고 등록은 신원입니다.
+- 결제·정산의 `merchant_id`는 아직 `merchant` 테이블을 검증하지 않습니다. 등록되지 않은 판매자
+  식별자로도 결제가 만들어집니다. 검증과 외래키는 별도 작업입니다.
+
 ### 관리자 API
 
 ```text
@@ -203,7 +221,11 @@ POST /api/v1/admin/outbox-events/{eventId}/retry
 GET  /api/v1/admin/reconciliation/mismatches
 POST /api/v1/admin/reconciliation/mismatches/{id}/resolve
 POST /api/v1/admin/adjustments
+POST /api/v1/admin/merchants
 ```
+
+판매자 등록은 운영자만 합니다. 가입한 사람이 스스로 판매자가 될 수 없습니다. 등록과 `MERCHANT`
+역할 부여는 한 트랜잭션이며 감사 로그에 남습니다.
 
 금액 보정 API는 요청자·승인자 분리, 사유와 외부 근거를 요구합니다.
 

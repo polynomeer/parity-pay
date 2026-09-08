@@ -145,6 +145,25 @@
           "required" : [ "email", "password" ],
           "type" : "object"
         },
+        "MerchantResponse" : {
+          "properties" : {
+            "createdAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "merchantId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "OrderConfirmationResponse" : {
           "properties" : {
             "confirmedAt" : {
@@ -237,6 +256,53 @@
             },
             "walletId" : {
               "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "SettlementResponse" : {
+          "properties" : {
+            "adjustmentAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "cancellationAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "feeAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "grossAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "netAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "paidAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "periodEnd" : {
+              "format" : "date",
+              "type" : "string"
+            },
+            "periodStart" : {
+              "format" : "date",
+              "type" : "string"
+            },
+            "settlementId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "status" : {
               "type" : "string"
             }
           },
@@ -534,6 +600,82 @@
             }
           },
           "tags" : [ "onboarding-controller" ]
+        }
+      },
+      "/api/v1/merchant/me" : {
+        "get" : {
+          "operationId" : "me",
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/MerchantResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "merchant-controller" ]
+        }
+      },
+      "/api/v1/merchant/settlements" : {
+        "get" : {
+          "operationId" : "listSettlements",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 20,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "$ref" : "#/components/schemas/SettlementResponse"
+                    },
+                    "type" : "array"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "merchant-controller" ]
+        }
+      },
+      "/api/v1/merchant/settlements/{settlementId}" : {
+        "get" : {
+          "operationId" : "getSettlement",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "settlementId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SettlementResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "merchant-controller" ]
         }
       },
       "/api/v1/payments" : {
@@ -927,6 +1069,24 @@
           "required" : [ "reason" ],
           "type" : "object"
         },
+        "MerchantRegistrationResponse" : {
+          "properties" : {
+            "merchantId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string"
+            },
+            "ownerEmail" : {
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "MismatchResponse" : {
           "properties" : {
             "adjustmentLedgerTransactionId" : {
@@ -1016,6 +1176,25 @@
               "type" : "string"
             }
           },
+          "type" : "object"
+        },
+        "RegisterMerchantRequest" : {
+          "properties" : {
+            "name" : {
+              "maxLength" : 100,
+              "minLength" : 0,
+              "type" : "string"
+            },
+            "ownerEmail" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "reason" : {
+              "minLength" : 1,
+              "type" : "string"
+            }
+          },
+          "required" : [ "name", "ownerEmail", "reason" ],
           "type" : "object"
         },
         "ResolveRequest" : {
@@ -1202,6 +1381,34 @@
     },
     "openapi" : "3.1.0",
     "paths" : {
+      "/api/v1/admin/merchants" : {
+        "post" : {
+          "operationId" : "registerMerchant",
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RegisterMerchantRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/MerchantRegistrationResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
       "/api/v1/admin/mock-bank/mode" : {
         "post" : {
           "operationId" : "setMockBankMode",

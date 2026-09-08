@@ -1,6 +1,6 @@
 package io.parity.pay.settlement.adapter.in.web;
 
-import io.parity.pay.settlement.application.port.in.SettlementUseCases.SettlementView;
+import io.parity.pay.settlement.application.port.in.SettlementView;
 import io.parity.pay.settlement.application.service.SettlementPayoutService;
 import io.parity.pay.settlement.application.service.SettlementService;
 import io.parity.pay.shared.id.MerchantId;

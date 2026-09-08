@@ -67,6 +67,10 @@ class SecurityConfig {
                         .hasAnyRole(Role.OPS_VIEWER.name(), Role.OPS_OPERATOR.name(), Role.OPS_APPROVER.name())
                         .requestMatchers("/api/v1/admin/**")
                         .hasAnyRole(Role.OPS_OPERATOR.name(), Role.OPS_APPROVER.name())
+                        // 판매자 경로입니다. 조회 대상은 토큰의 회원으로 결정되며 요청에 판매자
+                        // 식별자를 넣는 자리가 없습니다.
+                        .requestMatchers("/api/v1/merchant/**")
+                        .hasRole(Role.MERCHANT.name())
                         .anyRequest()
                         .authenticated())
                 .oauth2ResourceServer(

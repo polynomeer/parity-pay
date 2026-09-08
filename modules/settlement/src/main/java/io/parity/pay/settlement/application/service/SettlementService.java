@@ -6,7 +6,8 @@ import io.parity.pay.ledger.domain.AccountCode;
 import io.parity.pay.ledger.domain.JournalFactory;
 import io.parity.pay.ledger.domain.LedgerAccount;
 import io.parity.pay.settlement.application.event.SettlementEvents;
-import io.parity.pay.settlement.application.port.in.SettlementUseCases;
+import io.parity.pay.settlement.application.port.in.SettlementQuery;
+import io.parity.pay.settlement.application.port.in.SettlementView;
 import io.parity.pay.settlement.application.port.out.SettlementItemRepository;
 import io.parity.pay.settlement.application.port.out.SettlementRepository;
 import io.parity.pay.settlement.domain.Settlement;
@@ -34,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>근거: FR-016, docs/04-payment-policy.md §8, INV-008
  */
 @Service
-public class SettlementService {
+public class SettlementService implements SettlementQuery {
 
     private final SettlementRepository settlementRepository;
     private final SettlementItemRepository itemRepository;
@@ -68,8 +69,7 @@ public class SettlementService {
      * 돌아도 같은 금액이 두 회차에 들어가지 않습니다. 근거: docs/04-payment-policy.md §8
      */
     @Transactional
-    public SettlementUseCases.SettlementView calculate(
-            MerchantId merchantId, LocalDate periodStart, LocalDate periodEnd) {
+    public SettlementView calculate(MerchantId merchantId, LocalDate periodStart, LocalDate periodEnd) {
         List<SettlementItem> items = itemRepository.findEligible(
                 merchantId,
                 periodEnd.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).minusNanos(1),
@@ -100,32 +100,34 @@ public class SettlementService {
         }
 
         outboxAppender.append(SettlementEvents.settlementCreated(settlement, settlement.createdAt()));
-        return SettlementUseCases.SettlementView.of(settlement);
+        return SettlementView.of(settlement);
     }
 
     @Transactional
-    public SettlementUseCases.SettlementView hold(SettlementId settlementId, String reason) {
+    public SettlementView hold(SettlementId settlementId, String reason) {
         Settlement settlement = load(settlementId).hold(reason, clock.instant());
         settlementRepository.save(settlement);
-        return SettlementUseCases.SettlementView.of(settlement);
+        return SettlementView.of(settlement);
     }
 
     @Transactional
-    public SettlementUseCases.SettlementView release(SettlementId settlementId) {
+    public SettlementView release(SettlementId settlementId) {
         Settlement settlement = load(settlementId).release(clock.instant());
         settlementRepository.save(settlement);
-        return SettlementUseCases.SettlementView.of(settlement);
+        return SettlementView.of(settlement);
     }
 
     @Transactional(readOnly = true)
-    public SettlementUseCases.SettlementView get(SettlementId settlementId) {
-        return SettlementUseCases.SettlementView.of(load(settlementId));
+    @Override
+    public SettlementView get(SettlementId settlementId) {
+        return SettlementView.of(load(settlementId));
     }
 
     @Transactional(readOnly = true)
-    public List<SettlementUseCases.SettlementView> listByMerchant(MerchantId merchantId, int limit) {
+    @Override
+    public List<SettlementView> listByMerchant(MerchantId merchantId, int limit) {
         return settlementRepository.findByMerchant(merchantId, limit).stream()
-                .map(SettlementUseCases.SettlementView::of)
+                .map(SettlementView::of)
                 .toList();
     }
 

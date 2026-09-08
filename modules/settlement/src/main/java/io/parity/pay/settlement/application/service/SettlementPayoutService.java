@@ -1,6 +1,6 @@
 package io.parity.pay.settlement.application.service;
 
-import io.parity.pay.settlement.application.port.in.SettlementUseCases.SettlementView;
+import io.parity.pay.settlement.application.port.in.SettlementView;
 import io.parity.pay.settlement.application.port.out.MerchantPayoutPort;
 import io.parity.pay.settlement.application.port.out.MerchantPayoutPort.PayoutResult;
 import io.parity.pay.settlement.domain.Settlement;

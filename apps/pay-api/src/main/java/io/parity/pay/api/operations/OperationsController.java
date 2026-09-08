@@ -1,5 +1,7 @@
 package io.parity.pay.api.operations;
 
+import io.parity.pay.api.merchant.Merchant;
+import io.parity.pay.api.merchant.MerchantDirectory;
 import io.parity.pay.shared.id.TopUpId;
 import io.parity.pay.shared.id.WalletId;
 import io.parity.pay.shared.security.ApprovalAuthority;
@@ -11,10 +13,12 @@ import io.parity.pay.wallet.application.service.TopUpRecoveryService;
 import io.parity.pay.wallet.application.service.TopUpRecoveryService.RecoveryOutcome;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +47,7 @@ class OperationsController {
     private final TransactionTimelineService timelineService;
     private final TopUpRecoveryRepository recoveryRepository;
     private final RebuildBalanceUseCase rebuildBalance;
+    private final MerchantDirectory merchantDirectory;
     private final ApprovalAuthority approvalAuthority;
     private final AuditLogWriter auditLogWriter;
     private final JdbcTemplate jdbcTemplate;
@@ -53,6 +58,7 @@ class OperationsController {
             TransactionTimelineService timelineService,
             TopUpRecoveryRepository recoveryRepository,
             RebuildBalanceUseCase rebuildBalance,
+            MerchantDirectory merchantDirectory,
             ApprovalAuthority approvalAuthority,
             AuditLogWriter auditLogWriter,
             JdbcTemplate jdbcTemplate,
@@ -61,6 +67,7 @@ class OperationsController {
         this.timelineService = timelineService;
         this.recoveryRepository = recoveryRepository;
         this.rebuildBalance = rebuildBalance;
+        this.merchantDirectory = merchantDirectory;
         this.approvalAuthority = approvalAuthority;
         this.auditLogWriter = auditLogWriter;
         this.jdbcTemplate = jdbcTemplate;
@@ -189,6 +196,33 @@ class OperationsController {
                 outcome.detail()));
     }
 
+    /**
+     * 회원을 판매자로 등록합니다.
+     *
+     * <p>가입한 사람이 스스로 판매자가 될 수는 없습니다. 판매자로 등록되면 정산 금액이 보이므로
+     * 운영자가 확인하고 등록합니다. 감사 로그에 누가 누구를 등록했는지 남습니다.
+     */
+    @PostMapping("/merchants")
+    ResponseEntity<MerchantRegistrationResponse> registerMerchant(@Valid @RequestBody RegisterMerchantRequest request) {
+        String operatorId = currentPrincipal.actorId();
+        Merchant merchant = merchantDirectory.register(request.ownerEmail(), request.name());
+
+        auditLogWriter.record(
+                operatorId,
+                "MERCHANT_REGISTER",
+                "MERCHANT",
+                merchant.id().toString(),
+                request.reason(),
+                null,
+                "owner=" + request.ownerEmail(),
+                AuditLogWriter.Result.SUCCEEDED,
+                "name=" + merchant.name());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new MerchantRegistrationResponse(
+                        merchant.id().value(), merchant.name(), request.ownerEmail(), merchant.status()));
+    }
+
     private String currentStatus(UUID topUpId) {
         List<String> rows =
                 jdbcTemplate.queryForList("SELECT status FROM top_up WHERE top_up_id = ?", String.class, topUpId);
@@ -198,6 +232,11 @@ class OperationsController {
     record ResolveRequest(@NotBlank String reason) {}
 
     record RebuildRequest(@NotBlank String reason) {}
+
+    record RegisterMerchantRequest(
+            @NotBlank @Size(max = 100) String name, @NotBlank String ownerEmail, @NotBlank String reason) {}
+
+    record MerchantRegistrationResponse(UUID merchantId, String name, String ownerEmail, String status) {}
 
     record BalanceRebuildResponse(
             UUID walletId, long snapshotBefore, long ledgerBalance, long snapshotAfter, String status, String detail) {}

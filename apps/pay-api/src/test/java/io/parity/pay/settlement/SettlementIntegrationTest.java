@@ -15,7 +15,7 @@ import io.parity.pay.payment.application.port.in.CancelPaymentUseCase.CancelPaym
 import io.parity.pay.payment.application.port.in.ConfirmOrderUseCase;
 import io.parity.pay.payment.domain.PaymentMethod;
 import io.parity.pay.settlement.adapter.in.messaging.SettlementItemConsumer;
-import io.parity.pay.settlement.application.port.in.SettlementUseCases.SettlementView;
+import io.parity.pay.settlement.application.port.in.SettlementView;
 import io.parity.pay.settlement.application.service.SettlementPayoutService;
 import io.parity.pay.settlement.application.service.SettlementRecoveryService;
 import io.parity.pay.settlement.application.service.SettlementService;
