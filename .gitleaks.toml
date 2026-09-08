@@ -1,0 +1,16 @@
+# 비밀값 스캐너 설정. CI의 `비밀값 검사` 잡과 로컬 스캔이 같은 규칙을 씁니다.
+#
+# 기본 규칙을 그대로 쓰고, 예외만 최소로 더합니다. 예외를 넓게 잡으면 스캐너를 켜 둔
+# 의미가 없어지므로 값 하나를 정확히 지목합니다.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "위조 토큰 거부를 확인하는 테스트 고정값"
+# 서명 자리에 문자열이 그대로 적혀 있는 토큰입니다. 어떤 키로도 검증되지 않으므로 이 값으로는
+# 아무것도 인증할 수 없고, 바로 그 사실을 확인하는 것이 그 테스트입니다.
+# (AuthenticationApiTest.forgedTokenIsRejected)
+regexes = [
+    '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiJhdHRhY2tlciJ9\.not-a-valid-signature''',
+]
