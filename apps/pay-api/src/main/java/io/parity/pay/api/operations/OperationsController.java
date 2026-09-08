@@ -2,6 +2,7 @@ package io.parity.pay.api.operations;
 
 import io.parity.pay.api.merchant.Merchant;
 import io.parity.pay.api.merchant.MerchantDirectory;
+import io.parity.pay.api.outbox.OutboxAdminService;
 import io.parity.pay.payment.application.service.PaymentRecoveryService;
 import io.parity.pay.shared.id.PaymentId;
 import io.parity.pay.shared.id.TopUpId;
@@ -51,6 +52,7 @@ class OperationsController {
     private final RebuildBalanceUseCase rebuildBalance;
     private final PaymentRecoveryService paymentRecoveryService;
     private final MerchantDirectory merchantDirectory;
+    private final OutboxAdminService outboxAdminService;
     private final ApprovalAuthority approvalAuthority;
     private final AuditLogWriter auditLogWriter;
     private final JdbcTemplate jdbcTemplate;
@@ -63,6 +65,7 @@ class OperationsController {
             RebuildBalanceUseCase rebuildBalance,
             PaymentRecoveryService paymentRecoveryService,
             MerchantDirectory merchantDirectory,
+            OutboxAdminService outboxAdminService,
             ApprovalAuthority approvalAuthority,
             AuditLogWriter auditLogWriter,
             JdbcTemplate jdbcTemplate,
@@ -73,6 +76,7 @@ class OperationsController {
         this.rebuildBalance = rebuildBalance;
         this.paymentRecoveryService = paymentRecoveryService;
         this.merchantDirectory = merchantDirectory;
+        this.outboxAdminService = outboxAdminService;
         this.approvalAuthority = approvalAuthority;
         this.auditLogWriter = auditLogWriter;
         this.jdbcTemplate = jdbcTemplate;
@@ -292,6 +296,47 @@ class OperationsController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new MerchantRegistrationResponse(
                         merchant.id().value(), merchant.name(), request.ownerEmail(), merchant.status()));
+    }
+
+    /**
+     * Outbox 이벤트 목록입니다. 기본은 발행을 포기한 것들입니다.
+     *
+     * <p>적체 지표({@code paritypay.outbox.failed})가 0이 아닐 때 그 숫자의 정체를 보는 곳입니다.
+     * 지금까지는 SQL로만 볼 수 있었습니다.
+     */
+    @GetMapping("/outbox-events")
+    ResponseEntity<List<OutboxAdminService.OutboxEventSummary>> listOutboxEvents(
+            @RequestParam(defaultValue = "FAILED") String status, @RequestParam(defaultValue = "50") int limit) {
+        return ResponseEntity.ok(outboxAdminService.list(status, limit));
+    }
+
+    /**
+     * 실패한 이벤트를 다시 발행 대상으로 되돌립니다.
+     *
+     * <p>여기서 브로커로 직접 보내지 않습니다. 상태만 되돌리고 발행은 발행기가 합니다. 확인 시점과
+     * 중복 규칙이 한 곳에만 있어야 하기 때문입니다.
+     *
+     * <p>같은 Aggregate의 뒤 이벤트가 이미 나갔으면 응답이 그 사실을 알려 줍니다. 되돌린 이벤트는
+     * 순서가 뒤집힌 채 도착합니다. 근거: reports/11 M-001
+     */
+    @PostMapping("/outbox-events/{eventId}/retry")
+    ResponseEntity<OutboxAdminService.RequeueOutcome> retryOutboxEvent(
+            @PathVariable UUID eventId, @Valid @RequestBody ResolveRequest request) {
+        String operatorId = currentPrincipal.actorId();
+        OutboxAdminService.RequeueOutcome outcome = outboxAdminService.requeue(eventId);
+
+        auditLogWriter.record(
+                operatorId,
+                "OUTBOX_EVENT_REQUEUE",
+                "OUTBOX_EVENT",
+                eventId.toString(),
+                request.reason(),
+                "status=FAILED attempts=" + outcome.previousAttemptCount(),
+                "status=" + outcome.status(),
+                outcome.changed() ? AuditLogWriter.Result.SUCCEEDED : AuditLogWriter.Result.NO_CHANGE,
+                outcome.detail());
+
+        return ResponseEntity.ok(outcome);
     }
 
     private String currentPaymentStatus(UUID paymentId) {

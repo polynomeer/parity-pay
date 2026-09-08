@@ -1266,6 +1266,49 @@
           },
           "type" : "object"
         },
+        "OutboxEventSummary" : {
+          "properties" : {
+            "aggregateId" : {
+              "type" : "string"
+            },
+            "aggregateType" : {
+              "type" : "string"
+            },
+            "attemptCount" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "eventId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "eventType" : {
+              "type" : "string"
+            },
+            "lastError" : {
+              "type" : "string"
+            },
+            "nextAttemptAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "occurredAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "partitionKey" : {
+              "type" : "string"
+            },
+            "publishedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "PaymentRecoveryOutcomeResponse" : {
           "properties" : {
             "changed" : {
@@ -1329,6 +1372,31 @@
             }
           },
           "required" : [ "name", "ownerEmail", "reason" ],
+          "type" : "object"
+        },
+        "RequeueOutcome" : {
+          "properties" : {
+            "changed" : {
+              "type" : "boolean"
+            },
+            "detail" : {
+              "type" : "string"
+            },
+            "eventId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "laterSiblingPublished" : {
+              "type" : "boolean"
+            },
+            "previousAttemptCount" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "status" : {
+              "type" : "string"
+            }
+          },
           "type" : "object"
         },
         "ResolveRequest" : {
@@ -1626,6 +1694,82 @@
             }
           },
           "tags" : [ "onboarding-controller" ]
+        }
+      },
+      "/api/v1/admin/outbox-events" : {
+        "get" : {
+          "operationId" : "listOutboxEvents",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "status",
+            "required" : false,
+            "schema" : {
+              "default" : "FAILED",
+              "type" : "string"
+            }
+          }, {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 50,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "$ref" : "#/components/schemas/OutboxEventSummary"
+                    },
+                    "type" : "array"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
+      "/api/v1/admin/outbox-events/{eventId}/retry" : {
+        "post" : {
+          "operationId" : "retryOutboxEvent",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "eventId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResolveRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/RequeueOutcome"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
         }
       },
       "/api/v1/admin/payments" : {
