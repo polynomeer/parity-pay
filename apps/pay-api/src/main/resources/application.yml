@@ -86,6 +86,17 @@ paritypay:
     recovery-max-attempts: 8
     recovery-not-found-confirm-threshold: 3
   recovery:
+    # 외부 PG 결제의 미확정 복구입니다. 충전과 같은 규칙이며 대상만 다릅니다.
+    payment:
+      enabled: true
+      interval-ms: 5000
+      grace: 30s
+      lease: 30s
+      base-backoff: 2s
+      max-backoff: 10m
+      max-attempts: 8
+      not-found-confirm-threshold: 3
+      batch-size: 50
     top-up:
       enabled: true
       interval-ms: 5000

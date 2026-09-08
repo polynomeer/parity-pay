@@ -2,6 +2,8 @@ package io.parity.pay.api.operations;
 
 import io.parity.pay.api.merchant.Merchant;
 import io.parity.pay.api.merchant.MerchantDirectory;
+import io.parity.pay.payment.application.service.PaymentRecoveryService;
+import io.parity.pay.shared.id.PaymentId;
 import io.parity.pay.shared.id.TopUpId;
 import io.parity.pay.shared.id.WalletId;
 import io.parity.pay.shared.security.ApprovalAuthority;
@@ -47,6 +49,7 @@ class OperationsController {
     private final TransactionTimelineService timelineService;
     private final TopUpRecoveryRepository recoveryRepository;
     private final RebuildBalanceUseCase rebuildBalance;
+    private final PaymentRecoveryService paymentRecoveryService;
     private final MerchantDirectory merchantDirectory;
     private final ApprovalAuthority approvalAuthority;
     private final AuditLogWriter auditLogWriter;
@@ -58,6 +61,7 @@ class OperationsController {
             TransactionTimelineService timelineService,
             TopUpRecoveryRepository recoveryRepository,
             RebuildBalanceUseCase rebuildBalance,
+            PaymentRecoveryService paymentRecoveryService,
             MerchantDirectory merchantDirectory,
             ApprovalAuthority approvalAuthority,
             AuditLogWriter auditLogWriter,
@@ -67,6 +71,7 @@ class OperationsController {
         this.timelineService = timelineService;
         this.recoveryRepository = recoveryRepository;
         this.rebuildBalance = rebuildBalance;
+        this.paymentRecoveryService = paymentRecoveryService;
         this.merchantDirectory = merchantDirectory;
         this.approvalAuthority = approvalAuthority;
         this.auditLogWriter = auditLogWriter;
@@ -115,6 +120,72 @@ class OperationsController {
                 status,
                 limit);
         return ResponseEntity.ok(rows);
+    }
+
+    /**
+     * 아직 최종 상태에 도달하지 못한 결제 목록입니다.
+     *
+     * <p>외부 PG 결제만 여기에 나타납니다. 페이머니 결제는 한 트랜잭션으로 끝나므로 미확정 상태로
+     * 남지 않습니다.
+     */
+    @GetMapping("/payments")
+    ResponseEntity<List<UnresolvedPaymentResponse>> listUnresolvedPayments(
+            @RequestParam(defaultValue = "UNKNOWN") String status, @RequestParam(defaultValue = "50") int limit) {
+        List<UnresolvedPaymentResponse> rows = jdbcTemplate.query(
+                """
+                SELECT p.payment_id, p.order_id, p.merchant_id, p.status, p.requested_amount, p.currency,
+                       p.external_reference_id, p.created_at,
+                       coalesce(r.attempt_count, 0) AS attempt_count,
+                       coalesce(r.requires_manual_review, false) AS requires_manual_review,
+                       r.last_error
+                  FROM payment p
+                  LEFT JOIN payment_recovery r ON r.payment_id = p.payment_id
+                 WHERE p.status = ?
+                 ORDER BY p.created_at
+                 LIMIT ?
+                """,
+                (rs, rowNum) -> new UnresolvedPaymentResponse(
+                        rs.getObject("payment_id", UUID.class),
+                        rs.getString("order_id"),
+                        rs.getObject("merchant_id", UUID.class),
+                        rs.getString("status"),
+                        rs.getLong("requested_amount"),
+                        rs.getString("currency"),
+                        rs.getString("external_reference_id"),
+                        rs.getTimestamp("created_at").toInstant(),
+                        rs.getInt("attempt_count"),
+                        rs.getBoolean("requires_manual_review"),
+                        rs.getString("last_error")),
+                status,
+                limit);
+        return ResponseEntity.ok(rows);
+    }
+
+    /**
+     * 결제의 외부 상태를 즉시 다시 조회해 확정을 시도합니다.
+     *
+     * <p>외부에 승인을 다시 보내는 것이 아니라 조회만 합니다. 이중 청구 위험이 없습니다.
+     */
+    @PostMapping("/payments/{paymentId}/resolve")
+    ResponseEntity<PaymentRecoveryOutcomeResponse> resolvePayment(
+            @PathVariable UUID paymentId, @Valid @RequestBody ResolveRequest request) {
+        String operatorId = currentPrincipal.actorId();
+        String beforeState = currentPaymentStatus(paymentId);
+        PaymentRecoveryService.RecoveryOutcome outcome = paymentRecoveryService.resolveNow(PaymentId.of(paymentId));
+
+        auditLogWriter.record(
+                operatorId,
+                "PAYMENT_RECOVERY_RESOLVE",
+                "PAYMENT",
+                paymentId.toString(),
+                request.reason(),
+                beforeState,
+                outcome.status(),
+                outcome.changed() ? AuditLogWriter.Result.SUCCEEDED : AuditLogWriter.Result.NO_CHANGE,
+                outcome.detail());
+
+        return ResponseEntity.ok(
+                new PaymentRecoveryOutcomeResponse(paymentId, outcome.status(), outcome.changed(), outcome.detail()));
     }
 
     /** 자동 복구를 포기하고 사람에게 넘어온 건들입니다. */
@@ -223,6 +294,12 @@ class OperationsController {
                         merchant.id().value(), merchant.name(), request.ownerEmail(), merchant.status()));
     }
 
+    private String currentPaymentStatus(UUID paymentId) {
+        List<String> rows =
+                jdbcTemplate.queryForList("SELECT status FROM payment WHERE payment_id = ?", String.class, paymentId);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
     private String currentStatus(UUID topUpId) {
         List<String> rows =
                 jdbcTemplate.queryForList("SELECT status FROM top_up WHERE top_up_id = ?", String.class, topUpId);
@@ -253,4 +330,19 @@ class OperationsController {
             String lastError) {}
 
     record RecoveryOutcomeResponse(UUID topUpId, String status, boolean changed, String detail) {}
+
+    record PaymentRecoveryOutcomeResponse(UUID paymentId, String status, boolean changed, String detail) {}
+
+    record UnresolvedPaymentResponse(
+            UUID paymentId,
+            String orderId,
+            UUID merchantId,
+            String status,
+            long requestedAmount,
+            String currency,
+            String externalReferenceId,
+            Instant createdAt,
+            int attemptCount,
+            boolean requiresManualReview,
+            String lastError) {}
 }

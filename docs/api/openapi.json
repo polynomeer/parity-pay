@@ -1266,6 +1266,24 @@
           },
           "type" : "object"
         },
+        "PaymentRecoveryOutcomeResponse" : {
+          "properties" : {
+            "changed" : {
+              "type" : "boolean"
+            },
+            "detail" : {
+              "type" : "string"
+            },
+            "paymentId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "RebuildRequest" : {
           "properties" : {
             "reason" : {
@@ -1440,6 +1458,49 @@
           },
           "type" : "object"
         },
+        "UnresolvedPaymentResponse" : {
+          "properties" : {
+            "attemptCount" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "createdAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "externalReferenceId" : {
+              "type" : "string"
+            },
+            "lastError" : {
+              "type" : "string"
+            },
+            "merchantId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "orderId" : {
+              "type" : "string"
+            },
+            "paymentId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "requestedAmount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "requiresManualReview" : {
+              "type" : "boolean"
+            },
+            "status" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "UnresolvedTopUpResponse" : {
           "properties" : {
             "attemptCount" : {
@@ -1565,6 +1626,82 @@
             }
           },
           "tags" : [ "onboarding-controller" ]
+        }
+      },
+      "/api/v1/admin/payments" : {
+        "get" : {
+          "operationId" : "listUnresolvedPayments",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "status",
+            "required" : false,
+            "schema" : {
+              "default" : "UNKNOWN",
+              "type" : "string"
+            }
+          }, {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 50,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "$ref" : "#/components/schemas/UnresolvedPaymentResponse"
+                    },
+                    "type" : "array"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
+      "/api/v1/admin/payments/{paymentId}/resolve" : {
+        "post" : {
+          "operationId" : "resolvePayment",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "paymentId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResolveRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/PaymentRecoveryOutcomeResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
         }
       },
       "/api/v1/admin/reconciliation/mismatches" : {

@@ -137,7 +137,7 @@ sequenceDiagram
 
 | 작업 | 대상 | 주기 | 종료 조건 |
 |---|---|---|---|
-| UnknownPaymentResolver | 오래된 Payment UNKNOWN | 짧은 주기 | APPROVED/FAILED 또는 수동 검토 |
+| UnknownPaymentResolver | 오래된 Payment UNKNOWN·PROCESSING (외부 PG) | 짧은 주기 | APPROVED/FAILED 또는 수동 검토 |
 | UnknownCancellationResolver | Cancellation UNKNOWN | 짧은 주기 | COMPLETED/FAILED 또는 수동 검토 |
 | OutboxPublisher | PENDING/재시도 가능 Outbox | 연속 또는 짧은 폴링 | PUBLISHED/FAILED |
 | StaleIdempotencyResolver | 오래된 PROCESSING | 중간 주기 | 업무 결과 기반 확정 |
@@ -145,6 +145,19 @@ sequenceDiagram
 | ReconciliationJob | 내외부 거래 | 일별 | mismatch 생성·해결 |
 
 모든 복구 작업은 리더 재선출, 중복 실행과 프로세스 종료를 견뎌야 합니다.
+
+`UnknownPaymentResolver`는 `PaymentRecoveryService`로 구현되어 있고 충전 복구와 같은 규칙을
+따릅니다. 대상은 **외부 PG 결제뿐**입니다. 페이머니 결제는 한 트랜잭션으로 끝나므로 미확정으로
+남을 수 없고, 남았다면 그것은 복구가 아니라 조사할 문제입니다.
+
+운영자 진입점:
+
+```text
+GET  /api/v1/admin/payments?status=UNKNOWN     미확정 결제 목록
+POST /api/v1/admin/payments/{paymentId}/resolve  즉시 재조회 (사유 필수, 감사 로그)
+```
+
+재조회는 **조회만** 합니다. 외부에 승인을 다시 보내지 않으므로 이중 청구 위험이 없습니다.
 
 ## 9. 장애 시나리오와 기대 결과
 
