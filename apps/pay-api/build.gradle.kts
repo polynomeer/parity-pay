@@ -23,7 +23,7 @@ dependencies {
     implementation("org.springframework.security:spring-security-oauth2-jose")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
     // 이벤트 계약 검사용 JSON Schema 검증기입니다. 근거: docs/08-db-api-event-spec.md §7
-    implementation("com.networknt:json-schema-validator:1.5.8")
+    implementation("com.networknt:json-schema-validator:3.0.7")
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
