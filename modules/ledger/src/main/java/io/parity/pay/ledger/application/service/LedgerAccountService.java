@@ -25,7 +25,9 @@ public class LedgerAccountService implements ResolveLedgerAccountUseCase {
     public LedgerAccount resolve(AccountCode code, UUID ownerId, CurrencyCode currency) {
         return accountRepository
                 .find(code, ownerId, currency)
-                .orElseGet(() -> accountRepository.save(
+                // 없으면 만들되, 같은 순간 다른 요청이 만들었을 수 있으므로 충돌 안전하게 만듭니다.
+                // 계정은 첫 사용 시점에 생기므로 이 경합은 부하가 시작되는 순간에 실제로 일어납니다.
+                .orElseGet(() -> accountRepository.findOrCreate(
                         new LedgerAccount(LedgerAccountId.generate(), code, ownerId, currency, true)));
     }
 

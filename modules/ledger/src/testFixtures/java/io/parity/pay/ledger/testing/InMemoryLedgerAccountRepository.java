@@ -35,4 +35,11 @@ public class InMemoryLedgerAccountRepository implements LedgerAccountRepository 
         accounts.put(account.id().value(), account);
         return account;
     }
+
+    @Override
+    public LedgerAccount findOrCreate(LedgerAccount candidate) {
+        // computeIfAbsent가 아니라 find + put인 이유는 키가 계정 ID가 아니라 (코드, 통화, 소유자)
+        // 조합이기 때문입니다. 맵 자체가 동시 접근에 안전하므로 여기서는 단순하게 둡니다.
+        return find(candidate.code(), candidate.ownerId(), candidate.currency()).orElseGet(() -> save(candidate));
+    }
 }

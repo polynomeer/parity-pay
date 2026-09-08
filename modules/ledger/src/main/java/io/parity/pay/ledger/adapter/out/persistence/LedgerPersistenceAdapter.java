@@ -17,6 +17,7 @@ import io.parity.pay.shared.money.CurrencyCode;
 import io.parity.pay.shared.money.Money;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.sql.Timestamp;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
@@ -76,6 +77,32 @@ class LedgerPersistenceAdapter implements LedgerAccountRepository, LedgerTransac
                 clock.instant());
         entityManager.persist(entity);
         return toDomain(entity);
+    }
+
+    @Override
+    public LedgerAccount findOrCreate(LedgerAccount candidate) {
+        // 충돌하면 아무것도 하지 않고, 이미 있는 행을 그대로 씁니다. 계정은 식별자만 다를 뿐
+        // 같은 (계정코드, 통화, 소유자)면 같은 계정입니다.
+        entityManager
+                .createNativeQuery(
+                        """
+                        INSERT INTO ledger_account
+                            (account_id, account_code, owner_type, owner_id, currency, status, created_at)
+                        VALUES (:accountId, :accountCode, :ownerType, :ownerId, :currency, :status, :createdAt)
+                        ON CONFLICT ON CONSTRAINT uq_ledger_account_owner DO NOTHING
+                        """)
+                .setParameter("accountId", candidate.id().value())
+                .setParameter("accountCode", candidate.code().code())
+                .setParameter("ownerType", candidate.ownerType().name())
+                .setParameter("ownerId", candidate.ownerId())
+                .setParameter("currency", candidate.currency().name())
+                .setParameter("status", candidate.active() ? "ACTIVE" : "INACTIVE")
+                .setParameter("createdAt", Timestamp.from(clock.instant()))
+                .executeUpdate();
+
+        return find(candidate.code(), candidate.ownerId(), candidate.currency())
+                .orElseThrow(() ->
+                        new IllegalStateException("ledger account should exist after insert: " + candidate.code()));
     }
 
     @Override
