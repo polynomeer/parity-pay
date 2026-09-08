@@ -30,8 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>가입 시 KRW 지갑과 사용자 원장 계정을 함께 만듭니다. 근거: FR-001, FR-002
  *
- * <p>인증·인가는 아직 구현되지 않았습니다(Phase 2). 현재 API는 로컬 개발용이며 호출자가 보낸
- * {@code X-Member-Id}를 그대로 신뢰합니다.
+ * <p>가입은 인증 이전 경로입니다. 가입 이후의 모든 요청은 서명된 토큰으로 신원을 확인하며,
+ * {@code X-Member-Id}를 신뢰하던 경로는 Phase 7에서 제거했습니다.
  */
 @Service
 public class OnboardingService {

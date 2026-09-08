@@ -63,8 +63,8 @@ MVP 완료 전에는 다음 기능을 구현하지 않습니다.
 
 ## 4. MVP API 표면
 
-인증이 구현되기 전까지 `me` 경로 대신 `{walletId}` 경로를 사용하고 호출자는 `X-Member-Id` 헤더로
-자신을 밝힙니다. 인증 도입 시 `me` 경로로 바꿉니다(Phase 2 잔여 작업).
+호출자는 `Authorization: Bearer` 토큰으로 자신을 밝힙니다(Phase 7, 2026-09-07). `X-Member-Id`
+헤더는 제거했습니다. 지갑 경로는 아직 `me` 대신 `{walletId}`를 사용합니다.
 
 ```text
 POST /api/v1/members

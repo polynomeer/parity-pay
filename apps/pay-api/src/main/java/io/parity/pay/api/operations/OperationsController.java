@@ -36,8 +36,8 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>미확정 거래를 찾고, 안전한 범위에서 재조회를 요청합니다. 여기에서 금액을 직접 고치는 기능은
  * 제공하지 않습니다. 보정은 원장 분개로만 가능합니다. 근거: docs/09-consistency-recovery.md §13
  *
- * <p>인증이 아직 없으므로 운영자 식별은 {@code X-Operator-Id} 헤더로 대신합니다. 역할 기반 권한은
- * Phase 2 잔여 작업입니다.
+ * <p>운영자 식별은 서명된 토큰에서만 옵니다. 경로별 역할은 {@code SecurityConfig}가 강제하고,
+ * 이중 승인이 필요한 경로는 승인자를 {@code X-Approver-Id}로 따로 받습니다.
  */
 @RestController
 @RequestMapping("/api/v1/admin")

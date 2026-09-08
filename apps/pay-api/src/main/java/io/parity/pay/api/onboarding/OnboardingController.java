@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 가입·계좌 연결과 Mock Bank 동작 제어.
  *
- * <p>인증이 아직 없으므로 사용자 식별은 {@code X-Member-Id} 헤더로 대신합니다. Phase 2에서 인증을
- * 도입하면서 제거합니다. 근거: docs/13-implementation-checklist.md Phase 2
+ * <p>사용자 식별은 {@code CurrentPrincipal}을 통해 서명된 토큰에서만 옵니다. 가입과 토큰 발급은
+ * 인증 이전 경로이므로 열려 있습니다. 근거: docs/13-implementation-checklist.md Phase 7
  */
 @RestController
 @RequestMapping("/api/v1")

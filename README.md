@@ -206,21 +206,21 @@ curl -s "localhost:8080/api/v1/admin/transactions/$PAYMENT_ID/timeline" -H "Auth
 외부 승인 후 응답 유실을 재현하고 복구되는 과정을 볼 수 있습니다.
 
 ```bash
-# 1. 외부는 출금을 처리하지만 응답이 유실되도록 설정
+# 1. 외부는 출금을 처리하지만 응답이 유실되도록 설정 (mock-bank 제어는 OPS_OPERATOR 권한입니다)
 curl -s -X POST localhost:8080/api/v1/admin/mock-bank/mode \
-  -H 'Content-Type: application/json' -d '{"mode":"TIMEOUT_AFTER_WITHDRAWAL"}'
+  -H "Authorization: Bearer $OPS" -H 'Content-Type: application/json' -d '{"mode":"TIMEOUT_AFTER_WITHDRAWAL"}'
 
 # 2. 충전 요청 → 실패가 아니라 202 UNKNOWN으로 응답합니다
 # 3. 미확정 목록에서 확인
-curl -s "localhost:8080/api/v1/admin/top-ups?status=UNKNOWN"
+curl -s "localhost:8080/api/v1/admin/top-ups?status=UNKNOWN" -H "Authorization: Bearer $OPS"
 
 # 4. 외부를 정상으로 되돌리면 복구 작업이 조회로 확정합니다 (기본 5초 주기)
 curl -s -X POST localhost:8080/api/v1/admin/mock-bank/mode \
-  -H 'Content-Type: application/json' -d '{"mode":"NORMAL"}'
+  -H "Authorization: Bearer $OPS" -H 'Content-Type: application/json' -d '{"mode":"NORMAL"}'
 
 # 즉시 확정을 요청할 수도 있습니다. 사유가 필수이며 감사 로그로 남습니다.
 curl -s -X POST "localhost:8080/api/v1/admin/top-ups/$TOP_UP_ID/resolve" \
-  -H 'X-Operator-Id: ops-1' -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPS" -H 'Content-Type: application/json' \
   -d '{"reason":"고객 문의"}'
 ```
 
