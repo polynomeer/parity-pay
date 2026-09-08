@@ -18,6 +18,7 @@ public record SecurityProperties(
         Duration refreshTokenTtl,
         int maxLoginFailures,
         Duration loginLockDuration,
+        Duration passwordResetTtl,
         List<BootstrapOperator> bootstrapOperators) {
 
     public SecurityProperties {
@@ -25,6 +26,8 @@ public record SecurityProperties(
         refreshTokenTtl = refreshTokenTtl == null ? Duration.ofDays(14) : refreshTokenTtl;
         maxLoginFailures = maxLoginFailures <= 0 ? 5 : maxLoginFailures;
         loginLockDuration = loginLockDuration == null ? Duration.ofMinutes(10) : loginLockDuration;
+        // 재설정 토큰은 짧게 삽니다. 메일함에 오래 남아 있는 토큰은 그 자체가 위험입니다.
+        passwordResetTtl = passwordResetTtl == null ? Duration.ofMinutes(30) : passwordResetTtl;
         bootstrapOperators = bootstrapOperators == null ? List.of() : List.copyOf(bootstrapOperators);
         if (jwtSecret == null || jwtSecret.length() < 32) {
             throw new IllegalStateException("paritypay.security.jwt-secret must be at least 32 characters");

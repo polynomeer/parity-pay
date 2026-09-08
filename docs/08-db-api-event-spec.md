@@ -95,6 +95,7 @@ UNIQUE (member_id, idempotency_key)
 | consumed_event | 소비 중복 방지 | UNIQUE(consumer_name, event_id) |
 | external_request | 외부 요청·응답·조회 기록 | external id index |
 | merchant | 판매자와 계정 주인 | UNIQUE(owner_member_id) |
+| password_reset_token | 재설정 토큰(해시) | UNIQUE(token_hash), 미사용 토큰 부분 index |
 | audit_log | 운영자 작업 감사 | append-only |
 | reconciliation_run | 대사 실행 단위 | 날짜·기관·유형 index |
 | reconciliation_mismatch | 불일치 상세 | 상태·유형 index |
@@ -192,6 +193,24 @@ Header: `Idempotency-Key: <unique-key>`
   "currency": "KRW"
 }
 ```
+
+### 인증 API
+
+```text
+POST /api/v1/auth/tokens                  로그인
+POST /api/v1/auth/tokens/refresh          리프레시 토큰 회전
+POST /api/v1/auth/logout                  이 사용자의 리프레시 토큰 전부 철회
+POST /api/v1/auth/password                비밀번호 변경 (인증 필요)
+POST /api/v1/auth/password-reset          재설정 요청 (인증 불필요)
+POST /api/v1/auth/password-reset/confirm  재설정 확정 (인증 불필요)
+```
+
+- 변경은 `currentPassword`와 `newPassword`를 받고 `204`입니다. 성공하면 그 사용자의 리프레시 토큰이
+  모두 철회됩니다.
+- 재설정 요청은 가입 여부와 무관하게 `202`입니다. 응답에 토큰이 없습니다.
+- 재설정 확정은 `token`과 `newPassword`를 받고 `204`입니다. 토큰이 없거나 이미 썼거나 만료됐거나
+  무효화됐으면 모두 같은 `400 INVALID_REQUEST`입니다.
+- 자세한 규칙과 미완 항목(전달 어댑터)은 [기술설계서](05-technical-design.md) §11에 있습니다.
 
 ### 판매자 API
 

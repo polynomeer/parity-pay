@@ -50,6 +50,10 @@ public class MemberAccountRepository {
                 memberId.value());
     }
 
+    public void updatePasswordHash(MemberId memberId, String passwordHash) {
+        jdbcTemplate.update("UPDATE member SET password_hash = ? WHERE member_id = ?", passwordHash, memberId.value());
+    }
+
     private static Set<Role> parseRoles(String roles) {
         if (roles == null || roles.isBlank()) {
             return Set.of(Role.CUSTOMER);

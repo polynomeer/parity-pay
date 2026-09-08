@@ -51,6 +51,10 @@ class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/api/v1/auth/tokens", "/api/v1/auth/tokens/refresh")
                         .permitAll()
+                        // 비밀번호를 잊은 사람은 로그인할 수 없으므로 인증 전에 열려 있어야 합니다.
+                        // 변경(`/auth/password`)은 반대로 인증이 필요합니다.
+                        .requestMatchers("/api/v1/auth/password-reset", "/api/v1/auth/password-reset/confirm")
+                        .permitAll()
                         // 헬스와 지표는 내부 수집 대상입니다. 운영에서는 네트워크로 제한합니다.
                         .requestMatchers("/actuator/health/**", "/actuator/prometheus")
                         .permitAll()
