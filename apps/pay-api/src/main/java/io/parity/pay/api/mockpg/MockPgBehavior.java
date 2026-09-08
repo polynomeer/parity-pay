@@ -3,75 +3,66 @@ package io.parity.pay.api.mockpg;
 import org.springframework.stereotype.Component;
 
 /**
- * Mock PG의 응답 동작을 제어합니다.
+ * 외부 PG의 동작을 원격으로 제어합니다.
  *
- * <p>장애 시나리오(F-006·F-007·F-009)를 재현하기 위한 주입 지점입니다. 운영 환경에는 이 대역
- * 자체가 없습니다. 근거: docs/05-technical-design.md §10, docs/10-test-strategy.md §6
+ * <p>은행과 같습니다. 스위치가 아니라 **기관에게 보내는 지시**이며, 모드 이름을 우리 어휘
+ * (TIMEOUT_*)에서 기관 어휘(HANG_*)로 옮기는 것이 이 클래스의 일입니다.
+ *
+ * <p>근거: docs/05-technical-design.md §10, docs/10-test-strategy.md §6
  */
 @Component
 public class MockPgBehavior {
 
     public enum Mode {
-        /** 정상 승인. */
         NORMAL,
-        /** 외부가 명시적으로 거절합니다. 결과를 아는 실패입니다. */
         EXPLICIT_DECLINE,
-        /** 처리 전에 응답이 끊깁니다. 외부에서는 아무 일도 일어나지 않았습니다. */
+        /** 처리 전에 응답이 오지 않습니다. 실제 읽기 타임아웃이 납니다. */
         TIMEOUT_BEFORE_APPROVAL,
-        /** 처리한 뒤 응답이 유실됩니다. 청구 또는 환불은 이미 일어났습니다(F-006·F-007). */
-        TIMEOUT_AFTER_APPROVAL
+        /** 처리한 뒤 응답이 오지 않습니다(F-006·F-007). */
+        TIMEOUT_AFTER_APPROVAL;
+
+        String remoteName() {
+            return switch (this) {
+                case NORMAL -> "NORMAL";
+                case EXPLICIT_DECLINE -> "EXPLICIT_DECLINE";
+                case TIMEOUT_BEFORE_APPROVAL -> "HANG_BEFORE_PROCESSING";
+                case TIMEOUT_AFTER_APPROVAL -> "HANG_AFTER_PROCESSING";
+            };
+        }
     }
 
-    private volatile Mode mode = Mode.NORMAL;
+    private final MockPgClient client;
+    private final MockPgProperties properties;
 
-    /**
-     * 상태 조회 API의 가용성입니다. 승인 동작과 독립적으로 제어합니다.
-     *
-     * <p>결과를 모르는 상태에서 조회까지 실패하는 상황(F-009)을 만들기 위해 필요합니다.
-     */
-    private volatile boolean statusQueryAvailable = true;
-
-    /** 환불의 동작입니다. 승인과 독립적으로 제어합니다(F-007). */
-    private volatile Mode refundMode = Mode.NORMAL;
-
-    private volatile boolean refundStatusQueryAvailable = true;
-
-    public Mode mode() {
-        return mode;
+    MockPgBehavior(MockPgClient client, MockPgProperties properties) {
+        this.client = client;
+        this.properties = properties;
     }
 
+    /** 승인 동작입니다. */
     public void setMode(Mode mode) {
-        this.mode = mode;
+        client.setBehavior(new MockPgClient.BehaviorRequest(mode.remoteName(), null, null, null, hangMillis(), null));
     }
 
-    public boolean statusQueryAvailable() {
-        return statusQueryAvailable;
+    /** 환불 동작입니다. 승인과 독립적으로 제어합니다. */
+    public void setRefundMode(Mode mode) {
+        client.setBehavior(new MockPgClient.BehaviorRequest(null, mode.remoteName(), null, null, hangMillis(), null));
     }
 
-    public void setStatusQueryAvailable(boolean statusQueryAvailable) {
-        this.statusQueryAvailable = statusQueryAvailable;
+    public void setStatusQueryAvailable(boolean available) {
+        client.setBehavior(new MockPgClient.BehaviorRequest(null, null, available, null, null, null));
     }
 
-    public Mode refundMode() {
-        return refundMode;
-    }
-
-    public void setRefundMode(Mode refundMode) {
-        this.refundMode = refundMode;
-    }
-
-    public boolean refundStatusQueryAvailable() {
-        return refundStatusQueryAvailable;
-    }
-
-    public void setRefundStatusQueryAvailable(boolean refundStatusQueryAvailable) {
-        this.refundStatusQueryAvailable = refundStatusQueryAvailable;
+    public void setRefundStatusQueryAvailable(boolean available) {
+        client.setBehavior(new MockPgClient.BehaviorRequest(null, null, null, available, null, null));
     }
 
     public void reset() {
-        this.mode = Mode.NORMAL;
-        this.statusQueryAvailable = true;
-        this.refundMode = Mode.NORMAL;
-        this.refundStatusQueryAvailable = true;
+        client.setBehavior(new MockPgClient.BehaviorRequest(null, null, null, null, null, true));
+    }
+
+    /** 기관이 붙잡고 있을 시간입니다. 읽기 타임아웃의 두 배로 잡아 타임아웃이 확실히 재현되게 합니다. */
+    private long hangMillis() {
+        return properties.readTimeout().toMillis() * 2;
     }
 }

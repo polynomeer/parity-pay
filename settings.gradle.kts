@@ -9,4 +9,5 @@ include(
     "modules:reconciliation",
     "apps:pay-api",
     "apps:mock-bank",
+    "apps:mock-pg",
 )

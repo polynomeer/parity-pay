@@ -11,6 +11,9 @@ paritypay:
     # 시간은 이 값의 두 배로 자동 설정됩니다(MockBankBehavior).
     connect-timeout: 500ms
     read-timeout: 400ms
+  mock-pg:
+    connect-timeout: 500ms
+    read-timeout: 400ms
   security:
     jwt-secret: test-only-secret-key-that-is-long-enough-1234
     access-token-ttl: 5m

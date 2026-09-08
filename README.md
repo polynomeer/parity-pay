@@ -105,9 +105,9 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 docker compose up -d
 ./gradlew test
 
-# 외부 은행은 별도 프로세스입니다. 먼저 띄워야 충전·정산 지급이 동작합니다.
-./gradlew :apps:mock-bank:bootJar && docker compose up -d mock-bank
-# (또는 직접: MOCK_BANK_PORT=8090 ./gradlew :apps:mock-bank:bootRun)
+# 외부기관 둘은 별도 프로세스입니다. 먼저 띄워야 충전·결제·정산 지급이 동작합니다.
+./gradlew :apps:mock-bank:bootJar :apps:mock-pg:bootJar
+docker compose up -d mock-bank mock-pg
 
 # 로컬 실행에는 local 프로필이 필요합니다. 서명 키가 없으면 애플리케이션이 뜨지 않습니다.
 SPRING_PROFILES_ACTIVE=local ./gradlew :apps:pay-api:bootRun
@@ -123,6 +123,9 @@ SPRING_PROFILES_ACTIVE=local ./gradlew :apps:pay-api:bootRun
 ```bash
 docker compose stop mock-bank    # 충전 요청이 UNKNOWN으로 보존되는지 확인
 docker compose start mock-bank   # 복구 작업이 조회로 확정합니다
+
+docker compose stop mock-pg      # 카드 결제만 막힙니다. 충전은 계속 됩니다
+docker compose start mock-pg
 ```
 
 ### 코드 스타일

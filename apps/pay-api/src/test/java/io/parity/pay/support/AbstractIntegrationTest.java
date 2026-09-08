@@ -2,6 +2,7 @@ package io.parity.pay.support;
 
 import io.parity.pay.ParityPayApplication;
 import io.parity.pay.api.mockbank.MockBankBehavior;
+import io.parity.pay.api.mockpg.MockPgBehavior;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -50,6 +51,9 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     private MockBankBehavior externalBank;
 
+    @Autowired
+    private MockPgBehavior externalPg;
+
     /**
      * 외부 기관의 상태를 되돌립니다.
      *
@@ -61,15 +65,20 @@ public abstract class AbstractIntegrationTest {
      * 유지됩니다.
      */
     @BeforeEach
-    void resetExternalInstitution() {
+    void resetExternalInstitutions() {
         externalBank.reset();
+        externalPg.reset();
     }
 
     @DynamicPropertySource
-    static void mockBank(DynamicPropertyRegistry registry) {
+    static void externalInstitutions(DynamicPropertyRegistry registry) {
         registry.add(
                 "paritypay.mock-bank.base-url",
                 () -> "http://localhost:"
                         + MockBankProcess.start(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+        registry.add(
+                "paritypay.mock-pg.base-url",
+                () -> "http://localhost:"
+                        + MockPgProcess.start(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
     }
 }

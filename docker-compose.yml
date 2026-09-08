@@ -76,6 +76,25 @@ services:
       - ./apps/mock-bank/build/libs:/app:ro
     command: ["java", "-jar", "/app/mock-bank-0.1.0-SNAPSHOT.jar"]
 
+  # 카드 PG 대역입니다. 은행과 별도 프로세스여야 한쪽만 죽이는 실험이 됩니다.
+  mock-pg:
+    image: eclipse-temurin:21-jre
+    container_name: paritypay-mock-pg
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MOCK_PG_DB_URL: jdbc:postgresql://postgres:5432/paritypay
+      MOCK_PG_DB_USERNAME: paritypay
+      MOCK_PG_DB_PASSWORD: paritypay
+      MOCK_PG_PORT: 8091
+    ports:
+      - "${PARITYPAY_MOCK_PG_PORT:-8091}:8091"
+    volumes:
+      # 먼저 빌드해야 합니다: ./gradlew :apps:mock-pg:bootJar
+      - ./apps/mock-pg/build/libs:/app:ro
+    command: ["java", "-jar", "/app/mock-pg-0.1.0-SNAPSHOT.jar"]
+
   # 관측성 스택입니다. 근거: docs/05-technical-design.md §12, Phase 6
   prometheus:
     image: prom/prometheus:v3.1.0

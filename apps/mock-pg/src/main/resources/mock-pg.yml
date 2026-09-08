@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: mock-pg
+  datasource:
+    # 스키마는 pay-api의 Flyway가 만듭니다. 기관이 우리와 DB를 공유하는 것은 현실과 다르며,
+    # 그 결합은 docs/05 §10에 남겨 두었습니다.
+    url: ${MOCK_PG_DB_URL:jdbc:postgresql://localhost:5432/paritypay}
+    username: ${MOCK_PG_DB_USERNAME:paritypay}
+    password: ${MOCK_PG_DB_PASSWORD:paritypay}
+    hikari:
+      pool-name: mock-pg-pool
+      maximum-pool-size: 10
+
+  flyway:
+    # 스키마는 pay-api가 만듭니다. 기관이 우리 마이그레이션을 함께 돌리면 두 앱이 같은 스키마를
+    # 두고 경쟁합니다.
+    enabled: false
+  jpa:
+    # 테스트에서는 두 앱이 클래스패스를 공유합니다. 기관은 JPA를 쓰지 않습니다.
+    open-in-view: false
+
+server:
+  port: ${MOCK_PG_PORT:8091}
+  error:
+    include-message: never
+
+logging:
+  level:
+    io.parity.mockbank: INFO
