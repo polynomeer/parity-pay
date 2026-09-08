@@ -238,3 +238,7 @@ curl -s -X POST "localhost:8080/api/v1/admin/wallets/$WALLET_ID/balance-rebuild"
 
 쓸 수 있는 값은 원장 계산값 하나뿐이라 이 경로로 없는 돈을 만들 수 없고, 자동으로 돌지 않습니다.
 절차는 [docs/09-consistency-recovery.md](docs/09-consistency-recovery.md) §12에 있습니다.
+
+## 라이선스
+
+MIT. 자세한 것은 [LICENSE](LICENSE)에 있습니다.
