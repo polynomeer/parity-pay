@@ -82,16 +82,21 @@ class App:
                 self.process.wait()
 
 
-def seed(container, events, lead_seconds):
-    """적체를 만듭니다. occurred_at을 n에 비례해 늘려 Aggregate 안의 순서를 정의합니다."""
+def seed(container, events, lead_seconds, partition_keys):
+    """적체를 만듭니다. occurred_at을 n에 비례해 늘려 Aggregate 안의 순서를 정의합니다.
+
+    partition_keys는 적체가 몇 개의 Aggregate에 흩어져 있는지입니다. 발행기는 파티션 키마다 선두
+    하나만 집어가므로(순서 보장), 이 값이 곧 한 배치에 담길 수 있는 최대 건수입니다. 적체가 한
+    지갑에 몰리는 상황(연속 충전, 부분취소 반복)이 곧 이 값이 작은 경우입니다.
+    """
     start_at = psql(container, f"SELECT to_char(now() + interval '{lead_seconds} seconds',"
                                " 'YYYY-MM-DD\"T\"HH24:MI:SS.MSOF')")
     psql(container, f"""
         INSERT INTO outbox_event
             (event_id, event_type, event_version, aggregate_type, aggregate_id, partition_key,
              payload, trace_id, status, attempt_count, next_attempt_at, occurred_at, created_at)
-        SELECT gen_random_uuid(), 'BenchmarkEvent', 1, 'BENCHMARK', 'agg-' || (n % 1000),
-               'agg-' || (n % 1000),
+        SELECT gen_random_uuid(), 'BenchmarkEvent', 1, 'BENCHMARK', 'agg-' || (n % {partition_keys}),
+               'agg-' || (n % {partition_keys}),
                jsonb_build_object('sequence', n, 'amount', 1000, 'currency', 'KRW'),
                NULL, 'PENDING', 0, timestamptz '{start_at}',
                now() + (n * interval '1 microsecond'), now()
@@ -173,6 +178,12 @@ def main():
     parser.add_argument("--jar", required=True)
     parser.add_argument("--instances", default="1,2,4", help="쉼표로 구분한 발행기 대수")
     parser.add_argument("--events", type=int, default=20000)
+    parser.add_argument(
+        "--partition-keys",
+        type=int,
+        default=1000,
+        help="적체가 흩어진 Aggregate 수. 작을수록 head-of-line 대기가 커집니다",
+    )
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--base-port", type=int, default=8080)
     parser.add_argument("--db-url", default="jdbc:postgresql://localhost:5435/paritypay")
@@ -195,7 +206,7 @@ def main():
             for i in range(count)
         ]
         for run in range(1, args.runs + 1):
-            print(f"== 발행기 {count}대, run {run}/{args.runs}")
+            print(f"== 발행기 {count}대, 파티션 키 {args.partition_keys}종, run {run}/{args.runs}")
             psql(args.container, "TRUNCATE outbox_event, consumed_event")
             # 토픽을 비웁니다. 이전 실행이 남긴 메시지가 있으면 중복·순서 계산이 그것까지 셉니다.
             rpk(args.broker_container, "topic", "delete", args.topic)
@@ -204,7 +215,7 @@ def main():
             for app in apps:
                 app.start()
             try:
-                start_at = seed(args.container, args.events, args.lead)
+                start_at = seed(args.container, args.events, args.lead, args.partition_keys)
                 elapsed = drain(args.container, start_at, args.drain_timeout)
             finally:
                 for app in apps:
@@ -220,6 +231,7 @@ def main():
                   f"duplicates={topic['duplicates']} inversions={topic['inversions']}")
 
     print()
+    print(f"파티션 키 {args.partition_keys}종, 이벤트 {args.events}건")
     print("발행기 | run | 발행 | 실패 | 소요(s) | 처리량(/s) | 브로커 도착 | 유실 | 중복 | 순서역전")
     for count, run, published, failed, elapsed, rate, topic in results:
         print(f"{count:>5} | {run:>3} | {published:>4} | {failed:>4} | {elapsed:>7.1f} | {rate:>10.1f} | "
