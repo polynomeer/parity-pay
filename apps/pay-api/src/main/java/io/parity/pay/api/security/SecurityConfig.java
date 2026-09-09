@@ -55,6 +55,11 @@ class SecurityConfig {
                         // 변경(`/auth/password`)은 반대로 인증이 필요합니다.
                         .requestMatchers("/api/v1/auth/password-reset", "/api/v1/auth/password-reset/confirm")
                         .permitAll()
+                        // 웹훅은 기관이 부릅니다. 기관은 우리 토큰을 갖고 있지 않으므로 신원 확인을
+                        // 서명으로 합니다(WebhookSignature). 인증 없이 열리는 유일한 쓰기 경로이며,
+                        // 그래서 payload를 믿지 않고 조회로 확정합니다. 근거: F-008
+                        .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/**")
+                        .permitAll()
                         // 헬스와 지표는 내부 수집 대상입니다. 운영에서는 네트워크로 제한합니다.
                         .requestMatchers("/actuator/health/**", "/actuator/prometheus")
                         .permitAll()

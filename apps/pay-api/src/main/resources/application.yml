@@ -83,6 +83,12 @@ paritypay:
     validate-schema: false
     base-backoff: 1s
     max-backoff: 5m
+  webhook:
+    # 기관과 나눠 가진 비밀입니다. 운영에서는 반드시 환경변수로 주입합니다.
+    secret: ${PARITYPAY_WEBHOOK_SECRET:local-development-only-webhook-secret}
+    # 서명된 시각의 허용 오차입니다. 좁을수록 재전송 창이 작아지지만, 기관과 우리 시계 차이보다
+    # 좁으면 정상 웹훅이 거절됩니다. 중복 자체는 webhook_receipt가 막습니다.
+    tolerance: 5m
   observability:
     # 불변조건 지표를 다시 계산하는 주기입니다. 게이지는 캐시된 값을 읽으므로 스크레이프 횟수와
     # 무관하게 이 주기만큼만 DB를 씁니다. 근거: reports/11 M-006

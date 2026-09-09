@@ -499,6 +499,14 @@
             }
           },
           "type" : "object"
+        },
+        "WebhookAck" : {
+          "properties" : {
+            "result" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
         }
       },
       "securitySchemes" : {
@@ -1074,6 +1082,49 @@
             }
           },
           "tags" : [ "wallet-controller" ]
+        }
+      },
+      "/api/v1/webhooks/mock-pg" : {
+        "post" : {
+          "operationId" : "receive",
+          "parameters" : [ {
+            "in" : "header",
+            "name" : "X-Webhook-Timestamp",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          }, {
+            "in" : "header",
+            "name" : "X-Webhook-Signature",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/WebhookAck"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "pg-webhook-controller" ]
         }
       }
     },

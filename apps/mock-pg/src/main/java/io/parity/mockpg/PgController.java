@@ -29,20 +29,24 @@ class PgController {
 
     private final PgLedger ledger;
     private final PgBehavior behavior;
+    private final WebhookSender webhooks;
 
-    PgController(PgLedger ledger, PgBehavior behavior) {
+    PgController(PgLedger ledger, PgBehavior behavior, WebhookSender webhooks) {
         this.ledger = ledger;
         this.behavior = behavior;
+        this.webhooks = webhooks;
     }
 
     @PostMapping("/approvals")
     ResponseEntity<ResultResponse> approve(@Valid @RequestBody ApprovalRequest request) {
         UUID merchantId = UUID.fromString(request.merchantId());
         return switch (behavior.approvalMode()) {
-            case NORMAL -> ResponseEntity.ok(new ResultResponse(
-                    true,
-                    ledger.approve(request.externalKey(), merchantId, request.orderId(), request.amount()),
-                    null));
+            case NORMAL -> {
+                String reference =
+                        ledger.approve(request.externalKey(), merchantId, request.orderId(), request.amount());
+                webhooks.notifyResult("PAYMENT_APPROVED", request.externalKey(), request.amount());
+                yield ResponseEntity.ok(new ResultResponse(true, reference, null));
+            }
             case EXPLICIT_DECLINE -> {
                 ledger.decline(request.externalKey(), merchantId, request.orderId(), request.amount());
                 yield ResponseEntity.ok(new ResultResponse(false, null, "MOCK_PG_DECLINED"));
@@ -54,8 +58,11 @@ class PgController {
             }
             case HANG_AFTER_PROCESSING -> {
                 // 카드는 이미 청구됐고 응답만 늦습니다. 호출자는 결과를 모릅니다.
+                // 웹훅은 그래도 나갑니다 — 실제 PG도 응답이 끊겼다고 알림을 멈추지 않으며, 오히려
+                // 이때가 웹훅이 값어치를 하는 순간입니다(F-006).
                 String reference =
                         ledger.approve(request.externalKey(), merchantId, request.orderId(), request.amount());
+                webhooks.notifyResult("PAYMENT_APPROVED", request.externalKey(), request.amount());
                 log.info("hanging after approving {}", request.externalKey());
                 behavior.hang();
                 yield ResponseEntity.ok(new ResultResponse(true, reference, null));
@@ -76,8 +83,11 @@ class PgController {
     @PostMapping("/refunds")
     ResponseEntity<ResultResponse> refund(@Valid @RequestBody RefundRequest request) {
         return switch (behavior.refundMode()) {
-            case NORMAL -> ResponseEntity.ok(new ResultResponse(
-                    true, ledger.refund(request.externalKey(), request.paymentKey(), request.amount()), null));
+            case NORMAL -> {
+                String reference = ledger.refund(request.externalKey(), request.paymentKey(), request.amount());
+                webhooks.notifyResult("REFUND_COMPLETED", request.externalKey(), request.amount());
+                yield ResponseEntity.ok(new ResultResponse(true, reference, null));
+            }
             case EXPLICIT_DECLINE -> {
                 ledger.declineRefund(request.externalKey(), request.paymentKey(), request.amount());
                 yield ResponseEntity.ok(new ResultResponse(false, null, "MOCK_PG_REFUND_DECLINED"));
@@ -87,8 +97,9 @@ class PgController {
                 yield ResponseEntity.ok(new ResultResponse(false, null, "MOCK_PG_LATE_RESPONSE"));
             }
             case HANG_AFTER_PROCESSING -> {
-                // 환불은 이미 나갔고 응답만 늦습니다(F-007).
+                // 환불은 이미 나갔고 응답만 늦습니다(F-007). 웹훅은 나갑니다.
                 String reference = ledger.refund(request.externalKey(), request.paymentKey(), request.amount());
+                webhooks.notifyResult("REFUND_COMPLETED", request.externalKey(), request.amount());
                 behavior.hang();
                 yield ResponseEntity.ok(new ResultResponse(true, reference, null));
             }
@@ -104,7 +115,6 @@ class PgController {
                 new StatusResponse(ledger.refundStatus(externalKey).orElse("NOT_FOUND")));
     }
 
-    /** 장애 주입입니다. 이 앱은 운영에 배포되지 않으므로 인증을 두지 않습니다. */
     /**
      * 시험이 기관의 장부를 초기화하는 통로입니다.
      *
@@ -142,6 +152,12 @@ class PgController {
         if (request.hangForMillis() != null) {
             behavior.setHangFor(Duration.ofMillis(request.hangForMillis()));
         }
+        if (request.webhookUrl() != null) {
+            behavior.setWebhookUrl(request.webhookUrl());
+        }
+        if (request.webhookMode() != null) {
+            behavior.setWebhookMode(request.webhookMode());
+        }
         if (Boolean.TRUE.equals(request.reset())) {
             behavior.reset();
         }
@@ -161,6 +177,8 @@ class PgController {
     record StatusResponse(String status) {}
 
     record BehaviorRequest(
+            PgBehavior.WebhookMode webhookMode,
+            String webhookUrl,
             PgBehavior.Mode approvalMode,
             PgBehavior.Mode refundMode,
             Boolean approvalStatusQueryAvailable,

@@ -18,6 +18,13 @@ spring:
     # 테스트에서는 두 앱이 클래스패스를 공유합니다. 기관은 JPA를 쓰지 않습니다.
     open-in-view: false
 
+# 결과를 알릴 곳입니다. 비어 있으면 웹훅을 보내지 않습니다 — 실제 PG도 등록된 주소가 없으면
+# 보내지 않고, 그때는 상대가 조회로 확정해야 합니다.
+mock-pg:
+  webhook:
+    url: ${MOCK_PG_WEBHOOK_URL:}
+    secret: ${MOCK_PG_WEBHOOK_SECRET:local-development-only-webhook-secret}
+
 server:
   port: ${MOCK_PG_PORT:8091}
   error:

@@ -123,6 +123,8 @@ public class MockPgClient {
     record StatusResponse(String status) {}
 
     public record BehaviorRequest(
+            String webhookMode,
+            String webhookUrl,
             String approvalMode,
             String refundMode,
             Boolean approvalStatusQueryAvailable,
