@@ -60,10 +60,14 @@ AI 에이전트(Claude Code)로 이 저장소에서 작업한다면 [CLAUDE.md](
 
 ## 현재 상태
 
-Phase 0~6이 모두 구현되었습니다. 기능은 동작하고 불변조건은 자동화 테스트와 DB 제약으로 검증되지만,
-HTTP 부하 실험은 아직 실행하지 않아 성능 수치는 비어 있습니다.
+Phase 0~8이 모두 구현되었고, 설계 문서가 예고한 장애 시나리오 F-001~F-011을 전부 실행했습니다.
+실험은 매번 결함을 찾아냈고 그 목록과 수치는 [성능·장애 보고서](reports/11-performance-failure-report-template.md)에
+있습니다 — 통과한 것만이 아니라 틀렸던 가설과 측정 방법의 실수도 함께 적혀 있습니다.
 
-**검증 현황** (2026-09-07): 169개 테스트, 실패 0건. PR과 main 푸시마다
+외부기관(Mock Bank·Mock PG)은 별도 프로세스이고 **자기 데이터베이스**를 씁니다. 대사와 타임라인은
+기관의 API로 받으며, 그래서 "기관에 물어보지 못했다"와 "기관에 기록이 없다"가 코드에서 구분됩니다.
+
+**검증 현황** (2026-09-09): 277개 테스트, 실패 0건. PR과 main 푸시마다
 [CI](.github/workflows/ci.yml)가 전체 테스트, 마이그레이션 검증, 문서 링크·불변조건 추적,
 비밀값 검사를 실행합니다.
 (`./gradlew build --rerun-tasks --no-build-cache`).
@@ -102,6 +106,8 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 ```
 
 ```bash
+# 기관용 데이터베이스는 볼륨이 비어 있을 때 만들어집니다. 이미 쓰던 환경이라면 한 번 비웁니다.
+docker compose down -v
 docker compose up -d
 ./gradlew test
 
@@ -115,8 +121,9 @@ SPRING_PROFILES_ACTIVE=local ./gradlew :apps:pay-api:bootRun
 
 운영 환경에서는 `PARITYPAY_JWT_SECRET`을 주입하고 `paritypay.security.bootstrap-operators`를 비웁니다.
 
-테스트는 Testcontainers로 PostgreSQL과 Redpanda를 띄우고, 외부 은행도 별도 Spring 컨텍스트로 실제로
-띄웁니다. 그래서 `docker compose` 없이도 실행되며, 타임아웃은 흉내가 아니라 진짜 읽기 타임아웃입니다.
+테스트는 Testcontainers로 PostgreSQL과 Redpanda를 띄우고, 외부 기관도 별도 Spring 컨텍스트로 실제로
+띄웁니다. 기관에는 **자기 데이터베이스**가 따로 만들어지므로 우리 코드가 기관의 표를 조인할 수
+없습니다. 그래서 `docker compose` 없이도 실행되며, 타임아웃은 흉내가 아니라 진짜 읽기 타임아웃입니다.
 
 은행을 죽여 연결 거부를 만들려면:
 
