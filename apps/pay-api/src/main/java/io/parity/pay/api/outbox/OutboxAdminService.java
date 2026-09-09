@@ -26,10 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class OutboxAdminService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final OutboxRepository outboxRepository;
     private final Clock clock;
 
-    OutboxAdminService(JdbcTemplate jdbcTemplate, Clock clock) {
+    OutboxAdminService(JdbcTemplate jdbcTemplate, OutboxRepository outboxRepository, Clock clock) {
         this.jdbcTemplate = jdbcTemplate;
+        this.outboxRepository = outboxRepository;
         this.clock = clock;
     }
 
@@ -65,6 +67,24 @@ public class OutboxAdminService {
                                 : rs.getTimestamp("published_at").toInstant()),
                 status,
                 limit);
+    }
+
+    /**
+     * 적체가 몰려 있는 파티션 키를 많은 순으로 돌려줍니다.
+     *
+     * <p>지표(`paritypay.outbox.max_partition_pending`)가 "한 곳에 몰려 있다"까지 알려 주면, 여기서
+     * "어느 지갑인가"를 봅니다. 파티션 키는 지갑·결제 ID이므로 지표 라벨로는 붙일 수 없습니다 —
+     * 라벨 값이 무한히 늘어납니다.
+     *
+     * <p>발행기는 파티션 키마다 선두 하나만 집어가므로 한 키의 발행은 직렬화됩니다. 기본 설정에서
+     * 초당 26.6건이 상한이고(M-003), 그보다 빨리 쌓이는 키가 있으면 그 키만 계속 밀립니다.
+     * {@code maxAttemptCount}가 함께 오르고 있으면 밀리는 이유가 양이 아니라 실패입니다.
+     */
+    public List<PartitionBacklog> partitionBacklog(int limit) {
+        return outboxRepository.topPartitionBacklog(limit, clock.instant()).stream()
+                .map(row -> new PartitionBacklog(
+                        row.partitionKey(), row.pending(), row.oldestAgeSeconds(), row.maxAttemptCount()))
+                .toList();
     }
 
     /**
@@ -172,6 +192,9 @@ public class OutboxAdminService {
             Instant occurredAt,
             Instant nextAttemptAt,
             Instant publishedAt) {}
+
+    /** 파티션 키 하나에 몰린 적체입니다. Outbox 내부 타입을 그대로 응답으로 내보내지 않습니다. */
+    public record PartitionBacklog(String partitionKey, long pending, long oldestAgeSeconds, int maxAttemptCount) {}
 
     public record RequeueOutcome(
             UUID eventId,

@@ -43,6 +43,9 @@ class OutboxAdminApiTest extends AbstractIntegrationTest {
     @Autowired
     private OperatorBootstrap operatorBootstrap;
 
+    @Autowired
+    private io.micrometer.core.instrument.MeterRegistry meterRegistry;
+
     private String operatorToken;
     private String viewerToken;
 
@@ -149,6 +152,44 @@ class OutboxAdminApiTest extends AbstractIntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                         "SELECT status FROM outbox_event WHERE event_id = ?", String.class, eventId))
                 .isEqualTo("FAILED");
+    }
+
+    @Test
+    @DisplayName("적체가 한 파티션 키에 몰리면 전체 적체와 구분되어 드러난다")
+    void backlogConcentratedOnOneKeyIsVisible() {
+        // 한 지갑에 40건, 다른 지갑들에 1건씩. 전체 적체(45)만 보면 평범해 보입니다.
+        Instant base = Instant.now().minusSeconds(300);
+        for (int i = 0; i < 40; i++) {
+            seedEvent("PENDING", "busy-wallet", base.plusSeconds(i), 0, null);
+        }
+        for (int i = 0; i < 5; i++) {
+            seedEvent("PENDING", "quiet-wallet-" + i, base.plusSeconds(i), 0, null);
+        }
+
+        // 지표는 "한 곳에 몰려 있다"까지만 말합니다. 파티션 키는 지갑 ID이므로 라벨로 붙일 수
+        // 없습니다 — 붙이면 시계열이 지갑 수만큼 생깁니다.
+        assertThat(meterRegistry
+                        .get("paritypay.outbox.max_partition_pending")
+                        .gauge()
+                        .value())
+                .isEqualTo(40.0d);
+        assertThat(meterRegistry.get("paritypay.outbox.pending").gauge().value())
+                .isEqualTo(45.0d);
+
+        // 어느 지갑인지는 운영자 API가 말합니다.
+        ResponseEntity<List> response = restTemplate.exchange(
+                "/api/v1/admin/outbox-events/backlog?limit=3",
+                HttpMethod.GET,
+                new HttpEntity<>(ApiAuth.bearer(operatorToken)),
+                List.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<Map<String, Object>> rows = response.getBody();
+        assertThat(rows).hasSize(3);
+        assertThat(rows.get(0).get("partitionKey")).isEqualTo("busy-wallet");
+        assertThat(rows.get(0).get("pending")).isEqualTo(40);
+        // 얼마나 오래 밀려 있었는지가 함께 나와야 "쌓이는 중"과 "막혀 있음"을 가릅니다.
+        assertThat(((Number) rows.get(0).get("oldestAgeSeconds")).longValue()).isGreaterThan(290L);
     }
 
     private ResponseEntity<Map> retry(UUID eventId, String token) {

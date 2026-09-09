@@ -1309,6 +1309,26 @@
           },
           "type" : "object"
         },
+        "PartitionBacklog" : {
+          "properties" : {
+            "maxAttemptCount" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "oldestAgeSeconds" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "partitionKey" : {
+              "type" : "string"
+            },
+            "pending" : {
+              "format" : "int64",
+              "type" : "integer"
+            }
+          },
+          "type" : "object"
+        },
         "PaymentRecoveryOutcomeResponse" : {
           "properties" : {
             "changed" : {
@@ -1724,6 +1744,37 @@
                   "schema" : {
                     "items" : {
                       "$ref" : "#/components/schemas/OutboxEventSummary"
+                    },
+                    "type" : "array"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
+      "/api/v1/admin/outbox-events/backlog" : {
+        "get" : {
+          "operationId" : "outboxBacklog",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 20,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "$ref" : "#/components/schemas/PartitionBacklog"
                     },
                     "type" : "array"
                   }

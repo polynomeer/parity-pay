@@ -192,6 +192,58 @@ class OutboxRepository {
         return Math.max(0.0d, (now.toEpochMilli() - oldest.getTime()) / 1000.0d);
     }
 
+    /**
+     * 한 파티션 키에 몰려 있는 미발행 건수의 최댓값입니다.
+     *
+     * <p>전체 적체와 다른 것을 봅니다. 발행기는 파티션 키마다 선두 하나만 집어가므로(순서 보장) 한
+     * Aggregate의 발행은 직렬화되고, 기본 설정에서 초당 26.6건이 상한입니다(M-003). 그래서 전체
+     * 적체가 작아도 <b>한 지갑만 계속 밀리는</b> 상황이 생길 수 있고, {@code pending}과
+     * {@code oldest_pending_age_seconds}만으로는 그것을 전체 지연과 구분할 수 없습니다.
+     *
+     * <p>지표에 파티션 키를 라벨로 붙이지 않습니다. 파티션 키는 지갑·결제 ID이므로 라벨 값이 무한히
+     * 늘어나고, 시계열이 그만큼 생깁니다. 어느 키인지는 운영자 API로 봅니다.
+     *
+     * <p>근거: reports/11 M-003, ADR-005
+     */
+    long maxPartitionPending() {
+        Long max = jdbcTemplate.queryForObject(
+                """
+                SELECT coalesce(max(pending), 0)
+                  FROM (SELECT count(*) AS pending
+                          FROM outbox_event
+                         WHERE status = 'PENDING'
+                         GROUP BY partition_key) AS per_key
+                """,
+                Long.class);
+        return max == null ? 0L : max;
+    }
+
+    /** 적체가 많은 순으로 파티션 키를 돌려줍니다. 운영자가 "어느 지갑인가"를 보는 경로입니다. */
+    List<PartitionBacklog> topPartitionBacklog(int limit, Instant now) {
+        return jdbcTemplate.query(
+                """
+                SELECT partition_key, count(*) AS pending, min(occurred_at) AS oldest,
+                       max(attempt_count) AS max_attempts
+                  FROM outbox_event
+                 WHERE status = 'PENDING'
+                 GROUP BY partition_key
+                 ORDER BY pending DESC, oldest
+                 LIMIT ?
+                """,
+                (rs, rowNum) -> new PartitionBacklog(
+                        rs.getString("partition_key"),
+                        rs.getLong("pending"),
+                        // 나이는 초 단위 정수로 둡니다. 운영자 화면에 밀리초는 의미가 없고,
+                        // 이 저장소는 필드에 부동소수점을 두지 않습니다(ModuleBoundaryTest).
+                        Math.max(
+                                0L,
+                                (now.toEpochMilli() - rs.getTimestamp("oldest").getTime()) / 1000L),
+                        rs.getInt("max_attempts")),
+                limit);
+    }
+
+    record PartitionBacklog(String partitionKey, long pending, long oldestAgeSeconds, int maxAttemptCount) {}
+
     private static String truncate(String error) {
         if (error == null) {
             return null;

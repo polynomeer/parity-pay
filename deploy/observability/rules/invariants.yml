@@ -44,6 +44,20 @@ groups:
         annotations:
           summary: "Outbox 발행이 1분 이상 밀리고 있습니다"
 
+      # 적체가 한 파티션 키에 몰린 상황입니다. 전체 적체 경보와 다른 사고를 봅니다 — 전체가 작아도
+      # 한 지갑만 계속 밀리면 그 지갑의 이벤트는 영영 따라잡지 못합니다.
+      # 임계치 100건은 실측에서 나왔습니다. 한 파티션 키의 발행은 직렬화되어 기본 설정에서 초당
+      # 26.6건이 상한이므로(M-003), 100건은 정상이면 약 4초에 사라집니다. 5분을 넘긴다는 것은
+      # 비워지는 속도보다 쌓이는 속도가 빠르거나 그 키가 막혀 있다는 뜻입니다.
+      # 어느 키인지는 GET /api/v1/admin/outbox-events/backlog 로 봅니다.
+      - alert: OutboxBacklogConcentratedOnOneKey
+        expr: paritypay_outbox_max_partition_pending > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "한 파티션 키에 미발행 이벤트가 5분 넘게 100건 이상 쌓여 있습니다"
+
       # 소비자 적체입니다. Outbox 적체와 다른 사고입니다 — 발행이 멈추면 이벤트가 브로커에 없고,
       # 소비가 멈추면 브로커에는 있는데 프로젝션과 정산이 따라오지 못합니다.
       # 임계치 1,000건은 기준선이 아니라 출발점입니다. 발행 실측이 1대 기준 2,700건/초였으므로

@@ -311,6 +311,18 @@ class OperationsController {
     }
 
     /**
+     * 적체가 몰려 있는 파티션 키입니다.
+     *
+     * <p>`paritypay.outbox.max_partition_pending`이 오르면 여기서 어느 지갑·결제인지 봅니다. 지표에
+     * 파티션 키를 라벨로 붙이면 시계열이 무한히 늘어나므로 이 경로로 분리했습니다.
+     */
+    @GetMapping("/outbox-events/backlog")
+    ResponseEntity<List<OutboxAdminService.PartitionBacklog>> outboxBacklog(
+            @RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(outboxAdminService.partitionBacklog(limit));
+    }
+
+    /**
      * 실패한 이벤트를 다시 발행 대상으로 되돌립니다.
      *
      * <p>여기서 브로커로 직접 보내지 않습니다. 상태만 되돌리고 발행은 발행기가 합니다. 확인 시점과

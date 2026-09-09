@@ -32,6 +32,16 @@ class OutboxMetrics {
                 .description("최대 재시도를 넘겨 운영자 확인이 필요한 이벤트 수")
                 .register(meterRegistry);
 
+        // 전체 적체가 작아도 한 파티션 키만 계속 밀릴 수 있습니다. 발행기가 키마다 선두 하나만
+        // 집어가므로 그 키의 발행은 직렬화되고, 기본 설정에서 초당 26.6건이 상한입니다(M-003).
+        // 이 값이 pending에 근접하면 적체가 한 곳에 몰려 있다는 뜻입니다.
+        Gauge.builder(
+                        "paritypay.outbox.max_partition_pending",
+                        this,
+                        self -> self.outboxRepository.maxPartitionPending())
+                .description("한 파티션 키에 몰려 있는 미발행 이벤트 수의 최댓값")
+                .register(meterRegistry);
+
         Gauge.builder(
                         "paritypay.outbox.oldest_pending_age_seconds",
                         this,

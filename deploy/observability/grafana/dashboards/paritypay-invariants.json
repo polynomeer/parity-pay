@@ -58,7 +58,8 @@
       "targets": [
         { "expr": "paritypay_outbox_pending", "legendFormat": "pending" },
         { "expr": "paritypay_outbox_failed", "legendFormat": "failed" },
-        { "expr": "paritypay_outbox_oldest_pending_age_seconds", "legendFormat": "oldest age (s)" }
+        { "expr": "paritypay_outbox_oldest_pending_age_seconds", "legendFormat": "oldest age (s)" },
+        { "expr": "paritypay_outbox_max_partition_pending", "legendFormat": "max per partition key" }
       ]
     },
     {
