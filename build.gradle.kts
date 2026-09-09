@@ -8,8 +8,8 @@ plugins {
 }
 
 val springBootVersion = "3.5.16"
-val archUnitVersion = "1.4.1"
-val jqwikVersion = "1.9.2"
+val archUnitVersion = "1.5.0"
+val jqwikVersion = "1.10.1"
 val errorProneVersion = "2.50.0"
 
 allprojects {
