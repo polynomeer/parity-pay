@@ -991,6 +991,33 @@
           "tags" : [ "top-up-controller" ]
         }
       },
+      "/api/v1/wallets/me" : {
+        "get" : {
+          "operationId" : "getMyBalance",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "currency",
+            "required" : false,
+            "schema" : {
+              "default" : "KRW",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/WalletBalanceResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "wallet-controller" ]
+        }
+      },
       "/api/v1/wallets/{walletId}" : {
         "get" : {
           "operationId" : "getBalance",

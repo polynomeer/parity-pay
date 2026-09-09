@@ -19,6 +19,12 @@ target/
 # out/ 로 두면 adapter/out, port/out 같은 소스 디렉터리가 통째로 무시됩니다.
 /out/
 
+# 프론트엔드 (pnpm 워크스페이스)
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
 # OS
 .DS_Store
 Thumbs.db

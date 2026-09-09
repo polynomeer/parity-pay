@@ -50,6 +50,17 @@ public class WalletService implements WalletQuery, WalletFundsUseCase, RebuildBa
         return new WalletBalanceView(walletId, balance.available(), balance.pending(), balance.updatedAt());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public WalletBalanceView getMyBalance(MemberId memberId, CurrencyCode currency) {
+        // 소유권 검사가 따로 필요 없습니다. 조회 자체가 호출자의 회원 ID로 시작합니다.
+        Wallet wallet = walletRepository
+                .findByMemberAndCurrency(memberId, currency)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "wallet not found"));
+        WalletBalance balance = loadBalance(wallet.id());
+        return new WalletBalanceView(wallet.id(), balance.available(), balance.pending(), balance.updatedAt());
+    }
+
     /**
      * 스냅샷과 원장 재생값을 비교합니다.
      *

@@ -1,6 +1,7 @@
 package io.parity.pay.wallet.adapter.in.web;
 
 import io.parity.pay.shared.id.WalletId;
+import io.parity.pay.shared.money.CurrencyCode;
 import io.parity.pay.shared.security.CurrentPrincipal;
 import io.parity.pay.wallet.application.port.in.WalletQuery;
 import io.parity.pay.wallet.application.port.in.WalletTransactionQuery;
@@ -31,15 +32,33 @@ class WalletController {
         this.currentPrincipal = currentPrincipal;
     }
 
+    /**
+     * 호출자 자신의 지갑입니다. 근거: FR-004
+     *
+     * <p>클라이언트가 `walletId`를 보관하지 않아도 됩니다. 이 경로가 없던 동안 `walletId`는 가입
+     * 응답에만 있었고 토큰에도 없어서, 다른 기기에서 로그인하면 자기 지갑을 조회할 수단이
+     * 없었습니다. 프론트엔드를 붙이면서 드러났습니다.
+     */
+    @GetMapping("/me")
+    ResponseEntity<WalletBalanceResponse> getMyBalance(@RequestParam(defaultValue = "KRW") String currency) {
+        WalletQuery.WalletBalanceView view =
+                walletQuery.getMyBalance(currentPrincipal.memberId(), CurrencyCode.valueOf(currency));
+        return ResponseEntity.ok(toResponse(view));
+    }
+
     @GetMapping("/{walletId}")
     ResponseEntity<WalletBalanceResponse> getBalance(@PathVariable UUID walletId) {
         WalletQuery.WalletBalanceView view = walletQuery.getBalance(currentPrincipal.memberId(), WalletId.of(walletId));
-        return ResponseEntity.ok(new WalletBalanceResponse(
+        return ResponseEntity.ok(toResponse(view));
+    }
+
+    private static WalletBalanceResponse toResponse(WalletQuery.WalletBalanceView view) {
+        return new WalletBalanceResponse(
                 view.walletId().value(),
                 view.available().amount(),
                 view.pending().amount(),
                 view.available().currency().name(),
-                view.asOf()));
+                view.asOf());
     }
 
     /**

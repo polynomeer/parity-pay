@@ -72,6 +72,40 @@ jobs:
       - name: Check invariant traceability
         run: python3 scripts/check-invariant-coverage.py
 
+  frontend:
+    name: 프론트엔드
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # 생성물이 커밋된 스냅샷과 어긋나면 실패합니다. 백엔드가 API를 바꾸고 타입을 다시 만들지
+      # 않으면 여기서 드러납니다. 근거: docs/14-frontend-design.md §8
+      - name: Check generated API types are current
+        run: |
+          pnpm generate
+          git diff --exit-code packages/api-client/src/generated
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
   secrets:
     name: 비밀값 검사
     runs-on: ubuntu-latest
