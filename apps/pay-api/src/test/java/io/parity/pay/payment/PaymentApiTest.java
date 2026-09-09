@@ -48,7 +48,6 @@ class PaymentApiTest extends AbstractIntegrationTest {
                 TRUNCATE refresh_token, login_attempt,
                          ledger_entry, ledger_transaction, ledger_account,
                          idempotency_record, payment_cancellation, payment, top_up,
-                         mock_bank_withdrawal, mock_bank_account,
                          wallet_balance, bank_account, wallet, member CASCADE
                 """);
         // 컨텍스트를 공유하므로 다른 테스트가 남긴 장애 주입 설정을 되돌립니다.

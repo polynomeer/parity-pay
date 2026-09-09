@@ -2,10 +2,9 @@ spring:
   application:
     name: mock-bank
   datasource:
-    # 스키마는 pay-api의 Flyway가 만듭니다. 기관이 우리와 DB를 공유하는 것은 현실과 다르지만,
-    # 이 실험의 목적은 **호출 경계**를 진짜 네트워크로 만드는 것입니다. 대사·타임라인이 아직
-    # 이 표를 직접 읽는다는 사실은 docs/05 §10에 남겨 두었습니다.
-    url: ${MOCK_BANK_DB_URL:jdbc:postgresql://localhost:5432/paritypay}
+    # 이 기관의 데이터베이스입니다. pay-api와 **다른 데이터베이스**여야 합니다. 같은 곳에 두면 우리
+    # 쪽 코드가 기관의 표를 조인할 수 있고, 실제로 대사가 그렇게 하고 있었습니다(2026-09-09에 분리).
+    url: ${MOCK_BANK_DB_URL:jdbc:postgresql://localhost:5432/paritypay_bank}
     username: ${MOCK_BANK_DB_USERNAME:paritypay}
     password: ${MOCK_BANK_DB_PASSWORD:paritypay}
     hikari:
@@ -13,9 +12,10 @@ spring:
       maximum-pool-size: 10
 
   flyway:
-    # 스키마는 pay-api가 만듭니다. 기관이 우리 마이그레이션을 함께 돌리면 두 앱이 같은 스키마를
-    # 두고 경쟁합니다.
-    enabled: false
+    # 자기 스키마는 자기가 만듭니다. 위치가 pay-api와 다른 이유는 테스트에서 두 앱이 클래스패스를
+    # 공유하기 때문입니다. 둘 다 `db/migration`을 쓰면 서로의 마이그레이션을 집어가고 V1이 충돌합니다.
+    enabled: true
+    locations: classpath:db/mock-bank
   jpa:
     # 테스트에서는 두 앱이 클래스패스를 공유합니다. 기관은 JPA를 쓰지 않습니다.
     open-in-view: false

@@ -66,6 +66,27 @@ public class MockPgClient {
         return status("/mock-pg/refunds/" + externalKey);
     }
 
+    /** 기관의 장부와 장애 모드를 함께 초기화합니다. */
+    public void resetInstitution() {
+        restClient.post().uri("/mock-pg/admin/reset").retrieve().toBodilessEntity();
+    }
+
+    /** 기관에 남은 건수입니다. {@code table}은 approvals 또는 refunds입니다. */
+    public long count(String table, String status) {
+        Long value = restClient
+                .get()
+                .uri(builder -> {
+                    var uri = builder.path("/mock-pg/admin/{table}/count");
+                    if (status != null) {
+                        uri = uri.queryParam("status", status);
+                    }
+                    return uri.build(table);
+                })
+                .retrieve()
+                .body(Long.class);
+        return value == null ? 0L : value;
+    }
+
     public void setBehavior(BehaviorRequest request) {
         restClient
                 .post()

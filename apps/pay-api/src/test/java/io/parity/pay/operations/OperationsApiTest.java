@@ -60,7 +60,6 @@ class OperationsApiTest extends AbstractIntegrationTest {
                          idempotency_record, payment_cancellation, payment,
                          top_up_recovery, top_up, audit_log,
                          outbox_event, consumed_event, wallet_transaction,
-                         mock_bank_withdrawal, mock_bank_account,
                          wallet_balance, bank_account, wallet, member CASCADE
                 """);
 

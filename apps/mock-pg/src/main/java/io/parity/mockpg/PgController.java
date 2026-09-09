@@ -105,6 +105,26 @@ class PgController {
     }
 
     /** 장애 주입입니다. 이 앱은 운영에 배포되지 않으므로 인증을 두지 않습니다. */
+    /**
+     * 시험이 기관의 장부를 초기화하는 통로입니다.
+     *
+     * <p>기관이 자기 데이터베이스를 갖게 되면서 시험이 우리 JdbcTemplate으로 기관 표를 비울 수 없게
+     * 됐습니다. 그건 옳은 일이고, 대신 기관 쪽에 이 통로를 둡니다.
+     */
+    @PostMapping("/admin/reset")
+    ResponseEntity<Void> reset() {
+        ledger.reset();
+        behavior.reset();
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/admin/{table}/count")
+    ResponseEntity<Long> count(
+            @PathVariable String table,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String status) {
+        return ResponseEntity.ok(ledger.count(table, status));
+    }
+
     @PostMapping("/admin/behavior")
     ResponseEntity<Void> setBehavior(@RequestBody BehaviorRequest request) {
         if (request.approvalMode() != null) {

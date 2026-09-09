@@ -72,8 +72,24 @@ public class MockBankBehavior {
         send(new MockBankClient.BehaviorRequest(null, null, null, null, available, null, null));
     }
 
+    /**
+     * 장애 모드만 되돌립니다. <b>장부는 건드리지 않습니다.</b>
+     *
+     * <p>시험이 장애를 주입했다가 정상으로 되돌릴 때 부르는 자리입니다. 여기서 장부까지 비우면
+     * 방금 만든 외부 기록이 사라져, 복구가 조회로 확정해야 할 대상이 없어집니다.
+     */
     public void reset() {
         send(new MockBankClient.BehaviorRequest(null, null, null, null, null, null, true));
+    }
+
+    /**
+     * 장부까지 비웁니다. 시험 사이의 초기화 전용입니다.
+     *
+     * <p>기관이 자기 데이터베이스를 갖기 전에는 시험이 우리 JdbcTemplate으로 기관 표를 비웠습니다.
+     * 이제 그럴 수 없고, 그것이 옳습니다 — 실제 기관의 장부를 우리가 지울 수는 없습니다.
+     */
+    public void resetLedgerAndBehavior() {
+        client.resetInstitution();
     }
 
     /**

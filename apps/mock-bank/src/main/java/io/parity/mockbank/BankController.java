@@ -140,6 +140,68 @@ class BankController {
         return ResponseEntity.ok(ledger.payoutStatement(from, to));
     }
 
+    /** 건별 기록입니다. 상태만이 아니라 금액·시각까지 알려 줍니다. */
+    @GetMapping("/records/withdrawals/{externalKey}")
+    ResponseEntity<BankLedger.Statement> withdrawalRecord(@PathVariable String externalKey) {
+        if (!behavior.withdrawalStatusQueryAvailable()) {
+            return ResponseEntity.status(503).build();
+        }
+        return ledger.withdrawalRecord(externalKey).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
+                .build());
+    }
+
+    @GetMapping("/records/payouts/{externalKey}")
+    ResponseEntity<BankLedger.Statement> payoutRecord(@PathVariable String externalKey) {
+        if (!behavior.payoutStatusQueryAvailable()) {
+            return ResponseEntity.status(503).build();
+        }
+        return ledger.payoutRecord(externalKey).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
+                .build());
+    }
+
+    /**
+     * 시험이 기관의 장부를 손보는 통로입니다.
+     *
+     * <p>기관이 자기 데이터베이스를 갖게 되면서 시험이 우리 JdbcTemplate으로 기관 표를 비우거나
+     * 고칠 수 없게 됐습니다. 그건 옳은 일이고, 대신 기관 쪽에 이 통로를 둡니다. 이 앱은 운영에
+     * 배포되지 않습니다.
+     */
+    @PostMapping("/admin/reset")
+    ResponseEntity<Void> reset() {
+        ledger.reset();
+        behavior.reset();
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/admin/withdrawals/amend")
+    ResponseEntity<Void> amendWithdrawal(@RequestBody AmendRequest request) {
+        ledger.amendWithdrawal(request.externalKey(), request.amount(), Boolean.TRUE.equals(request.delete()));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/admin/withdrawals/orphan")
+    ResponseEntity<Void> insertOrphanWithdrawal(@RequestBody OrphanRequest request) {
+        ledger.insertOrphanWithdrawal(request.externalKey(), request.amount(), request.accountNumberToken());
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/admin/accounts/{accountNumberToken}/balance")
+    ResponseEntity<Long> accountBalance(@PathVariable String accountNumberToken) {
+        return ledger.accountBalance(accountNumberToken)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/admin/accounts/balance-total")
+    ResponseEntity<Long> totalBalance() {
+        return ResponseEntity.ok(ledger.totalAccountBalance());
+    }
+
+    @GetMapping("/admin/{table}/count")
+    ResponseEntity<Long> count(@PathVariable String table, @RequestParam(required = false) String status) {
+        return ResponseEntity.ok(ledger.count(table, status));
+    }
+
     /** 장애 주입입니다. 이 앱은 운영에 배포되지 않으므로 인증을 두지 않습니다. */
     @PostMapping("/admin/behavior")
     ResponseEntity<Void> setBehavior(@RequestBody BehaviorRequest request) {
@@ -170,6 +232,10 @@ class BankController {
     private static TransferResponse toResponse(BankLedger.Outcome outcome) {
         return new TransferResponse(outcome.succeeded(), outcome.externalReferenceId(), outcome.failureReason());
     }
+
+    record AmendRequest(String externalKey, Long amount, Boolean delete) {}
+
+    record OrphanRequest(String externalKey, long amount, String accountNumberToken) {}
 
     record OpenAccountRequest(
             @NotBlank String accountId,

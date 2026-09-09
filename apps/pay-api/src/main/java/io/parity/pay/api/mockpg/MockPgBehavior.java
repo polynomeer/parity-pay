@@ -57,8 +57,14 @@ public class MockPgBehavior {
         client.setBehavior(new MockPgClient.BehaviorRequest(null, null, null, available, null, null));
     }
 
+    /** 장애 모드만 되돌립니다. 장부는 건드리지 않습니다. 이유는 MockBankBehavior에 적어 두었습니다. */
     public void reset() {
         client.setBehavior(new MockPgClient.BehaviorRequest(null, null, null, null, null, true));
+    }
+
+    /** 장부까지 비웁니다. 시험 사이의 초기화 전용입니다. */
+    public void resetLedgerAndBehavior() {
+        client.resetInstitution();
     }
 
     /** 기관이 붙잡고 있을 시간입니다. 읽기 타임아웃의 두 배로 잡아 타임아웃이 확실히 재현되게 합니다. */

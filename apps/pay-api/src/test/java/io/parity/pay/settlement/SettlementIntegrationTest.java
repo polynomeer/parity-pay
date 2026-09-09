@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import io.parity.pay.api.mockbank.MockBankBehavior;
+import io.parity.pay.api.mockbank.MockBankClient;
 import io.parity.pay.api.onboarding.OnboardingService;
 import io.parity.pay.api.outbox.OutboxPublisher;
 import io.parity.pay.payment.application.port.in.ApprovePaymentUseCase;
@@ -87,6 +88,9 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     private MockBankBehavior mockBankBehavior;
 
     @Autowired
+    private MockBankClient bankClient;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     private MemberId memberId;
@@ -100,12 +104,10 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
                 """
                 TRUNCATE refresh_token, login_attempt,
                          settlement_recovery, settlement_item, settlement, order_confirmation,
-                         mock_bank_payout,
                          ledger_entry, ledger_transaction, ledger_account,
                          idempotency_record, payment_cancellation, payment,
                          top_up_recovery, top_up, audit_log,
                          outbox_event, consumed_event, wallet_transaction,
-                         mock_bank_withdrawal, mock_bank_account,
                          wallet_balance, bank_account, wallet, member CASCADE
                 """);
 
@@ -405,8 +407,7 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
     }
 
     private long mockBankPayoutCount() {
-        Long count = jdbcTemplate.queryForObject("SELECT count(*) FROM mock_bank_payout", Long.class);
-        return count == null ? 0L : count;
+        return bankClient.count("payouts", null);
     }
 
     private List<String> outboxEventTypes() {

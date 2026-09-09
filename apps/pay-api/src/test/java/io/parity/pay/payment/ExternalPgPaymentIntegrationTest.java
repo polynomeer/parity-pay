@@ -3,6 +3,7 @@ package io.parity.pay.payment;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.parity.pay.api.mockpg.MockPgBehavior;
+import io.parity.pay.api.mockpg.MockPgClient;
 import io.parity.pay.api.onboarding.OnboardingService;
 import io.parity.pay.payment.application.port.in.ApprovePaymentUseCase;
 import io.parity.pay.payment.application.port.in.ApprovePaymentUseCase.ApprovePaymentCommand;
@@ -55,6 +56,9 @@ class ExternalPgPaymentIntegrationTest extends AbstractIntegrationTest {
     private MockPgBehavior mockPgBehavior;
 
     @Autowired
+    private MockPgClient pgClient;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     private MemberId memberId;
@@ -70,7 +74,6 @@ class ExternalPgPaymentIntegrationTest extends AbstractIntegrationTest {
                          ledger_entry, ledger_transaction, ledger_account,
                          idempotency_record, payment_cancellation, payment, top_up,
                          outbox_event, consumed_event, wallet_transaction,
-                         mock_pg_approval, mock_bank_withdrawal, mock_bank_account,
                          wallet_balance, bank_account, wallet, member CASCADE
                 """);
         mockPgBehavior.reset();
@@ -207,8 +210,6 @@ class ExternalPgPaymentIntegrationTest extends AbstractIntegrationTest {
     }
 
     private long externalApprovalCount() {
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM mock_pg_approval WHERE status = 'APPROVED'", Long.class);
-        return count == null ? 0L : count;
+        return pgClient.count("approvals", "APPROVED");
     }
 }

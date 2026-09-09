@@ -136,6 +136,122 @@ class BankLedger {
     }
 
     /**
+     * 건별 기록 전체입니다.
+     *
+     * <p>상태만 돌려주던 것으로는 우리 쪽 타임라인이 금액과 시각을 채울 수 없어 기관의 표를 직접
+     * 읽고 있었습니다. 기관이 알려줄 수 있는 사실이므로 여기서 답합니다.
+     */
+    Optional<Statement> withdrawalRecord(String externalKey) {
+        return firstRecord("mock_bank_withdrawal", externalKey);
+    }
+
+    Optional<Statement> payoutRecord(String externalKey) {
+        return firstRecord("mock_bank_payout", externalKey);
+    }
+
+    private Optional<Statement> firstRecord(String table, String externalKey) {
+        List<Statement> rows = jdbcTemplate.query(
+                "SELECT external_key, status, amount, created_at FROM " + table + " WHERE external_key = ?",
+                (rs, rowNum) -> new Statement(
+                        rs.getString("external_key"),
+                        rs.getString("status"),
+                        rs.getLong("amount"),
+                        "KRW",
+                        rs.getTimestamp("created_at").toInstant()),
+                externalKey);
+        return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
+    }
+
+    /** 자기 표를 비웁니다. 시험이 우리 데이터베이스로 기관을 초기화할 수 없게 된 뒤에 필요해졌습니다. */
+    @Transactional
+    void reset() {
+        jdbcTemplate.execute("TRUNCATE mock_bank_withdrawal, mock_bank_payout, mock_bank_account CASCADE");
+    }
+
+    /** 시험이 "기관 쪽 기록"을 만들거나 바꾸는 통로입니다. 운영에 배포되지 않는 앱입니다. */
+    @Transactional
+    void amendWithdrawal(String externalKey, Long amount, boolean delete) {
+        // externalKey가 없으면 전부입니다. 시험이 "기관 쪽 기록이 통째로 사라진 날"이나 "금액이
+        // 전부 다르게 적힌 날"을 만들 때 씁니다.
+        if (delete) {
+            if (externalKey == null) {
+                jdbcTemplate.update("DELETE FROM mock_bank_withdrawal");
+            } else {
+                jdbcTemplate.update("DELETE FROM mock_bank_withdrawal WHERE external_key = ?", externalKey);
+            }
+            return;
+        }
+        if (amount == null) {
+            return;
+        }
+        if (externalKey == null) {
+            jdbcTemplate.update("UPDATE mock_bank_withdrawal SET amount = ?", amount);
+        } else {
+            jdbcTemplate.update(
+                    "UPDATE mock_bank_withdrawal SET amount = ? WHERE external_key = ?", amount, externalKey);
+        }
+    }
+
+    /** 계좌 잔액 합계입니다. 시험이 계좌 토큰을 모르는 경우에 씁니다(토큰은 우리 쪽에서 해시로 만듭니다). */
+    long totalAccountBalance() {
+        Long value = jdbcTemplate.queryForObject("SELECT coalesce(sum(balance), 0) FROM mock_bank_account", Long.class);
+        return value == null ? 0L : value;
+    }
+
+    /** 우리에게 기록이 없는 외부 출금(EXTERNAL_ONLY)을 만들기 위한 통로입니다. */
+    @Transactional
+    void insertOrphanWithdrawal(String externalKey, long amount, String accountToken) {
+        UUID accountId = UUID.randomUUID();
+        jdbcTemplate.update(
+                """
+                INSERT INTO mock_bank_account
+                    (mock_account_id, account_number_token, balance, currency, created_at)
+                VALUES (?, ?, ?, 'KRW', ?)
+                ON CONFLICT (account_number_token) DO NOTHING
+                """,
+                accountId,
+                accountToken,
+                500_000L,
+                Timestamp.from(clock.instant()));
+        UUID existing = jdbcTemplate.queryForObject(
+                "SELECT mock_account_id FROM mock_bank_account WHERE account_number_token = ?",
+                UUID.class,
+                accountToken);
+        jdbcTemplate.update(
+                """
+                INSERT INTO mock_bank_withdrawal
+                    (withdrawal_id, external_key, mock_account_id, amount, status, created_at)
+                VALUES (?, ?, ?, ?, 'SUCCEEDED', ?)
+                """,
+                UUID.randomUUID(),
+                externalKey,
+                existing,
+                amount,
+                Timestamp.from(clock.instant()));
+    }
+
+    /** 계좌 잔액입니다. 시험이 "기관에서 돈이 나갔는가"를 확인하는 데 씁니다. */
+    Optional<Long> accountBalance(String accountToken) {
+        List<Long> rows = jdbcTemplate.queryForList(
+                "SELECT balance FROM mock_bank_account WHERE account_number_token = ?", Long.class, accountToken);
+        return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
+    }
+
+    /** 표별 행 수입니다. 시험이 "기관에 몇 건 남았는가"를 확인하는 데 씁니다. */
+    long count(String table, String status) {
+        String sql = "SELECT count(*) FROM "
+                + switch (table) {
+                    case "withdrawals" -> "mock_bank_withdrawal";
+                    case "payouts" -> "mock_bank_payout";
+                    default -> throw new IllegalArgumentException("unknown table: " + table);
+                };
+        Long value = status == null
+                ? jdbcTemplate.queryForObject(sql, Long.class)
+                : jdbcTemplate.queryForObject(sql + " WHERE status = ?", Long.class, status);
+        return value == null ? 0L : value;
+    }
+
+    /**
      * 기간 내 출금 명세입니다.
      *
      * <p>실제 은행이 대사용으로 주는 것이 이런 명세입니다. 우리 쪽이 기관의 표를 직접 읽는 대신

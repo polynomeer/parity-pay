@@ -1,11 +1,15 @@
 package io.parity.pay.api.operations;
 
+import io.parity.pay.api.mockbank.BankUnknownResultException;
+import io.parity.pay.api.mockbank.MockBankClient;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +27,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class TransactionTimelineService {
 
-    private final JdbcTemplate jdbcTemplate;
+    private static final Logger log = LoggerFactory.getLogger(TransactionTimelineService.class);
 
-    TransactionTimelineService(JdbcTemplate jdbcTemplate) {
+    private final JdbcTemplate jdbcTemplate;
+    private final MockBankClient bankClient;
+
+    TransactionTimelineService(JdbcTemplate jdbcTemplate, MockBankClient bankClient) {
         this.jdbcTemplate = jdbcTemplate;
+        this.bankClient = bankClient;
     }
 
     /**
@@ -92,25 +100,7 @@ public class TransactionTimelineService {
                 referenceId,
                 referenceId));
 
-        entries.addAll(query(
-                """
-                SELECT 'EXTERNAL_WITHDRAWAL' AS kind, w.external_key AS id, w.status,
-                       w.amount, 'KRW' AS currency, w.created_at AS occurred_at,
-                       'mock-bank withdrawal' AS detail
-                  FROM mock_bank_withdrawal w
-                 WHERE w.external_key = ?
-                """,
-                referenceId));
-
-        entries.addAll(query(
-                """
-                SELECT 'EXTERNAL_PAYOUT' AS kind, p.external_key AS id, p.status,
-                       p.amount, 'KRW' AS currency, p.created_at AS occurred_at,
-                       'mock-bank payout' AS detail
-                  FROM mock_bank_payout p
-                 WHERE p.external_key = ?
-                """,
-                referenceId));
+        entries.addAll(institutionEntries(referenceId));
 
         entries.addAll(query(
                 """
@@ -146,6 +136,62 @@ public class TransactionTimelineService {
 
         entries.sort(Comparator.comparing(TimelineEntry::occurredAt));
         return new Timeline(referenceId, entries);
+    }
+
+    /**
+     * 기관이 알고 있는 사실입니다.
+     *
+     * <p>예전에는 기관의 표를 같은 데이터베이스에서 읽었습니다. 지금은 기관에 물어봅니다. 없으면
+     * 아무 줄도 만들지 않지만, <b>물어보지 못한 경우는 그렇게 두지 않습니다</b> — 조용히 빼면
+     * 운영자가 "기관에 기록이 없다"로 읽습니다. 대사에서 배운 것과 같은 구분입니다(F-011).
+     *
+     * <p>기관이 답하지 않는다고 타임라인 전체를 실패시키지도 않습니다. 우리 쪽 사실은 그대로 보여
+     * 주고, 기관 부분만 "물어보지 못함"으로 표시합니다.
+     */
+    private List<TimelineEntry> institutionEntries(String referenceId) {
+        List<TimelineEntry> entries = new ArrayList<>();
+        addInstitutionEntry(
+                entries,
+                referenceId,
+                "EXTERNAL_WITHDRAWAL",
+                "mock-bank withdrawal",
+                () -> bankClient.withdrawalRecord(referenceId));
+        addInstitutionEntry(
+                entries,
+                referenceId,
+                "EXTERNAL_PAYOUT",
+                "mock-bank payout",
+                () -> bankClient.payoutRecord(referenceId));
+        return entries;
+    }
+
+    private void addInstitutionEntry(
+            List<TimelineEntry> entries,
+            String referenceId,
+            String kind,
+            String detail,
+            java.util.function.Supplier<java.util.Optional<MockBankClient.StatementLine>> fetch) {
+        try {
+            fetch.get()
+                    .ifPresent(line -> entries.add(new TimelineEntry(
+                            kind,
+                            line.externalKey(),
+                            line.status(),
+                            line.amount(),
+                            line.currency(),
+                            detail,
+                            line.occurredAt())));
+        } catch (BankUnknownResultException e) {
+            log.warn("could not ask the bank about {} for the timeline", referenceId);
+            entries.add(new TimelineEntry(
+                    kind,
+                    referenceId,
+                    "UNAVAILABLE",
+                    null,
+                    null,
+                    detail + " (기관에 물어보지 못했습니다 — 기록이 없다는 뜻이 아닙니다)",
+                    Instant.now()));
+        }
     }
 
     private List<TimelineEntry> query(String sql, Object... args) {

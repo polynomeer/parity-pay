@@ -3,6 +3,11 @@ package io.parity.pay.support;
 import io.parity.pay.ParityPayApplication;
 import io.parity.pay.api.mockbank.MockBankBehavior;
 import io.parity.pay.api.mockpg.MockPgBehavior;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -41,9 +46,42 @@ public abstract class AbstractIntegrationTest {
     @ServiceConnection
     static final RedpandaContainer REDPANDA = new RedpandaContainer("redpandadata/redpanda:v24.3.6");
 
+    /** 기관은 자기 데이터베이스를 씁니다. 같은 컨테이너 안이지만 **다른 데이터베이스**입니다. */
+    static final String BANK_DATABASE = "paritypay_bank";
+
+    static final String PG_DATABASE = "paritypay_pg";
+
     static {
         POSTGRES.start();
         REDPANDA.start();
+        createInstitutionDatabases();
+    }
+
+    /**
+     * 기관용 데이터베이스를 만듭니다.
+     *
+     * <p>같은 컨테이너를 쓰지만 데이터베이스가 다르면 조인이 불가능합니다. 그것이 요점입니다 —
+     * 예전에는 기관 표가 우리 데이터베이스에 있어서 대사와 타임라인이 그냥 조인했고, 실제 기관에서는
+     * 할 수 없는 일이 코드에서는 가능했습니다.
+     *
+     * <p>{@code CREATE DATABASE}는 트랜잭션 안에서 돌 수 없으므로 초기화 스크립트가 아니라 여기서
+     * 직접 실행합니다.
+     */
+    private static void createInstitutionDatabases() {
+        try (Connection connection = DriverManager.getConnection(
+                        POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+                Statement statement = connection.createStatement()) {
+            for (String database : List.of(BANK_DATABASE, PG_DATABASE)) {
+                statement.execute("CREATE DATABASE " + database);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("failed to create institution databases", e);
+        }
+    }
+
+    /** 같은 컨테이너의 다른 데이터베이스를 가리키는 JDBC URL입니다. */
+    static String institutionJdbcUrl(String database) {
+        return POSTGRES.getJdbcUrl().replaceFirst("/" + POSTGRES.getDatabaseName() + "(\\?|$)", "/" + database + "$1");
     }
 
     /**
@@ -70,8 +108,8 @@ public abstract class AbstractIntegrationTest {
      */
     @BeforeEach
     void resetExternalInstitutions() {
-        externalBank.reset();
-        externalPg.reset();
+        externalBank.resetLedgerAndBehavior();
+        externalPg.resetLedgerAndBehavior();
     }
 
     @DynamicPropertySource
@@ -79,10 +117,12 @@ public abstract class AbstractIntegrationTest {
         registry.add(
                 "paritypay.mock-bank.base-url",
                 () -> "http://localhost:"
-                        + MockBankProcess.start(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+                        + MockBankProcess.start(
+                                institutionJdbcUrl(BANK_DATABASE), POSTGRES.getUsername(), POSTGRES.getPassword()));
         registry.add(
                 "paritypay.mock-pg.base-url",
                 () -> "http://localhost:"
-                        + MockPgProcess.start(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+                        + MockPgProcess.start(
+                                institutionJdbcUrl(PG_DATABASE), POSTGRES.getUsername(), POSTGRES.getPassword()));
     }
 }

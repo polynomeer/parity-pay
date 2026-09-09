@@ -75,7 +75,6 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
                 TRUNCATE refresh_token, login_attempt,
                          ledger_entry, ledger_transaction, ledger_account,
                          idempotency_record, payment_cancellation, payment, top_up,
-                         mock_bank_withdrawal, mock_bank_account,
                          wallet_balance, bank_account, wallet, member CASCADE
                 """);
 

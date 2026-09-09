@@ -3,6 +3,7 @@ package io.parity.pay.recovery;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.parity.pay.api.mockbank.MockBankBehavior;
+import io.parity.pay.api.mockbank.MockBankClient;
 import io.parity.pay.api.onboarding.OnboardingService;
 import io.parity.pay.api.outbox.OutboxPublisher;
 import io.parity.pay.shared.id.BankAccountId;
@@ -54,6 +55,9 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
     private MockBankBehavior mockBankBehavior;
 
     @Autowired
+    private MockBankClient bankClient;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     private MemberId memberId;
@@ -70,7 +74,6 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
                          idempotency_record, payment_cancellation, payment,
                          top_up_recovery, top_up, audit_log,
                          outbox_event, consumed_event, wallet_transaction,
-                         mock_bank_withdrawal, mock_bank_account,
                          wallet_balance, bank_account, wallet, member CASCADE
                 """);
 
@@ -259,8 +262,7 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
     }
 
     private long bankBalance() {
-        Long balance = jdbcTemplate.queryForObject("SELECT balance FROM mock_bank_account", Long.class);
-        return balance == null ? 0L : balance;
+        return bankClient.totalAccountBalance();
     }
 
     private Long ledgerTransactionCount() {

@@ -49,7 +49,7 @@ class TopUpApiTest extends AbstractIntegrationTest {
                 """
                 TRUNCATE refresh_token, login_attempt,
                          ledger_entry, ledger_transaction, ledger_account,
-                         idempotency_record, top_up, mock_bank_withdrawal, mock_bank_account,
+                         idempotency_record, top_up,
                          wallet_balance, bank_account, wallet, member CASCADE
                 """);
         // 회원 테이블을 비웠으므로 운영자 계정을 다시 만듭니다.

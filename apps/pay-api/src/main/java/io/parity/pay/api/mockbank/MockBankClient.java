@@ -102,6 +102,32 @@ public class MockBankClient {
         return statement("/mock-bank/statements/payouts", from, to);
     }
 
+    /**
+     * 건별 기록입니다. 금액과 시각까지 옵니다.
+     *
+     * <p>타임라인이 기관의 표를 직접 읽던 자리를 대신합니다. 없으면 빈 값이고, 물어보지 못하면
+     * 예외입니다 — 그 둘을 같은 값으로 만들면 "기관에 기록이 없다"는 잘못된 결론이 나옵니다.
+     */
+    public Optional<StatementLine> withdrawalRecord(String externalKey) {
+        return record("/mock-bank/records/withdrawals/" + externalKey);
+    }
+
+    public Optional<StatementLine> payoutRecord(String externalKey) {
+        return record("/mock-bank/records/payouts/" + externalKey);
+    }
+
+    private Optional<StatementLine> record(String uri) {
+        StatementLine line = call(
+                () -> restClient
+                        .get()
+                        .uri(uri)
+                        .retrieve()
+                        .onStatus(status -> status.value() == 404, (request, response) -> {})
+                        .body(StatementLine.class),
+                "record query " + uri);
+        return Optional.ofNullable(line);
+    }
+
     private List<StatementLine> statement(String path, Instant from, Instant to) {
         List<StatementLine> lines = call(
                 () -> restClient
@@ -114,6 +140,71 @@ public class MockBankClient {
                         .body(new ParameterizedTypeReference<List<StatementLine>>() {}),
                 "statement " + path);
         return lines == null ? List.of() : lines;
+    }
+
+    /**
+     * 기관의 장부와 장애 모드를 함께 초기화합니다.
+     *
+     * <p>기관이 자기 데이터베이스를 갖게 되면서 시험이 우리 JdbcTemplate으로 기관 표를 비울 수 없게
+     * 됐습니다. 그것이 요점이고, 대신 기관에 부탁합니다.
+     */
+    public void resetInstitution() {
+        restClient.post().uri("/mock-bank/admin/reset").retrieve().toBodilessEntity();
+    }
+
+    /** 시험이 기관 쪽 기록을 손보는 통로입니다. */
+    public void amendWithdrawal(String externalKey, Long amount, boolean delete) {
+        restClient
+                .post()
+                .uri("/mock-bank/admin/withdrawals/amend")
+                .body(new AmendRequest(externalKey, amount, delete))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    /** 우리에게 기록이 없는 외부 출금을 기관에 만듭니다(EXTERNAL_ONLY 시나리오). */
+    public void insertOrphanWithdrawal(String externalKey, long amount, String accountNumberToken) {
+        restClient
+                .post()
+                .uri("/mock-bank/admin/withdrawals/orphan")
+                .body(new OrphanRequest(externalKey, amount, accountNumberToken))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    /** 기관에 남아 있는 계좌 잔액 합계입니다. 시험은 계좌 토큰을 알지 못합니다(해시로 만들어집니다). */
+    public long totalAccountBalance() {
+        Long balance = restClient
+                .get()
+                .uri("/mock-bank/admin/accounts/balance-total")
+                .retrieve()
+                .body(Long.class);
+        return balance == null ? 0L : balance;
+    }
+
+    public long accountBalance(String accountNumberToken) {
+        Long balance = restClient
+                .get()
+                .uri("/mock-bank/admin/accounts/{token}/balance", accountNumberToken)
+                .retrieve()
+                .body(Long.class);
+        return balance == null ? 0L : balance;
+    }
+
+    /** 기관에 남은 건수입니다. {@code table}은 withdrawals 또는 payouts입니다. */
+    public long count(String table, String status) {
+        Long value = restClient
+                .get()
+                .uri(builder -> {
+                    var uri = builder.path("/mock-bank/admin/{table}/count");
+                    if (status != null) {
+                        uri = uri.queryParam("status", status);
+                    }
+                    return uri.build(table);
+                })
+                .retrieve()
+                .body(Long.class);
+        return value == null ? 0L : value;
     }
 
     /** 장애 주입을 기관에 전달합니다. 운영 환경에는 이 기관 자체가 없습니다. */
@@ -151,6 +242,10 @@ public class MockBankClient {
     record WithdrawalRequest(String externalKey, String accountNumberToken, long amount) {}
 
     record PayoutRequest(String externalKey, String merchantId, long amount) {}
+
+    record AmendRequest(String externalKey, Long amount, boolean delete) {}
+
+    record OrphanRequest(String externalKey, long amount, String accountNumberToken) {}
 
     public record TransferResponse(boolean succeeded, String externalReferenceId, String failureReason) {}
 

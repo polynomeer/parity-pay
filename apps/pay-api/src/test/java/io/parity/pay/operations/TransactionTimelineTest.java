@@ -70,12 +70,10 @@ class TransactionTimelineTest extends AbstractIntegrationTest {
                 TRUNCATE refresh_token, login_attempt,
                          reconciliation_mismatch, reconciliation_run,
                          settlement_recovery, settlement_item, settlement, order_confirmation,
-                         mock_bank_payout,
                          ledger_entry, ledger_transaction, ledger_account,
                          idempotency_record, payment_cancellation, payment,
                          top_up_recovery, top_up, audit_log,
                          outbox_event, consumed_event, wallet_transaction,
-                         mock_bank_withdrawal, mock_bank_account,
                          wallet_balance, bank_account, wallet, member CASCADE
                 """);
 

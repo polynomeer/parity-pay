@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.parity.pay.api.mockbank.MockBankBehavior;
+import io.parity.pay.api.mockbank.MockBankClient;
 import io.parity.pay.api.onboarding.OnboardingService;
 import io.parity.pay.api.security.OperatorBootstrap;
 import io.parity.pay.ledger.domain.AccountCode;
@@ -61,6 +62,9 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     private OperatorBootstrap operatorBootstrap;
 
     @Autowired
+    private MockBankClient bankClient;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     private MemberId memberId;
@@ -75,12 +79,10 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
                 TRUNCATE refresh_token, login_attempt,
                          reconciliation_mismatch, reconciliation_run,
                          settlement_recovery, settlement_item, settlement, order_confirmation,
-                         mock_bank_payout,
                          ledger_entry, ledger_transaction, ledger_account,
                          idempotency_record, payment_cancellation, payment,
                          top_up_recovery, top_up, audit_log,
                          outbox_event, consumed_event, wallet_transaction,
-                         mock_bank_withdrawal, mock_bank_account,
                          wallet_balance, bank_account, wallet, member CASCADE
                 """);
 
@@ -140,7 +142,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     void internalOnlyIsDetected() {
         TopUpView view = topUp("recon-key-000002", 100_000);
         // 외부 기록이 사라진 상황을 만듭니다(기관 장애·데이터 유실 등).
-        jdbcTemplate.update("DELETE FROM mock_bank_withdrawal");
+        bankClient.amendWithdrawal(null, null, true);
 
         reconciliationService.runTopUpReconciliation();
 
@@ -156,7 +158,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("AMOUNT_MISMATCH: 같은 거래인데 금액이 다르다")
     void amountMismatchIsDetected() {
         topUp("recon-key-000003", 100_000);
-        jdbcTemplate.update("UPDATE mock_bank_withdrawal SET amount = 90000");
+        bankClient.amendWithdrawal(null, 90_000L, false);
 
         reconciliationService.runTopUpReconciliation();
 
@@ -172,23 +174,9 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("EXTERNAL_ONLY: 외부는 출금했는데 우리에게 기록이 없다")
     void externalOnlyIsDetected() {
-        jdbcTemplate.update(
-                """
-                INSERT INTO mock_bank_account
-                    (mock_account_id, account_number_token, balance, currency, created_at)
-                VALUES (?, 'orphan-token', 500000, 'KRW', now())
-                """,
-                UUID.randomUUID());
-        jdbcTemplate.update(
-                """
-                INSERT INTO mock_bank_withdrawal
-                    (withdrawal_id, external_key, mock_account_id, amount, status, created_at)
-                VALUES (?, 'orphan-external-key', ?, 70000, 'SUCCEEDED', now())
-                """,
-                UUID.randomUUID(),
-                jdbcTemplate.queryForObject(
-                        "SELECT mock_account_id FROM mock_bank_account WHERE account_number_token = 'orphan-token'",
-                        UUID.class));
+        // 기관 쪽에만 있는 출금입니다. 기관이 자기 데이터베이스를 갖게 된 뒤로는 우리가 그 표에
+        // INSERT할 수 없고, 기관에 부탁합니다. 실제로도 남의 장부에 우리가 쓸 수는 없습니다.
+        bankClient.insertOrphanWithdrawal("orphan-external-key", 70_000L, "orphan-token");
 
         reconciliationService.runTopUpReconciliation();
 
@@ -216,15 +204,8 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
                 bankAccountId.value(),
                 Timestamp.from(Instant.now().minusSeconds(60)),
                 Timestamp.from(Instant.now().minusSeconds(60)));
-        jdbcTemplate.update(
-                """
-                INSERT INTO mock_bank_withdrawal
-                    (withdrawal_id, external_key, mock_account_id, amount, status, created_at)
-                VALUES (?, ?, ?, 50000, 'SUCCEEDED', now())
-                """,
-                UUID.randomUUID(),
-                orphanTopUpId.toString(),
-                bankAccountId.value());
+        // 기관에는 이 충전의 출금 기록이 있습니다. 없는 것은 우리 원장입니다.
+        bankClient.insertOrphanWithdrawal(orphanTopUpId.toString(), 50_000L, "ledger-missing-token");
 
         reconciliationService.runTopUpReconciliation();
 
@@ -237,7 +218,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("같은 차이가 대사를 반복해도 한 건만 열려 있다")
     void repeatedRunsDoNotDuplicateOpenMismatches() {
         topUp("recon-key-000004", 100_000);
-        jdbcTemplate.update("DELETE FROM mock_bank_withdrawal");
+        bankClient.amendWithdrawal(null, null, true);
 
         reconciliationService.runTopUpReconciliation();
         reconciliationService.runTopUpReconciliation();
@@ -251,7 +232,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("조치 없이 해결하면 사유가 남고, 원인이 그대로면 다음 대사에서 다시 열린다")
     void resolvingWithoutFixingTheCauseReopensTheMismatch() {
         topUp("recon-key-000005", 100_000);
-        jdbcTemplate.update("DELETE FROM mock_bank_withdrawal");
+        bankClient.amendWithdrawal(null, null, true);
         reconciliationService.runTopUpReconciliation();
         UUID mismatchId = openMismatches().get(0).mismatchId();
 
@@ -272,7 +253,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("보정은 원장을 고치지 않고 새 분개를 만든다")
     void adjustmentCreatesANewJournal() {
         topUp("recon-key-000006", 100_000);
-        jdbcTemplate.update("UPDATE mock_bank_withdrawal SET amount = 90000");
+        bankClient.amendWithdrawal(null, 90_000L, false);
         reconciliationService.runTopUpReconciliation();
         UUID mismatchId = openMismatches().get(0).mismatchId();
         long ledgerCountBefore = ledgerTransactionCount();
@@ -303,7 +284,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("요청자와 승인자가 같으면 보정할 수 없다")
     void adjustmentRequiresTwoDifferentPeople() {
         topUp("recon-key-000007", 100_000);
-        jdbcTemplate.update("UPDATE mock_bank_withdrawal SET amount = 90000");
+        bankClient.amendWithdrawal(null, 90_000L, false);
         reconciliationService.runTopUpReconciliation();
         UUID mismatchId = openMismatches().get(0).mismatchId();
 
@@ -327,7 +308,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("승인 권한이 없는 사람은 보정을 승인할 수 없다")
     void approverMustHaveApprovalAuthority() {
         topUp("recon-key-000010", 100_000);
-        jdbcTemplate.update("UPDATE mock_bank_withdrawal SET amount = 90000");
+        bankClient.amendWithdrawal(null, 90_000L, false);
         reconciliationService.runTopUpReconciliation();
         UUID mismatchId = openMismatches().get(0).mismatchId();
 
@@ -366,7 +347,7 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("이미 해결된 불일치는 다시 해결할 수 없다")
     void resolvedMismatchCannotBeResolvedAgain() {
         topUp("recon-key-000008", 100_000);
-        jdbcTemplate.update("DELETE FROM mock_bank_withdrawal");
+        bankClient.amendWithdrawal(null, null, true);
         reconciliationService.runTopUpReconciliation();
         UUID mismatchId = openMismatches().get(0).mismatchId();
         resolutionService.resolveWithoutAdjustment(mismatchId, "ops-1", "확인 완료", true);

@@ -127,4 +127,24 @@ class PgLedger {
                 ? Optional.empty()
                 : Optional.ofNullable(rows.get(0).values().iterator().next()).map(Object::toString);
     }
+
+    /** 자기 표를 비웁니다. 시험이 우리 데이터베이스로 기관을 초기화할 수 없게 된 뒤에 필요해졌습니다. */
+    @Transactional
+    void reset() {
+        jdbcTemplate.execute("TRUNCATE mock_pg_refund, mock_pg_approval CASCADE");
+    }
+
+    /** 기관에 남은 건수입니다. 시험이 "외부에 몇 건 있는가"를 확인하는 데 씁니다. */
+    long count(String table, String status) {
+        String sql = "SELECT count(*) FROM "
+                + switch (table) {
+                    case "approvals" -> "mock_pg_approval";
+                    case "refunds" -> "mock_pg_refund";
+                    default -> throw new IllegalArgumentException("unknown table: " + table);
+                };
+        Long value = status == null
+                ? jdbcTemplate.queryForObject(sql, Long.class)
+                : jdbcTemplate.queryForObject(sql + " WHERE status = ?", Long.class, status);
+        return value == null ? 0L : value;
+    }
 }
