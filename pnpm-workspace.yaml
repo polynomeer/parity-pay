@@ -1,0 +1,13 @@
+# 프론트엔드 워크스페이스입니다. Gradle 빌드와 섞지 않습니다 —
+# `./gradlew build`가 프론트엔드 때문에 느려지면 안 됩니다. 근거: docs/14-frontend-design.md §6
+packages:
+  - "packages/*"
+  - "apps/web-*"
+# 설치 스크립트 실행을 명시적으로 허용하는 목록입니다. 기본은 금지이며, 여기 없는 패키지의
+# postinstall은 돌지 않습니다. esbuild는 플랫폼별 바이너리를 연결하는 용도이고 Vite·Vitest가
+# 이것 없이는 돌지 않습니다.
+allowBuilds:
+  esbuild: true
+  # msw의 postinstall은 브라우저용 서비스 워커 파일을 public/에 복사합니다. 우리는 시험에서
+  # `msw/node`만 쓰므로 그 파일이 필요 없습니다. 필요 없는 스크립트는 돌리지 않습니다.
+  msw: false

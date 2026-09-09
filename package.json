@@ -1,0 +1,16 @@
+{
+  "name": "paritypay-frontend",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "generate": "pnpm --filter @paritypay/api-client generate",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
+  },
+  "packageManager": "pnpm@11.22.0"
+}
