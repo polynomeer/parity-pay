@@ -8,7 +8,7 @@ package io.parity.pay.api.mockbank;
  *
  * <p>호출하는 서비스는 이 예외를 잡아 `UNKNOWN` 상태로 보존합니다. 근거: ADR-007, CLAUDE.md §3
  */
-class BankUnknownResultException extends RuntimeException {
+public class BankUnknownResultException extends RuntimeException {
 
     BankUnknownResultException(String message, Throwable cause) {
         super(message, cause);

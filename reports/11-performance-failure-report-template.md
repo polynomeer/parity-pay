@@ -395,6 +395,28 @@
   `unknownRefundConvergesToCompleted`, `repeatedRefundRecoveryIsIdempotent`,
   `missingRefundRecordReleasesTheReservation`, `declinedRefundReleasesTheReservation`
 
+### F-011 기관 명세를 받지 못한 날의 대사 — 검증됨 (자동화)
+
+**목적:** 2026-09-09까지 대사는 기관의 표를 같은 데이터베이스에서 직접 읽었습니다. 그래서 **대사가
+실패할 수 없었습니다** — 조회는 언제나 성공하고, 결과가 비어 있으면 "기관에 기록이 없다"가 됩니다.
+기관을 별도 프로세스로 떼어 놓고도 이 경로만 데이터베이스를 가로질러 있었습니다.
+
+명세를 기관 API(`GET /mock-bank/statements/...`)로 받게 바꾸고, 받지 못하는 날을 재현했습니다.
+
+- 기대: 그 회차는 아무것도 기록하지 않고 멈춥니다
+- 실제: `ReconciliationSourceUnavailableException`이 올라가고 불일치 0건, 이벤트 0건, 실행 기록도
+  남지 않습니다. 명세가 돌아오면 정상으로 끝납니다(내부 2건·외부 2건·불일치 0건)
+- 왜 이것이 중요한가: 빈 명세로 진행하면 우리 쪽 기록 **전부**가 `INTERNAL_ONLY` 불일치가 됩니다.
+  운영자는 존재하지 않는 문제를 놓고 보정 분개를 검토하게 되고, 그것이 대사가 할 수 있는 가장 나쁜
+  일입니다. 가드를 빼고 빈 목록을 돌려주도록 바꿔 돌려 보니 이 시험이 실패하는 것을 확인했습니다
+- 명세 가용성은 건별 조회 가용성(F-009)과 **따로** 제어합니다. 실제로 둘은 다른 시스템이고,
+  "건별 조회는 되는데 일별 명세가 안 나오는" 날이 대사에는 더 위험합니다
+- 증거: `ReconciliationIntegrationTest.anUnavailableStatementStopsTheRunInsteadOfFlaggingEverything`
+
+**함께 바뀐 것:** 명세가 HTTP로 오면서 트랜잭션 경계를 옮겼습니다. 기록을 받는 것은 트랜잭션 밖
+(`ReconciliationService`), 비교와 기록만 트랜잭션 안(`ReconciliationTransactions`)입니다. 예전 구조를
+그대로 두면 DB 트랜잭션을 연 채 기관 응답을 기다리게 됩니다(CLAUDE.md 금지 사항).
+
 ### F-008 중복·역순 웹훅 — 미검증
 
 웹훅 수신 경로를 아직 구현하지 않았습니다.

@@ -135,6 +135,38 @@ class BankLedger {
                 : Optional.of((String) rows.get(0).get("status"));
     }
 
+    /**
+     * 기간 내 출금 명세입니다.
+     *
+     * <p>실제 은행이 대사용으로 주는 것이 이런 명세입니다. 우리 쪽이 기관의 표를 직접 읽는 대신
+     * 이 경로로 받아야, 기관이 명세를 주지 못하는 상황이 우리 쪽 코드에 드러납니다.
+     */
+    List<Statement> withdrawalStatement(java.time.Instant from, java.time.Instant to) {
+        return statement("mock_bank_withdrawal", from, to);
+    }
+
+    /** 기간 내 지급 명세입니다. */
+    List<Statement> payoutStatement(java.time.Instant from, java.time.Instant to) {
+        return statement("mock_bank_payout", from, to);
+    }
+
+    private List<Statement> statement(String table, java.time.Instant from, java.time.Instant to) {
+        return jdbcTemplate.query(
+                "SELECT external_key, status, amount, created_at FROM " + table
+                        + " WHERE created_at BETWEEN ? AND ? ORDER BY created_at",
+                (rs, rowNum) -> new Statement(
+                        rs.getString("external_key"),
+                        rs.getString("status"),
+                        rs.getLong("amount"),
+                        "KRW",
+                        rs.getTimestamp("created_at").toInstant()),
+                Timestamp.from(from),
+                Timestamp.from(to));
+    }
+
+    /** 명세 한 줄. 기관이 알려주는 사실만 담습니다. */
+    record Statement(String externalKey, String status, long amount, String currency, java.time.Instant occurredAt) {}
+
     record Outcome(boolean succeeded, String externalReferenceId, String failureReason) {
 
         static Outcome succeeded(String externalReferenceId) {

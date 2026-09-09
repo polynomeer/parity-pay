@@ -15,9 +15,16 @@ public interface ReconciliationSourcePort {
 
     List<InternalRecord> loadInternalTopUps(Instant windowStart, Instant windowEnd);
 
+    /**
+     * 기관에서 출금 명세를 받아옵니다.
+     *
+     * <p>받지 못하면 {@link ReconciliationSourceUnavailableException}을 던집니다. 빈 목록으로
+     * 돌려주면 안 됩니다 — 그러면 "기관에 기록이 없다"가 되고 우리 쪽 기록 전부가 불일치가 됩니다.
+     */
     List<ExternalRecord> loadExternalWithdrawals(Instant windowStart, Instant windowEnd);
 
     List<InternalRecord> loadInternalPayouts(Instant windowStart, Instant windowEnd);
 
+    /** 기관에서 지급 명세를 받아옵니다. 실패는 예외입니다. */
     List<ExternalRecord> loadExternalPayouts(Instant windowStart, Instant windowEnd);
 }

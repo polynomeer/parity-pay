@@ -31,6 +31,14 @@ public class BankBehavior {
     private volatile boolean payoutStatusQueryAvailable = true;
 
     /**
+     * 대사 명세를 내줄 수 있는지입니다.
+     *
+     * <p>건별 조회 장애(F-009)와 스위치를 따로 둡니다. 실제로 "건별 조회는 되는데 일별 명세가 안
+     * 나오는" 날이 있고, 그때 대사를 돌리면 기관에 기록이 하나도 없는 것처럼 보입니다.
+     */
+    private volatile boolean statementAvailable = true;
+
+    /**
      * 응답을 끊을 때 얼마나 붙잡고 있을지입니다.
      *
      * <p>즉시 끊으면 클라이언트는 연결 오류를 받고, 이것은 "요청이 전달되지 않았다"로 오해되기
@@ -70,6 +78,14 @@ public class BankBehavior {
         this.payoutStatusQueryAvailable = available;
     }
 
+    public boolean statementAvailable() {
+        return statementAvailable;
+    }
+
+    public void setStatementAvailable(boolean available) {
+        this.statementAvailable = available;
+    }
+
     public Duration hangFor() {
         return hangFor;
     }
@@ -92,6 +108,7 @@ public class BankBehavior {
         payoutMode = Mode.NORMAL;
         withdrawalStatusQueryAvailable = true;
         payoutStatusQueryAvailable = true;
+        statementAvailable = true;
         hangFor = Duration.ofSeconds(30);
     }
 }

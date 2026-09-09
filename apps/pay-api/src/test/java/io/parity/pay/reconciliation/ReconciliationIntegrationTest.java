@@ -7,6 +7,7 @@ import io.parity.pay.api.mockbank.MockBankBehavior;
 import io.parity.pay.api.onboarding.OnboardingService;
 import io.parity.pay.api.security.OperatorBootstrap;
 import io.parity.pay.ledger.domain.AccountCode;
+import io.parity.pay.reconciliation.application.port.out.ReconciliationSourceUnavailableException;
 import io.parity.pay.reconciliation.application.service.MismatchResolutionService;
 import io.parity.pay.reconciliation.application.service.ReconciliationService;
 import io.parity.pay.reconciliation.domain.MismatchType;
@@ -102,6 +103,35 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(summary.internalCount()).isEqualTo(1);
         assertThat(summary.externalCount()).isEqualTo(1);
+        assertThat(summary.mismatchCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("기관 명세를 받지 못하면 대사를 멈춘다 — 기록이 없는 것으로 읽지 않는다")
+    void anUnavailableStatementStopsTheRunInsteadOfFlaggingEverything() {
+        topUp("recon-key-000010", 100_000);
+        topUp("recon-key-000011", 200_000);
+        long runsBefore = reconciliationRunCount();
+
+        // 기관이 명세를 내주지 못하는 날입니다. 건별 조회는 살아 있습니다 — 다른 시스템이니까요.
+        mockBankBehavior.setStatementAvailable(false);
+
+        assertThatThrownBy(() -> reconciliationService.runTopUpReconciliation())
+                .isInstanceOf(ReconciliationSourceUnavailableException.class);
+
+        // 이것이 이 시험의 요점입니다. 빈 명세로 진행했다면 충전 두 건이 모두 INTERNAL_ONLY로
+        // 올라가고, 운영자는 존재하지 않는 문제를 놓고 보정을 검토하게 됩니다.
+        assertThat(openMismatches()).isEmpty();
+        assertThat(outboxEventTypes()).doesNotContain("ReconciliationMismatchDetected");
+        // 실행 기록도 남기지 않습니다. 비교하지 못한 회차를 "0건 불일치"로 남기면 더 나쁩니다.
+        assertThat(reconciliationRunCount()).isEqualTo(runsBefore);
+
+        // 명세가 돌아오면 정상으로 끝납니다.
+        mockBankBehavior.setStatementAvailable(true);
+        ReconciliationService.ReconciliationSummary summary = reconciliationService.runTopUpReconciliation();
+
+        assertThat(summary.internalCount()).isEqualTo(2);
+        assertThat(summary.externalCount()).isEqualTo(2);
         assertThat(summary.mismatchCount()).isZero();
     }
 
@@ -363,6 +393,10 @@ class ReconciliationIntegrationTest extends AbstractIntegrationTest {
     private TopUpView topUp(String key, long amount) {
         return requestTopUp.requestTopUp(
                 new TopUpCommand(memberId, walletId, bankAccountId, Money.krw(amount), IdempotencyKey.of(key)));
+    }
+
+    private long reconciliationRunCount() {
+        return jdbcTemplate.queryForObject("SELECT count(*) FROM reconciliation_run", Long.class);
     }
 
     private List<ReconciliationMismatch> openMismatches() {

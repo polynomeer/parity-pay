@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -111,6 +114,32 @@ class BankController {
                 new StatusResponse(ledger.payoutStatus(externalKey).orElse("NOT_FOUND")));
     }
 
+    /**
+     * 대사용 출금 명세입니다.
+     *
+     * <p>지금까지 우리 쪽 대사는 이 기관의 표를 같은 데이터베이스에서 직접 읽었습니다. 그러면
+     * 기관이 명세를 주지 못하는 상황이 아예 표현되지 않습니다 — 조회는 언제나 성공하고, 결과가
+     * 비어 있으면 "기관에 기록이 없다"가 됩니다. 실제 대사는 파일이나 API로 받으며, 못 받는 날이
+     * 있습니다.
+     */
+    @GetMapping("/statements/withdrawals")
+    ResponseEntity<List<BankLedger.Statement>> withdrawalStatement(
+            @RequestParam Instant from, @RequestParam Instant to) {
+        if (!behavior.statementAvailable()) {
+            return ResponseEntity.status(503).build();
+        }
+        return ResponseEntity.ok(ledger.withdrawalStatement(from, to));
+    }
+
+    /** 대사용 지급 명세입니다. */
+    @GetMapping("/statements/payouts")
+    ResponseEntity<List<BankLedger.Statement>> payoutStatement(@RequestParam Instant from, @RequestParam Instant to) {
+        if (!behavior.statementAvailable()) {
+            return ResponseEntity.status(503).build();
+        }
+        return ResponseEntity.ok(ledger.payoutStatement(from, to));
+    }
+
     /** 장애 주입입니다. 이 앱은 운영에 배포되지 않으므로 인증을 두지 않습니다. */
     @PostMapping("/admin/behavior")
     ResponseEntity<Void> setBehavior(@RequestBody BehaviorRequest request) {
@@ -125,6 +154,9 @@ class BankController {
         }
         if (request.payoutStatusQueryAvailable() != null) {
             behavior.setPayoutStatusQueryAvailable(request.payoutStatusQueryAvailable());
+        }
+        if (request.statementAvailable() != null) {
+            behavior.setStatementAvailable(request.statementAvailable());
         }
         if (request.hangForMillis() != null) {
             behavior.setHangFor(Duration.ofMillis(request.hangForMillis()));
@@ -159,6 +191,7 @@ class BankController {
             BankBehavior.Mode payoutMode,
             Boolean withdrawalStatusQueryAvailable,
             Boolean payoutStatusQueryAvailable,
+            Boolean statementAvailable,
             Long hangForMillis,
             Boolean reset) {}
 }

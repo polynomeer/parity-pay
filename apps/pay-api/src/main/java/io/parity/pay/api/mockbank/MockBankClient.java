@@ -1,9 +1,12 @@
 package io.parity.pay.api.mockbank;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -85,6 +88,34 @@ public class MockBankClient {
         return status("/mock-bank/payouts/" + externalKey);
     }
 
+    /**
+     * 대사용 명세를 받아옵니다.
+     *
+     * <p>받지 못하면 예외입니다. 빈 목록을 돌려주면 "기관에 기록이 하나도 없다"가 되고, 대사는 우리
+     * 쪽 기록 전부를 불일치로 올립니다. 명세를 못 받은 것과 기관에 기록이 없는 것은 다릅니다.
+     */
+    public List<StatementLine> withdrawalStatement(Instant from, Instant to) {
+        return statement("/mock-bank/statements/withdrawals", from, to);
+    }
+
+    public List<StatementLine> payoutStatement(Instant from, Instant to) {
+        return statement("/mock-bank/statements/payouts", from, to);
+    }
+
+    private List<StatementLine> statement(String path, Instant from, Instant to) {
+        List<StatementLine> lines = call(
+                () -> restClient
+                        .get()
+                        .uri(builder -> builder.path(path)
+                                .queryParam("from", from.toString())
+                                .queryParam("to", to.toString())
+                                .build())
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<List<StatementLine>>() {}),
+                "statement " + path);
+        return lines == null ? List.of() : lines;
+    }
+
     /** 장애 주입을 기관에 전달합니다. 운영 환경에는 이 기관 자체가 없습니다. */
     public void setBehavior(Object behaviorRequest) {
         restClient
@@ -125,12 +156,16 @@ public class MockBankClient {
 
     record StatusResponse(String status) {}
 
+    /** 명세 한 줄입니다. 기관이 알려주는 사실만 담습니다. */
+    public record StatementLine(String externalKey, String status, long amount, String currency, Instant occurredAt) {}
+
     /** 기관이 붙잡고 있을 시간을 설정하는 요청입니다. */
     public record BehaviorRequest(
             String withdrawalMode,
             String payoutMode,
             Boolean withdrawalStatusQueryAvailable,
             Boolean payoutStatusQueryAvailable,
+            Boolean statementAvailable,
             Long hangForMillis,
             Boolean reset) {}
 }

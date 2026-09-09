@@ -47,23 +47,33 @@ public class MockBankBehavior {
     }
 
     public void setMode(Mode mode) {
-        send(new MockBankClient.BehaviorRequest(mode.remoteName(), null, null, null, hangMillis(), null));
+        send(new MockBankClient.BehaviorRequest(mode.remoteName(), null, null, null, null, hangMillis(), null));
     }
 
     public void setPayoutMode(Mode mode) {
-        send(new MockBankClient.BehaviorRequest(null, mode.remoteName(), null, null, hangMillis(), null));
+        send(new MockBankClient.BehaviorRequest(null, mode.remoteName(), null, null, null, hangMillis(), null));
     }
 
     public void setStatusQueryAvailable(boolean available) {
-        send(new MockBankClient.BehaviorRequest(null, null, available, null, null, null));
+        send(new MockBankClient.BehaviorRequest(null, null, available, null, null, null, null));
     }
 
     public void setPayoutStatusQueryAvailable(boolean available) {
-        send(new MockBankClient.BehaviorRequest(null, null, null, available, null, null));
+        send(new MockBankClient.BehaviorRequest(null, null, null, available, null, null, null));
+    }
+
+    /**
+     * 대사 명세를 내줄 수 있는지 바꿉니다.
+     *
+     * <p>건별 조회 가용성과 따로입니다. 실제로 둘은 다른 시스템이고, 명세만 못 받는 날이 대사에는
+     * 더 위험합니다 — 기관에 기록이 하나도 없는 것처럼 보이기 때문입니다.
+     */
+    public void setStatementAvailable(boolean available) {
+        send(new MockBankClient.BehaviorRequest(null, null, null, null, available, null, null));
     }
 
     public void reset() {
-        send(new MockBankClient.BehaviorRequest(null, null, null, null, null, true));
+        send(new MockBankClient.BehaviorRequest(null, null, null, null, null, null, true));
     }
 
     /**
