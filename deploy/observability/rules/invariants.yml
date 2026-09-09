@@ -35,6 +35,29 @@ groups:
         annotations:
           summary: "INV-005 위반: 누적 취소액이 승인액을 넘은 결제가 있습니다"
 
+      # 불변조건 값은 주기적으로 계산해 캐시합니다(스크레이프마다 원장 전체를 집계하면 원장이
+      # 커질수록 스크레이프가 시간 초과되고, 그러면 모든 지표가 사라집니다 — M-006).
+      # 캐시는 조용히 늙을 수 있습니다. 갱신이 멈춘 채 마지막 0이 계속 보이면 아무 일도 없는 것처럼
+      # 보이므로, 위 네 경보는 이 경보와 함께 있어야 의미가 있습니다.
+      # 첫 계산 전에는 나이가 무한대이므로 "아직 재지 않았다"도 같은 경보로 잡힙니다.
+      - alert: InvariantMetricsStale
+        expr: paritypay_invariant_refresh_age_seconds > 180
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "불변조건 지표가 3분 넘게 갱신되지 않았습니다 — 위 경보들을 신뢰할 수 없습니다"
+
+      # 계산 시간이 자라는 것은 원장이 커졌다는 뜻입니다. 갱신 주기(기본 30초)에 가까워지면 주기를
+      # 늘리거나 검사 방식을 바꿔야 합니다.
+      - alert: InvariantMetricsRefreshSlow
+        expr: paritypay_invariant_refresh_duration_seconds > 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "불변조건 한 바퀴 계산이 10초를 넘었습니다 (원장 증가)"
+
       # 아래는 임계치를 기준선 측정 후 조정해야 하는 운영 지표입니다.
       - alert: OutboxBacklogGrowing
         expr: paritypay_outbox_oldest_pending_age_seconds > 60

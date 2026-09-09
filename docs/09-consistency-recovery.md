@@ -230,8 +230,11 @@ POST /api/v1/admin/payments/{paymentId}/resolve  즉시 재조회 (사유 필수
 
 스냅샷과 원장이 어긋났을 때 고치는 것은 **스냅샷**입니다. 원장은 진실이므로 읽기만 합니다.
 
-1. `GET /api/v1/wallets/{walletId}/ledger-verification`으로 차이를 확인합니다(운영자 권한). 지표
-   `paritypay.invariant.balance_snapshot_drift`가 몇 개 지갑에서 벌어졌는지 알려줍니다.
+1. 지표 `paritypay.invariant.balance_snapshot_drift`가 **몇 개** 지갑에서 벌어졌는지 알려줍니다.
+   **어느 지갑인지**는 `GET /api/v1/admin/wallets/balance-drift`가 차이 큰 순으로 돌려줍니다. 지갑
+   하나를 자세히 볼 때는 `GET /api/v1/wallets/{walletId}/ledger-verification`을 씁니다(운영자 권한).
+   이 지표는 주기적으로 계산해 캐시한 값이므로, 방금 고친 것이 반영되지 않았다면
+   `paritypay.invariant.refresh_age_seconds`를 함께 봅니다.
 2. **먼저 원인을 조사합니다.** 재구축은 증상을 지웁니다. 어떤 거래에서 벌어졌는지 타임라인 API로
    확인하기 전에는 실행하지 않습니다.
 3. `POST /api/v1/admin/wallets/{walletId}/balance-rebuild`를 사유와 함께 호출합니다. 요청자와 다른
@@ -240,7 +243,9 @@ POST /api/v1/admin/payments/{paymentId}/resolve  즉시 재조회 (사유 필수
    조사해야 합니다), 실행 도중 잔액이 바뀐 경우입니다. 후자는 재시도합니다.
 5. 지표가 0으로 돌아오는지, 원장 거래·항목 수가 그대로인지 확인합니다.
 
-재구축은 자동으로 돌지 않습니다. 배경 작업이 조용히 맞추면 원인을 조사할 증거가 사라집니다.
+재구축은 자동으로 돌지 않고, **한 번에 전부 맞추는 API도 없습니다.** 배경 작업이나 일괄 실행이
+조용히 맞추면 원인을 조사할 증거가 사라지며, 그 판단은 어긋난 지갑이 많다고 해서 달라지지 않습니다.
+목록 API는 찾아주기만 하고 고치지 않습니다.
 실험 결과는 [reports/11](../reports/11-performance-failure-report-template.md) F-010에 있습니다.
 
 ## 13. 절대 금지 사항

@@ -1118,6 +1118,27 @@
           "required" : [ "creditAccount", "debitAccount", "reason" ],
           "type" : "object"
         },
+        "BalanceDriftResponse" : {
+          "properties" : {
+            "difference" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "ledgerBalance" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "snapshotTotal" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "walletId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "BalanceRebuildResponse" : {
           "properties" : {
             "detail" : {
@@ -2345,6 +2366,37 @@
                 "*/*" : {
                   "schema" : {
                     "$ref" : "#/components/schemas/Timeline"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
+      "/api/v1/admin/wallets/balance-drift" : {
+        "get" : {
+          "operationId" : "listBalanceDrift",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 50,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "$ref" : "#/components/schemas/BalanceDriftResponse"
+                    },
+                    "type" : "array"
                   }
                 }
               },

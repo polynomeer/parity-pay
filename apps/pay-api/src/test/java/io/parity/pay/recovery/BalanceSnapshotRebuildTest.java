@@ -57,6 +57,9 @@ class BalanceSnapshotRebuildTest extends AbstractIntegrationTest {
     @Autowired
     private MeterRegistry meterRegistry;
 
+    @Autowired
+    private io.parity.pay.api.observability.InvariantMetrics invariantMetrics;
+
     private UUID walletId;
     private String accessToken;
 
@@ -147,6 +150,30 @@ class BalanceSnapshotRebuildTest extends AbstractIntegrationTest {
         assertThat(audit.get("after_state")).isEqualTo("snapshot=" + TOP_UP_AMOUNT);
         assertThat(audit.get("result")).isEqualTo("SUCCEEDED");
         assertThat((String) audit.get("detail")).contains(ApiAuth.OPS_APPROVER);
+    }
+
+    @Test
+    @DisplayName("어긋난 지갑이 목록으로 나온다 — 지표는 개수만 알려주므로")
+    void driftedWalletsAreListedForOperators() {
+        jdbcTemplate.update("UPDATE wallet_balance SET available_amount = ? WHERE wallet_id = ?", 1L, walletId);
+
+        ResponseEntity<List> response = restTemplate.exchange(
+                "/api/v1/admin/wallets/balance-drift",
+                HttpMethod.GET,
+                new HttpEntity<>(ApiAuth.bearer(ApiAuth.login(restTemplate, ApiAuth.OPS_VIEWER, ApiAuth.OPS_PASSWORD))),
+                List.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<Map<String, Object>> rows = response.getBody();
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).get("walletId")).isEqualTo(walletId.toString());
+        // 부호가 있어야 어느 쪽이 큰지 그대로 드러납니다. 여기서는 스냅샷이 원장보다 작습니다.
+        assertThat(((Number) rows.get(0).get("difference")).longValue()).isNegative();
+        assertThat(((Number) rows.get(0).get("ledgerBalance")).longValue())
+                .isGreaterThan(((Number) rows.get(0).get("snapshotTotal")).longValue());
+
+        // 목록은 고치지 않습니다. 재구축은 지갑마다 사유와 승인자를 받아 따로 실행합니다.
+        assertThat(availableAmount()).isEqualTo(1L);
     }
 
     @Test
@@ -246,8 +273,14 @@ class BalanceSnapshotRebuildTest extends AbstractIntegrationTest {
                 .getBody();
     }
 
-    /** 지표는 게이지이므로 읽는 시점에 다시 계산됩니다. */
+    /**
+     * 지표는 주기적으로 계산해 캐시합니다. 시험은 그 주기를 기다리는 대신 직접 갱신합니다.
+     *
+     * <p>읽을 때마다 계산하던 때는 이 호출이 필요 없었습니다. 스크레이프마다 원장 전체를 집계하는
+     * 비용 때문에 바꿨습니다. 근거: reports/11 M-006
+     */
     private long driftCount() {
+        invariantMetrics.refresh();
         return (long) meterRegistry
                 .get("paritypay.invariant.balance_snapshot_drift")
                 .gauge()

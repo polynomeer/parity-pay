@@ -64,6 +64,16 @@
     },
     {
       "type": "timeseries",
+      "title": "불변조건 지표의 신선도",
+      "description": "위 INV 패널의 값은 주기적으로 계산해 캐시한 것입니다. 나이가 자라면 그 값들을 믿을 수 없습니다. 계산 시간은 원장이 커지면 함께 자라며, 갱신 주기에 가까워지면 방식을 바꿔야 합니다.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "paritypay_invariant_refresh_age_seconds", "legendFormat": "마지막 계산 이후(s)" },
+        { "expr": "paritypay_invariant_refresh_duration_seconds", "legendFormat": "한 바퀴 계산 시간(s)" }
+      ]
+    },
+    {
+      "type": "timeseries",
       "title": "미확정 거래와 사람 확인 대기",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
       "targets": [

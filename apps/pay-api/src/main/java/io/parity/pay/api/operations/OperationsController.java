@@ -232,6 +232,48 @@ class OperationsController {
     }
 
     /**
+     * 스냅샷이 원장과 어긋난 지갑 목록입니다.
+     *
+     * <p>지표(`paritypay.invariant.balance_snapshot_drift`)는 <b>몇 개</b>인지만 알려 줍니다. 지갑이
+     * 다섯 개일 때는 하나씩 확인해도 되지만 수천 개면 그럴 수 없고, 그래서 재구축 절차가 1단계에서
+     * 막혀 있었습니다. 여기가 "어느 지갑인가"에 답하는 자리입니다.
+     *
+     * <p>고치지는 않습니다. 재구축은 지갑마다 사유와 승인자를 받아 따로 실행합니다 — 한 번에 전부
+     * 맞추는 버튼은 만들지 않습니다. 조용히 맞춰버리면 원인을 조사할 증거가 사라지고, 그 판단은
+     * 지갑 수가 많다고 해서 달라지지 않습니다.
+     *
+     * <p>이 질의는 원장 전체를 훑습니다(항목 200만 건에서 약 0.87초, M-006). 스크레이프가 아니라
+     * 운영자가 필요할 때 부르는 경로이므로 그 비용을 여기서 냅니다.
+     */
+    @GetMapping("/wallets/balance-drift")
+    ResponseEntity<List<BalanceDriftResponse>> listBalanceDrift(@RequestParam(defaultValue = "50") int limit) {
+        List<BalanceDriftResponse> rows = jdbcTemplate.query(
+                """
+                SELECT wb.wallet_id,
+                       wb.available_amount + wb.pending_amount AS snapshot_total,
+                       coalesce(l.ledger_balance, 0) AS ledger_balance
+                  FROM wallet_balance wb
+                  JOIN ledger_account la
+                    ON la.owner_id = wb.wallet_id AND la.account_code = '2010'
+                  LEFT JOIN LATERAL (
+                       SELECT coalesce(sum(CASE WHEN e.direction = 'CREDIT' THEN e.amount
+                                                ELSE -e.amount END), 0) AS ledger_balance
+                         FROM ledger_entry e
+                        WHERE e.account_id = la.account_id) AS l ON true
+                 WHERE wb.available_amount + wb.pending_amount <> coalesce(l.ledger_balance, 0)
+                 ORDER BY abs(wb.available_amount + wb.pending_amount - coalesce(l.ledger_balance, 0)) DESC
+                 LIMIT ?
+                """,
+                (rs, rowNum) -> new BalanceDriftResponse(
+                        rs.getObject("wallet_id", UUID.class),
+                        rs.getLong("snapshot_total"),
+                        rs.getLong("ledger_balance"),
+                        rs.getLong("snapshot_total") - rs.getLong("ledger_balance")),
+                limit);
+        return ResponseEntity.ok(rows);
+    }
+
+    /**
      * 잔액 스냅샷을 원장으로 재구축합니다. 근거: INV-010, ADR-008, reports/11 F-010
      *
      * <p>고치는 것은 스냅샷 한 줄이고 원장은 읽기만 합니다. 쓸 수 있는 값도 원장 계산값 하나뿐이라
@@ -371,6 +413,9 @@ class OperationsController {
             @NotBlank @Size(max = 100) String name, @NotBlank String ownerEmail, @NotBlank String reason) {}
 
     record MerchantRegistrationResponse(UUID merchantId, String name, String ownerEmail, String status) {}
+
+    /** 스냅샷과 원장 재생값의 차이입니다. 부호가 있으므로 어느 쪽이 큰지 그대로 드러납니다. */
+    record BalanceDriftResponse(UUID walletId, long snapshotTotal, long ledgerBalance, long difference) {}
 
     record BalanceRebuildResponse(
             UUID walletId, long snapshotBefore, long ledgerBalance, long snapshotAfter, String status, String detail) {}

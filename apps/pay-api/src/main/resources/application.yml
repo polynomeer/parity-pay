@@ -25,6 +25,13 @@ spring:
   threads:
     virtual:
       enabled: true
+  task:
+    scheduling:
+      # 기본값은 1입니다. 스케줄 작업이 여섯 개(발행기, 복구 4종, 대사)인데 한 스레드를 나눠 쓰면
+      # 느린 작업 하나가 나머지를 멈춰 세웁니다. 발행기는 0.5초마다 돌아야 하고, 불변조건 지표
+      # 계산은 원장 200만 건에서 4.5초가 걸립니다(M-006). 둘이 같은 스레드에 있으면 안 됩니다.
+      pool:
+        size: 4
   kafka:
     bootstrap-servers: ${PARITYPAY_KAFKA_SERVERS:localhost:9092}
     producer:
@@ -76,6 +83,11 @@ paritypay:
     validate-schema: false
     base-backoff: 1s
     max-backoff: 5m
+  observability:
+    # 불변조건 지표를 다시 계산하는 주기입니다. 게이지는 캐시된 값을 읽으므로 스크레이프 횟수와
+    # 무관하게 이 주기만큼만 DB를 씁니다. 근거: reports/11 M-006
+    invariant-refresh-ms: 30000
+    invariant-initial-delay-ms: 5000
   wallet:
     # ADR-004의 기본안입니다. 비교 측정 결과는 reports/11에 기록합니다.
     balance-strategy: CONDITIONAL_UPDATE
