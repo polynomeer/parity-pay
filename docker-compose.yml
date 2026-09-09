@@ -9,6 +9,16 @@ services:
       POSTGRES_USER: paritypay
       POSTGRES_PASSWORD: paritypay
       TZ: UTC
+    # 느린 문장과 대기 시간을 서버 쪽에서 봅니다. 애플리케이션 지연만으로는 시간이 어디서
+    # 갔는지 알 수 없습니다(M-007). 라이브러리 적재는 재시작이 필요하므로 여기에 둡니다.
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - track_io_timing=on
     ports:
       # 다른 프로젝트가 5432를 쓰고 있으면 PARITYPAY_DB_PORT로 바꿉니다.
       - "${PARITYPAY_DB_PORT:-5432}:5432"

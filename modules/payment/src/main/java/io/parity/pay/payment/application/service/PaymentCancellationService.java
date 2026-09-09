@@ -131,9 +131,7 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "reserved cancellation amount disappeared");
         }
 
-        // 3. 사용자에게 금액을 되돌리고 상쇄 분개를 만듭니다.
-        walletFunds.credit(payment.walletId(), command.amount());
-
+        // 3. 상쇄 분개를 만들고, 지갑에 되돌리는 것은 트랜잭션의 마지막에 합니다.
         LedgerAccount userPayMoney = resolveLedgerAccount.resolve(
                 AccountCode.USER_PAY_MONEY,
                 payment.walletId().value(),
@@ -174,6 +172,13 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
                 command.idempotencyKey(),
                 IdempotencyStatus.COMPLETED,
                 completed.id().value());
+
+        // 잔액 복원을 마지막에 둡니다. 이 UPDATE가 지갑 행을 잠그고 잠금은 커밋까지 풀리지
+        // 않으므로, 앞에 두면 계정 해석·잔액 조회·분개 전기·Outbox 기록이 전부 잠금 안에서
+        // 일어납니다. 결제 승인에서 같은 이유로 같은 조치를 했습니다(M-007, M-009).
+        //
+        // 이 취소가 실패하면 트랜잭션 전체가 롤백되므로 순서를 바꿔도 결과는 같습니다.
+        walletFunds.credit(payment.walletId(), command.amount());
 
         return CancellationView.of(completed, canceledAmountOf(payment.id()));
     }
