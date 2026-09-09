@@ -119,10 +119,6 @@ class PaymentTransactions {
                         clock.instant())
                 .process(clock.instant());
 
-        // 잔액이 부족하면 여기서 확정 실패하고 트랜잭션 전체가 롤백됩니다.
-        // 실패한 시도를 별도 행으로 남기는 것은 외부 PG 결제를 도입하는 Phase 4에서 함께 다룹니다.
-        walletFunds.debit(payment.walletId(), payment.requestedAmount());
-
         Payment approved = payment.approve(clock.instant());
 
         LedgerAccount userPayMoney = resolveLedgerAccount.resolve(
@@ -150,6 +146,16 @@ class PaymentTransactions {
                 command.idempotencyKey(),
                 IdempotencyStatus.COMPLETED,
                 saved.id().value());
+
+        // 잔액 차감은 트랜잭션의 마지막에 둡니다. 이 UPDATE가 지갑 행을 잠그고, 잠금은 커밋까지
+        // 풀리지 않습니다. 앞에 두면 원장 전기·결제 저장·Outbox 기록·멱등 확정이 전부 잠금 안에서
+        // 일어나고, 그 동안 DB는 애플리케이션의 다음 문장을 기다리며 놀고 있습니다. 같은 지갑에
+        // 트래픽이 몰릴 때 직렬화되는 구간이 실제 필요한 것보다 훨씬 길어집니다(M-007).
+        //
+        // 잔액이 부족하면 여기서 확정 실패하고 트랜잭션 전체가 롤백됩니다. 앞의 기록도 함께
+        // 사라지므로 결과는 같고, 헛일은 거절 경로에서만 생깁니다.
+        // 실패한 시도를 별도 행으로 남기는 것은 외부 PG 결제를 도입하는 Phase 4에서 함께 다룹니다.
+        walletFunds.debit(saved.walletId(), saved.approvedAmount());
 
         return saved;
     }

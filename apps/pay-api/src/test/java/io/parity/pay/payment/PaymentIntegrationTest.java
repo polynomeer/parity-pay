@@ -183,6 +183,11 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(availableBalance()).isEqualTo(50_000L);
         assertThat(paymentCount()).isZero();
+        // 잔액 차감은 트랜잭션의 마지막입니다(M-007). 거절은 이미 기록한 원장 전기·결제·멱등
+        // 확정을 롤백해서 성립하므로, 롤백이 정말 전부를 되돌리는지 여기서 봅니다. 남아 있어야
+        // 하는 원장 거래는 셋업의 충전 1건뿐입니다.
+        assertThat(ledgerTransactionCount()).isEqualTo(1L);
+        assertThat(idempotencyStatuses("payment-key-00004")).isEmpty();
     }
 
     @Test
@@ -345,6 +350,11 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
 
     private Long cancellationCount() {
         return jdbcTemplate.queryForObject("SELECT count(*) FROM payment_cancellation", Long.class);
+    }
+
+    private List<String> idempotencyStatuses(String idempotencyKey) {
+        return jdbcTemplate.queryForList(
+                "SELECT status FROM idempotency_record WHERE idempotency_key = ?", String.class, idempotencyKey);
     }
 
     private Long ledgerTransactionCount() {
