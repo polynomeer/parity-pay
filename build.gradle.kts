@@ -2,12 +2,12 @@ import net.ltgt.gradle.errorprone.errorprone
 
 plugins {
     java
-    id("org.springframework.boot") version "3.5.16" apply false
+    id("org.springframework.boot") version "4.1.1" apply false
     id("com.diffplug.spotless") version "7.0.2"
     id("net.ltgt.errorprone") version "5.1.1" apply false
 }
 
-val springBootVersion = "3.5.16"
+val springBootVersion = "4.1.1"
 val archUnitVersion = "1.5.0"
 val jqwikVersion = "1.10.1"
 val errorProneVersion = "2.50.0"
