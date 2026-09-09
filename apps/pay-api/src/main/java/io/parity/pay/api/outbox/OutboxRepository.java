@@ -33,6 +33,29 @@ class OutboxRepository {
             rs.getInt("attempt_count"),
             rs.getTimestamp("occurred_at").toInstant());
 
+    /**
+     * 발행 대상 선점 문장입니다. 상수인 이유는 실행 계획 회귀 시험이 <b>같은 문장</b>을 EXPLAIN해야
+     * 하기 때문입니다({@code OutboxClaimPlanTest}). 테스트가 문장을 베껴 두면 본문만 바뀌었을 때
+     * 시험이 조용히 무의미해집니다.
+     */
+    static final String CLAIM_BATCH_SQL =
+            """
+            SELECT o.event_id, o.event_type, o.event_version, o.aggregate_type, o.aggregate_id,
+                   o.partition_key, o.payload::text AS payload, o.trace_id, o.attempt_count, o.occurred_at
+              FROM outbox_event o
+             WHERE o.status = 'PENDING'
+               AND o.next_attempt_at <= ?
+               AND NOT EXISTS (
+                   SELECT 1
+                     FROM outbox_event earlier
+                    WHERE earlier.partition_key = o.partition_key
+                      AND earlier.status = 'PENDING'
+                      AND (earlier.occurred_at, earlier.event_id) < (o.occurred_at, o.event_id))
+             ORDER BY o.occurred_at
+             LIMIT ?
+             FOR UPDATE OF o SKIP LOCKED
+            """;
+
     private final JdbcTemplate jdbcTemplate;
 
     OutboxRepository(JdbcTemplate jdbcTemplate) {
@@ -92,30 +115,20 @@ class OutboxRepository {
      * <p>대가는 head-of-line 대기입니다. 한 이벤트가 계속 실패하면 같은 Aggregate의 뒤 이벤트가
      * 함께 멈춥니다. 순서를 지키려면 그래야 하고, 멈춘 사실은 적체 지표로 드러납니다.
      *
+     * <p>정렬에 {@code event_id}를 넣지 않습니다. 넣으면 인덱스 순서(occurred_at)와 달라져 정렬
+     * 노드가 생기고, 그 노드는 LIMIT의 약 1.3배를 미리 당겨옵니다. 후보(=파티션 키별 선두)가 그보다
+     * 적으면 더 채울 것이 없는데도 남은 적체 전체를 훑습니다. 파티션 키 100종·적체 20,000건에서
+     * 131.9ms 대 0.94ms였습니다.
+     *
+     * <p>동점 처리는 정렬이 아니라 위 {@code NOT EXISTS}가 합니다. 같은 파티션 키에 시각이 같은
+     * 이벤트가 둘 있으면 {@code (occurred_at, event_id)} 비교가 하나만 선두로 남기므로, 배치에
+     * 담기는 것은 여전히 하나입니다. 서로 다른 키 사이의 순서는 어차피 의미가 없습니다.
+     *
      * <p>근거: ADR-005, reports/11 M-001, docs/05-technical-design.md §9
      */
     @Transactional(propagation = Propagation.MANDATORY)
     List<OutboxRecord> claimBatch(int batchSize, Instant now) {
-        return jdbcTemplate.query(
-                """
-                SELECT o.event_id, o.event_type, o.event_version, o.aggregate_type, o.aggregate_id,
-                       o.partition_key, o.payload::text AS payload, o.trace_id, o.attempt_count, o.occurred_at
-                  FROM outbox_event o
-                 WHERE o.status = 'PENDING'
-                   AND o.next_attempt_at <= ?
-                   AND NOT EXISTS (
-                       SELECT 1
-                         FROM outbox_event earlier
-                        WHERE earlier.partition_key = o.partition_key
-                          AND earlier.status = 'PENDING'
-                          AND (earlier.occurred_at, earlier.event_id) < (o.occurred_at, o.event_id))
-                 ORDER BY o.occurred_at, o.event_id
-                 LIMIT ?
-                 FOR UPDATE OF o SKIP LOCKED
-                """,
-                ROW_MAPPER,
-                Timestamp.from(now),
-                batchSize);
+        return jdbcTemplate.query(CLAIM_BATCH_SQL, ROW_MAPPER, Timestamp.from(now), batchSize);
     }
 
     /**
