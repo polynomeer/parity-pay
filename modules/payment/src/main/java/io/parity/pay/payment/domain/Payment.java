@@ -36,9 +36,9 @@ public record Payment(
         PaymentMethod method,
         PaymentStatus status,
         IdempotencyKey idempotencyKey,
-        /** 외부 PG가 준 승인 참조입니다. 페이머니 결제는 외부 호출이 없어 null입니다. */
+        // 외부 PG가 준 승인 참조입니다. 페이머니 결제는 외부 호출이 없어 null입니다.
         String externalReferenceId,
-        /** 외부가 거절한 이유입니다. 사용자에게 그대로 보여 주지 않습니다. */
+        // 외부가 거절한 이유입니다. 사용자에게 그대로 보여 주지 않습니다.
         String failureReason,
         Instant createdAt,
         Instant approvedAt,
