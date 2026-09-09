@@ -31,6 +31,11 @@ python3 load-tests/transaction-timeline.py --port 8080
 ```
 
 ```bash
+# M-008 거래내역 커서 조회. wallet_transaction을 비우고 합성 데이터로 채우므로 로컬 전용입니다.
+python3 load-tests/transaction-history-benchmark.py --rows 1000000
+```
+
+```bash
 # 크래시 실험. 스크립트가 앱을 직접 띄우고 죽이고 다시 띄웁니다.
 # docker compose up -d 로 postgres·redpanda가 떠 있어야 하고, bootJar가 필요합니다.
 ./gradlew :apps:pay-api:bootJar
@@ -65,6 +70,7 @@ docker run --rm -i --add-host=host.docker.internal:host-gateway \
 | `settlement-batch-mixed.js` + `run-p004.sh` | 정산 배치·대사가 도는 동안 API 지연 변화 | P-004 |
 | `lock-wait-experiment.py` | 같은 부하를 주면서 DB 안쪽(느린 문장·대기 이벤트·커넥션 풀)을 봄 | M-007 |
 | `transaction-timeline.py` | 결제 한 건의 문장 순서와 지갑 행 잠금 보유 구간 | M-007 |
+| `transaction-history-benchmark.py` | 거래내역 커서 조회의 깊은 페이지 비용 (OFFSET과 비교) | M-008 |
 
 ## 결과를 기록할 때
 
