@@ -44,6 +44,14 @@ python3 load-tests/lock-wait-experiment.py --reps 3 --modes same-wallet \
 ```
 
 ```bash
+# M-011 복구 확정 지연. 장애를 주입해 미확정으로 만든 뒤 조회로 확정될 때까지 잽니다.
+# postgres·mock-bank·mock-pg가 떠 있어야 합니다. 한 건당 35~45초이므로 12건이면 약 17분입니다.
+./gradlew :apps:pay-api:bootJar
+python3 load-tests/recovery-latency-experiment.py \
+  --jar apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar --runs 12 --target both
+```
+
+```bash
 # 크래시 실험. 스크립트가 앱을 직접 띄우고 죽이고 다시 띄웁니다.
 # docker compose up -d 로 postgres·redpanda가 떠 있어야 하고, bootJar가 필요합니다.
 ./gradlew :apps:pay-api:bootJar
@@ -80,6 +88,7 @@ docker run --rm -i --add-host=host.docker.internal:host-gateway \
 | `transaction-timeline.py` | 결제 한 건의 문장 순서와 지갑 행 잠금 보유 구간 | M-007 |
 | `transaction-history-benchmark.py` | 거래내역 커서 조회의 깊은 페이지 비용 (OFFSET과 비교) | M-008 |
 | `cancellation-contention.js` | 한 지갑에서 승인과 취소가 같은 행을 두고 만나는 부하 | M-009 |
+| `recovery-latency-experiment.py` | 미확정 거래가 확정되기까지의 시간 (충전·카드 결제) | M-011 |
 
 ## 결과를 기록할 때
 
