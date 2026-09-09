@@ -1,7 +1,5 @@
 package io.parity.pay.api.webhook;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -11,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 카드 PG 웹훅 수신.
@@ -65,7 +65,9 @@ class PgWebhookController {
                     text(node, "externalKey"),
                     node.path("sequence").asLong(),
                     node.hasNonNull("amount") ? node.get("amount").asLong() : null);
-        } catch (RuntimeException | com.fasterxml.jackson.core.JsonProcessingException e) {
+            // Jackson 3에서 파싱 실패는 검사 예외가 아니라 RuntimeException입니다. 예전에는
+            // JsonProcessingException을 함께 잡아야 했습니다.
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }
         if (payload.eventId() == null || payload.externalKey() == null) {

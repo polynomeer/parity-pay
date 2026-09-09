@@ -1,7 +1,5 @@
 package io.parity.pay.api.outbox;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -15,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 발행 한 배치의 트랜잭션 경계.
@@ -148,7 +148,7 @@ class OutboxPublishTransaction {
                     record.occurredAt(),
                     record.traceId(),
                     objectMapper.readTree(record.payloadJson())));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("failed to build event envelope for " + record.eventId(), e);
         }
     }

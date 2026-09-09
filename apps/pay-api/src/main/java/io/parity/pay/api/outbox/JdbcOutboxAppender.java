@@ -1,7 +1,5 @@
 package io.parity.pay.api.outbox;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.parity.pay.shared.error.BusinessException;
 import io.parity.pay.shared.error.ErrorCode;
 import io.parity.pay.shared.event.EventEnvelope;
@@ -11,6 +9,8 @@ import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 이벤트를 업무 트랜잭션과 같은 트랜잭션에 기록합니다.
@@ -46,7 +46,7 @@ class JdbcOutboxAppender implements OutboxAppender {
         String payloadJson;
         try {
             payloadJson = objectMapper.writeValueAsString(envelope.payload());
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new BusinessException(
                     ErrorCode.INTERNAL_ERROR, "failed to serialize event payload: " + envelope.eventType());
         }

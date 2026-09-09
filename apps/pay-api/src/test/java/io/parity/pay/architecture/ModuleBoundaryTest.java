@@ -26,7 +26,14 @@ class ModuleBoundaryTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(
-                    "org.springframework..", "jakarta.persistence..", "org.hibernate..", "com.fasterxml.jackson..")
+                    "org.springframework..",
+                    "jakarta.persistence..",
+                    "org.hibernate..",
+                    // Jackson은 3에서 tools.jackson으로 옮겨갔습니다. 옛 이름만 두면 이 규칙은 아무것도
+                    // 막지 않으면서 통과합니다 — 이름을 가리키는 규칙은 그 이름이 움직이면 조용히
+                    // 무의미해집니다. 둘 다 적습니다.
+                    "com.fasterxml.jackson..",
+                    "tools.jackson..")
             .as("도메인 계층은 Spring·JPA·Jackson에 의존하지 않아야 합니다");
 
     /** 도메인은 바깥 계층을 모릅니다. */

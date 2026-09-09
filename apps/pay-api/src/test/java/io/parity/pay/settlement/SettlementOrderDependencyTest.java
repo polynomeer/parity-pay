@@ -2,7 +2,6 @@ package io.parity.pay.settlement;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.parity.pay.settlement.adapter.in.messaging.SettlementItemConsumer;
 import io.parity.pay.support.AbstractIntegrationTest;
 import java.time.Instant;
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 정산 소비자의 순서 의존성.

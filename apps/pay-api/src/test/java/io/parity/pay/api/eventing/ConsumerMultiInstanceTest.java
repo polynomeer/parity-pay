@@ -2,8 +2,6 @@ package io.parity.pay.api.eventing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.parity.pay.settlement.adapter.in.messaging.SettlementItemConsumer;
 import io.parity.pay.support.AbstractIntegrationTest;
 import io.parity.pay.wallet.adapter.in.messaging.WalletTransactionProjectionConsumer;
@@ -24,6 +22,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 같은 소비자 그룹의 다중 인스턴스 경쟁.

@@ -1,7 +1,5 @@
 package io.parity.pay.wallet.adapter.in.messaging;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.parity.pay.shared.event.ConsumedEventStore;
 import io.parity.pay.shared.id.EventId;
 import io.parity.pay.shared.id.LedgerTransactionId;
@@ -20,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 거래내역 프로젝션 소비자.

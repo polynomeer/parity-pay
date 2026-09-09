@@ -2,9 +2,6 @@ package io.parity.pay.openapi;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import io.parity.pay.ParityPayApplication;
 import io.parity.pay.api.security.OperatorBootstrap;
 import io.parity.pay.support.AbstractIntegrationTest;
@@ -21,14 +18,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * OpenAPI 명세와 구현의 일치 검사.
@@ -42,12 +44,18 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * <p>근거: docs/03-mvp-scope.md §7, docs/10-test-strategy.md §8·§11
  */
 @SpringBootTest(classes = ParityPayApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+// Spring Boot 4는 TestRestTemplate 빈을 자동으로 만들지 않습니다. 3.5에서는 RANDOM_PORT만으로
+// 주입됐습니다. 기반 클래스에 두면 웹 서버가 없는 시험까지 깨지므로 여기에 붙입니다.
+@AutoConfigureTestRestTemplate
 class OpenApiSnapshotTest extends AbstractIntegrationTest {
 
     private static final Path SNAPSHOT = Path.of("..", "..", "docs", "api", "openapi.json");
     private static final String UPDATE_FLAG = "updateOpenApiSnapshot";
 
-    private final ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
+    // Jackson 3의 ObjectMapper는 불변입니다. 기능을 켜려면 빌더로 만들어야 합니다.
+    private final ObjectMapper objectMapper = JsonMapper.builder()
+            .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+            .build();
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -151,7 +159,8 @@ class OpenApiSnapshotTest extends AbstractIntegrationTest {
     private Object toSortedStructure(JsonNode node) {
         if (node.isObject()) {
             Map<String, Object> sorted = new TreeMap<>();
-            node.fields().forEachRemaining(entry -> sorted.put(entry.getKey(), toSortedStructure(entry.getValue())));
+            // Jackson 3에서 fields()가 properties()로 바뀌었고 Iterator가 아니라 Set을 돌려줍니다.
+            node.properties().forEach(entry -> sorted.put(entry.getKey(), toSortedStructure(entry.getValue())));
             return sorted;
         }
         if (node.isArray()) {

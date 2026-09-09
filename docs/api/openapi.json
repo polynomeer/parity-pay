@@ -5,6 +5,7 @@
         "ApprovePaymentRequest" : {
           "properties" : {
             "amount" : {
+              "exclusiveMinimum" : 0,
               "format" : "int64",
               "type" : "integer"
             },
@@ -53,6 +54,7 @@
         "CancelPaymentRequest" : {
           "properties" : {
             "amount" : {
+              "exclusiveMinimum" : 0,
               "format" : "int64",
               "type" : "integer"
             },
@@ -130,6 +132,7 @@
               "type" : "string"
             },
             "initialBalance" : {
+              "exclusiveMinimum" : 0,
               "format" : "int64",
               "type" : "integer"
             }
@@ -380,6 +383,7 @@
         "TopUpRequest" : {
           "properties" : {
             "amount" : {
+              "exclusiveMinimum" : 0,
               "format" : "int64",
               "type" : "integer"
             },
@@ -1142,6 +1146,7 @@
         "AdjustmentRequest" : {
           "properties" : {
             "amount" : {
+              "exclusiveMinimum" : 0,
               "format" : "int64",
               "type" : "integer"
             },

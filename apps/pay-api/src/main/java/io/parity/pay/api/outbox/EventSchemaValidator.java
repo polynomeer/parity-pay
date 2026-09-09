@@ -1,16 +1,15 @@
 package io.parity.pay.api.outbox;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SchemaValidatorsConfig;
-import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.Error;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.SchemaRegistryConfig;
+import com.networknt.schema.SpecificationVersion;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -19,6 +18,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 이벤트 계약 검사기.
@@ -35,7 +36,7 @@ public class EventSchemaValidator {
     private static final String ENVELOPE_ID = "https://paritypay.io/events/envelope.schema.json";
     private static final String ENVELOPE_RESOURCE = "events/schema/envelope.schema.json";
 
-    private final Map<String, JsonSchema> schemas;
+    private final Map<String, Schema> schemas;
 
     EventSchemaValidator(ObjectMapper objectMapper) {
         this.schemas = loadSchemas(objectMapper);
@@ -46,15 +47,19 @@ public class EventSchemaValidator {
         String key = keyOf(
                 envelope.path("eventType").asText(),
                 envelope.path("eventVersion").asInt());
-        JsonSchema schema = schemas.get(key);
+        Schema schema = schemas.get(key);
         if (schema == null) {
             throw new EventContractViolationException(
                     "no schema for event " + key + "; declared schemas: " + schemas.keySet());
         }
-        Set<ValidationMessage> errors = schema.validate(envelope);
+        List<Error> errors = schema.validate(envelope);
         if (!errors.isEmpty()) {
+            // 어느 필드가 문제인지 함께 적습니다. json-schema-validator 3.x의 메시지에는 경로가
+            // 들어 있지 않아, 그대로 쓰면 "형식이 틀렸다"까지만 알 수 있습니다.
             throw new EventContractViolationException(key + " violates its schema: "
-                    + errors.stream().map(ValidationMessage::getMessage).collect(Collectors.joining("; ")));
+                    + errors.stream()
+                            .map(error -> error.getInstanceLocation() + " " + error.getMessage())
+                            .collect(Collectors.joining("; ")));
         }
     }
 
@@ -67,17 +72,18 @@ public class EventSchemaValidator {
         return eventType + "-v" + eventVersion;
     }
 
-    private static Map<String, JsonSchema> loadSchemas(ObjectMapper objectMapper) {
+    private static Map<String, Schema> loadSchemas(ObjectMapper objectMapper) {
         String envelope = readEnvelope();
         // 이벤트 스키마가 봉투 스키마를 $ref로 참조합니다. 네트워크로 가져오지 않도록 내용을
         // 직접 등록합니다.
-        JsonSchemaFactory factory = JsonSchemaFactory.getInstance(
-                SpecVersion.VersionFlag.V202012,
-                builder -> builder.schemaLoaders(loaders -> loaders.schemas(Map.of(ENVELOPE_ID, envelope))));
-        SchemaValidatorsConfig config =
-                SchemaValidatorsConfig.builder().formatAssertionsEnabled(true).build();
+        SchemaRegistry registry = SchemaRegistry.withDefaultDialect(
+                SpecificationVersion.DRAFT_2020_12, builder -> builder.schemaLoader(loaders -> loaders.resourceLoaders(
+                                resources -> resources.resources(Map.of(ENVELOPE_ID, envelope))))
+                        .schemaRegistryConfig(SchemaRegistryConfig.builder()
+                                .formatAssertionsEnabled(true)
+                                .build()));
 
-        Map<String, JsonSchema> loaded = new LinkedHashMap<>();
+        Map<String, Schema> loaded = new LinkedHashMap<>();
         for (Resource resource : findSchemaResources()) {
             String filename = resource.getFilename();
             if (filename == null || filename.equals("envelope.schema.json")) {
@@ -85,7 +91,7 @@ public class EventSchemaValidator {
             }
             String key = filename.substring(0, filename.length() - ".schema.json".length());
             try (InputStream in = resource.getInputStream()) {
-                loaded.put(key, factory.getSchema(objectMapper.readTree(in), config));
+                loaded.put(key, registry.getSchema(objectMapper.readTree(in)));
             } catch (IOException e) {
                 throw new IllegalStateException("failed to read event schema " + filename, e);
             }

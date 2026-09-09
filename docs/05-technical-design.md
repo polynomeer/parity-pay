@@ -260,6 +260,43 @@ API로 받고, 못 받는 날이 있습니다.
 은행과 **한 앱으로 합치지 않았습니다.** 다른 회사이고, 무엇보다 하나만 죽여야 의미 있는 실험이
 됩니다. 카드 승인은 되는데 은행 출금이 안 되는 상황과 그 반대는 서로 다른 사고입니다.
 
+### Spring Boot 4 (2026-09-09)
+
+Spring Boot 3.5에서 4.1로 올렸습니다. 판올림 자체보다 **드러난 것**이 중요합니다.
+
+**Boot 4는 자동설정을 잘게 나눴습니다.** 3.5에서는 `spring-boot-autoconfigure` 하나가 다 했지만
+4에서는 모듈이 따로입니다. 우리가 스타터 대신 라이브러리를 직접 선언해 왔기 때문에, 다음이 없으면
+클래스패스에 라이브러리가 있어도 아무 일이 일어나지 않습니다.
+
+| 모듈 | 없으면 |
+|---|---|
+| `spring-boot-flyway` | 마이그레이션이 돌지 않고 Hibernate 검증이 "테이블 없음"으로 실패 |
+| `spring-boot-kafka` | `KafkaTemplate` 자동설정도 Testcontainers 서비스 연결도 없음 |
+| `spring-boot-restclient` | `RestTemplateBuilder`를 못 찾아 컨텍스트가 뜨지 않음 |
+| `spring-boot-resttestclient` | `TestRestTemplate` 클래스 자체가 없음 |
+
+**Jackson 3으로 옮겼습니다**(`com.fasterxml.jackson` → `tools.jackson`). Boot 4가 제공하는
+`ObjectMapper` 빈이 Jackson 3이므로 선택이 아니었습니다. 함께 바뀐 것:
+
+- 파싱 실패가 검사 예외에서 `RuntimeException`으로 바뀌었습니다(`JsonProcessingException` →
+  `JacksonException`). `throws` 선언과 다중 catch가 정리됐습니다.
+- `ObjectMapper`가 불변입니다. 기능을 켜려면 `JsonMapper.builder()`를 씁니다.
+- `JsonNode.fields()`가 `properties()`로 바뀌고 `Iterator`가 아니라 `Set`을 돌려줍니다.
+
+`json-schema-validator`도 3.x로 함께 올렸습니다. 1.5.x는 Jackson 2를 쓰므로 선택이 아니었고, API가
+전면 개명됐습니다(`JsonSchema`→`Schema`, `JsonSchemaFactory`→`SchemaRegistry`). 오류 메시지에 경로가
+빠져 있어 **어느 필드가 문제인지** 우리가 붙입니다.
+
+**이름을 가리키는 규칙 두 개가 조용히 무의미해졌습니다.** 이것이 이번 판올림에서 가장 값어치 있는
+발견입니다.
+
+- 시험 하니스가 기관의 보안 자동설정을 **클래스 이름 목록**으로 제외하고 있었습니다. Boot 4에서 네
+  클래스가 모두 다른 패키지로 옮겨갔고, 이름이 틀리면 조용히 아무것도 제외되지 않은 채 401만
+  남습니다. 이름을 맞히는 대신 **허용 규칙을 직접 등록**하도록 바꿨습니다.
+- ArchUnit의 "도메인은 Jackson에 의존하지 않는다" 규칙이 `com.fasterxml.jackson..`만 가리키고
+  있었습니다. 패키지가 옮겨간 뒤로 이 규칙은 **아무것도 막지 않으면서 통과**했습니다. 두 이름을 다
+  적었고, 도메인에 `tools.jackson` 참조를 넣어 실제로 실패하는 것을 확인했습니다.
+
 ## 11. 보안 설계
 
 - 비밀번호와 결제 PIN을 Argon2id 또는 bcrypt로 해시합니다.

@@ -2,7 +2,6 @@ package io.parity.pay.support;
 
 import io.parity.mockpg.MockPgApplication;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -43,20 +42,10 @@ final class MockPgProcess {
         properties.put("MOCK_PG_DB_PASSWORD", password);
         properties.put("spring.main.banner-mode", "off");
         properties.put("management.endpoints.web.exposure.include", "");
-        // 기관은 인증이 없습니다. 자기 build.gradle에 security 의존성도 없습니다. 그런데 테스트는
-        // pay-api와 클래스패스를 공유하므로 Spring Security가 자동 설정되어 기관의 모든 엔드포인트가
-        // 401이 됩니다. 그 자동 설정만 꺼 둡니다 — 운영 배포에는 이 문제 자체가 없습니다.
-        properties.put(
-                "spring.autoconfigure.exclude",
-                List.of(
-                        "org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration",
-                        "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration",
-                        "org.springframework.boot.autoconfigure.security.oauth2.resource.servlet"
-                                + ".OAuth2ResourceServerAutoConfiguration",
-                        "org.springframework.boot.actuate.autoconfigure.security.servlet"
-                                + ".ManagementWebSecurityAutoConfiguration"));
 
         context = new SpringApplicationBuilder(MockPgApplication.class)
+                // 기관은 인증이 없습니다. 시험에서만 클래스패스가 겹쳐 401이 되므로 열어 둡니다.
+                .sources(io.parity.institution.InstitutionSecurityBypass.class)
                 .properties(properties)
                 .run();
         port = context.getEnvironment().getProperty("local.server.port", Integer.class, 0);

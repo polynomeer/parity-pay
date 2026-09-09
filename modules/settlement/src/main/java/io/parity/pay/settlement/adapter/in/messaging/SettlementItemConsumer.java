@@ -1,7 +1,5 @@
 package io.parity.pay.settlement.adapter.in.messaging;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.parity.pay.settlement.application.port.out.SettlementItemRepository;
 import io.parity.pay.settlement.application.service.SettlementProperties;
 import io.parity.pay.settlement.domain.SettlementCalculator;
@@ -20,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 정산 항목을 만드는 소비자.

@@ -2,15 +2,20 @@ import net.ltgt.gradle.errorprone.errorprone
 
 plugins {
     java
-    id("org.springframework.boot") version "3.5.16" apply false
+    id("org.springframework.boot") version "4.1.1" apply false
     id("com.diffplug.spotless") version "7.0.2"
     id("net.ltgt.errorprone") version "5.1.1" apply false
 }
 
-val springBootVersion = "3.5.16"
+val springBootVersion = "4.1.1"
 val archUnitVersion = "1.5.0"
 val jqwikVersion = "1.10.1"
 val errorProneVersion = "2.50.0"
+
+// Spring Boot 4의 BOM은 Testcontainers 버전을 더 이상 관리하지 않습니다. 3.5에서는 관리해 주어
+// 버전을 적지 않았고, 판올림하자 버전이 빈 문자열로 해석되어 해석 자체가 실패했습니다.
+// 우리가 쓰는 것은 우리가 버전을 정합니다.
+val testcontainersVersion = "1.21.3"
 
 allprojects {
     group = "io.parity"
@@ -37,6 +42,7 @@ subprojects {
     dependencies {
         add("implementation", platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
         add("testImplementation", platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+        add("testImplementation", platform("org.testcontainers:testcontainers-bom:$testcontainersVersion"))
         add("testFixturesImplementation", platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
 
         add("testImplementation", "org.junit.jupiter:junit-jupiter")
