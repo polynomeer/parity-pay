@@ -35,7 +35,7 @@ jobs:
       # 원본 결과를 남깁니다. 수치를 보고서에 옮길 때 근거가 됩니다.
       - name: Upload benchmark result
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-result
           path: |
