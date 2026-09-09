@@ -38,6 +38,7 @@ DB CPU·락 대기·slow query. pg_stat_statements를 켜지 않았습니다"라
 import argparse
 import json
 import os
+import re
 import signal
 import statistics
 import subprocess
@@ -152,6 +153,23 @@ def rows(sql, db=DB):
     return [line.split("\x1f") for line in text.splitlines() if line]
 
 
+def truncate_with_retry(attempts=6):
+    """TRUNCATE는 AccessExclusiveLock을 요구합니다.
+
+    앱이 이미 떠 있고 스케줄 작업(발행기·복구·대사)이 같은 표를 읽고 있으므로, 그냥 실행하면
+    교착이 나고 PostgreSQL이 우리 쪽을 중단시킵니다. 실제로 한 번 겪었습니다. 잠금을 기다리지 않고
+    빨리 포기한 뒤 다시 시도합니다 — 스케줄 작업은 짧고 곧 놓습니다."""
+    last = None
+    for attempt in range(attempts):
+        try:
+            psql("SET lock_timeout = '3s'; " + TRUNCATE_SQL)
+            return
+        except RuntimeError as e:
+            last = e
+            time.sleep(2 + attempt)
+    raise RuntimeError(f"TRUNCATE가 {attempts}회 모두 실패했습니다: {last}")
+
+
 class PoolSampler(threading.Thread):
     """HikariCP 지표를 초 단위로 남깁니다. 줄이 DB 앞이 아니라 풀 앞에 서는지를 봅니다."""
 
@@ -235,7 +253,7 @@ def run_mode(mode, variant, jar, args, out_dir, tag):
     try:
         # 실행마다 같은 조건에서 시작합니다. member는 비우지 않습니다. 비우면 부트스트랩 운영자
         # 계정까지 사라집니다.
-        psql(TRUNCATE_SQL)
+        truncate_with_retry()
 
         pool = PoolSampler(args.port)
         pool.start()
@@ -247,7 +265,7 @@ def run_mode(mode, variant, jar, args, out_dir, tag):
                 "--summary-export", str(out_dir / f"k6-{tag}.json"),
                 "-e", f"BASE_URL=http://localhost:{args.port}",
                 "-e", f"SAME_WALLET={'true' if same_wallet else 'false'}",
-                "load-tests/payment-baseline.js",
+                args.script,
             ],
             stdout=k6_out,
             stderr=subprocess.STDOUT,
@@ -268,6 +286,12 @@ def run_mode(mode, variant, jar, args, out_dir, tag):
 
         time.sleep(max(0.0, args.window_seconds - (time.monotonic() - window_started)))
         statements = rows(STATEMENTS_SQL)
+        # 처리량 기준 문장은 상위 목록과 무관하게 직접 셉니다.
+        counted = psql(
+            "SELECT coalesce(sum(calls), 0) FROM pg_stat_statements"
+            f" WHERE dbid = (SELECT oid FROM pg_database WHERE datname = '{DB}')"
+            f"   AND query LIKE '{args.count_statement}%'"
+        )
         pool_summary = pool.summary()
         pool.stop()
         sampler.wait(timeout=60)
@@ -285,6 +309,7 @@ def run_mode(mode, variant, jar, args, out_dir, tag):
             "variant": variant,
             "k6": summary,
             "statements": statements,
+            "counted": int(counted),
             "wait_profile": wait_profile,
             "wait_by_statement": wait_by_statement,
             "pool": pool_summary,
@@ -298,20 +323,27 @@ def metric(summary, name, field):
     return node.get(field)
 
 
-def approved_in_window(result):
-    """측정 창 안에서 실제로 커밋된 결제 수입니다. payment INSERT 호출 수가 그것입니다."""
-    for calls, _total, _mean, _max, _read, query in result["statements"]:
-        if query.startswith("insert into payment "):
-            return int(calls)
-    return 0
+def approved_in_window(result, statement="insert into payment "):
+    """측정 창 안에서 실제로 커밋된 건수입니다. 해당 INSERT 호출 수가 그것입니다.
+
+    상위 15개 목록에서 찾지 않습니다. 취소 실험에서 그 문장이 목록 밖으로 밀려나 처리량이
+    0으로 보고된 적이 있습니다 — 값이 아니라 측정 실패였습니다. 실행 중에 따로 세어 둡니다."""
+    return result["counted"]
+
+
+# 차감은 JDBC(`available_amount = available_amount - ?`)가, 증가는 JPQL이 만듭니다. Hibernate는
+# 별칭을 붙여 `set available_amount=(wbje1_0.available_amount+$1)`로 내보내므로 한 문자열로는
+# 둘 다 잡을 수 없습니다. 실제로 취소 실험에서 이 함수가 증가 대신 차감을 집어 왔습니다.
+BALANCE_UPDATE = re.compile(r"(?is)update\s+wallet_balance\b.*available_amount")
 
 
 def balance_update(result):
-    """잔액 UPDATE의 (호출 수, 평균 실행 ms)입니다. 경합은 여기 평균에 나타납니다."""
-    for calls, _total, mean, _max, _read, query in result["statements"]:
-        if "available_amount = available_amount" in query:
-            return int(calls), float(mean)
-    return 0, 0.0
+    """지갑 잔액 UPDATE 중 시간을 가장 많이 쓴 것의 (호출 수, 평균 실행 ms)입니다."""
+    best = None
+    for calls, total, mean, _max, _read, query in result["statements"]:
+        if BALANCE_UPDATE.search(query) and (best is None or float(total) > best[0]):
+            best = (float(total), int(calls), float(mean))
+    return (best[1], best[2]) if best else (0, 0.0)
 
 
 def lock_wait_pct(result):
@@ -323,9 +355,13 @@ def lock_wait_pct(result):
 def render(result, window_seconds):
     lines = [f"===== {result['tag']} ====="]
     summary = result["k6"]
-    approved = metric(summary, "paritypay_payments_approved", "count") or 0
+    approved = metric(summary, "paritypay_payments_approved", "count") or metric(
+        summary, "paritypay_cancellations_completed", "count"
+    ) or 0
     rate = metric(summary, "http_reqs", "rate") or 0.0
-    duration = summary.get("metrics", {}).get("paritypay_payment_duration", {})
+    duration = summary.get("metrics", {}).get("paritypay_payment_duration") or summary.get(
+        "metrics", {}
+    ).get("paritypay_cancel_duration", {})
     lines.append(
         f"승인 {approved:.0f} / 전체 요청률 {rate:.1f} req/s / 결제 지연 "
         f"p50 {duration.get('med', 0):.0f} ms p95 {duration.get('p(95)', 0):.0f} ms "
@@ -374,6 +410,16 @@ def main():
     parser.add_argument("--window-start", type=int, default=DEFAULT_WINDOW_START)
     parser.add_argument("--window-seconds", type=int, default=DEFAULT_WINDOW_SECONDS)
     parser.add_argument("--modes", default="different-wallet,same-wallet")
+    parser.add_argument(
+        "--script",
+        default="load-tests/payment-baseline.js",
+        help="k6 시나리오. 취소 경합은 load-tests/cancellation-contention.js 입니다.",
+    )
+    parser.add_argument(
+        "--count-statement",
+        default="insert into payment ",
+        help="측정 창의 처리량을 셀 때 기준으로 삼는 문장. 취소는 'insert into payment_cancellation '.",
+    )
     args = parser.parse_args()
 
     variants = []
@@ -409,14 +455,14 @@ def main():
                 # 앞 실행의 여파 위에서 다음 실행을 시작하지 않습니다.
                 time.sleep(15)
 
-    report.append(compare(results, args.window_seconds))
+    report.append(compare(results, args.window_seconds, args.count_statement))
     print(report[-1])
     (out_dir / "report.txt").write_text("\n\n".join(report) + "\n")
     print(f"\n원본 결과: {out_dir}/report.txt")
     return 0
 
 
-def compare(results, window_seconds):
+def compare(results, window_seconds, count_statement="insert into payment "):
     """빌드×모드별로 반복의 중앙값을 모읍니다. 한 번의 값으로 결론을 내지 않기 위해서입니다."""
     lines = ["===== 요약 (반복 중앙값) =====",
              f"{'빌드':<10} {'모드':<18} {'결제/초':>9} {'잔액UPDATE평균ms':>16} {'Lock대기%':>10} {'p95 ms':>8}  반복값(결제/초)"]
@@ -424,10 +470,16 @@ def compare(results, window_seconds):
     for r in results:
         groups.setdefault((r["variant"], r["mode"]), []).append(r)
     for (variant, mode), items in groups.items():
-        rates = [approved_in_window(r) / window_seconds for r in items]
+        rates = [approved_in_window(r, count_statement) / window_seconds for r in items]
         means = [balance_update(r)[1] for r in items]
         locks = [lock_wait_pct(r) for r in items]
-        p95s = [r["k6"].get("metrics", {}).get("paritypay_payment_duration", {}).get("p(95)", 0) for r in items]
+        p95s = [
+            (
+                r["k6"].get("metrics", {}).get("paritypay_payment_duration")
+                or r["k6"].get("metrics", {}).get("paritypay_cancel_duration", {})
+            ).get("p(95)", 0)
+            for r in items
+        ]
         lines.append(
             f"{variant:<10} {mode:<18} {statistics.median(rates):>9.1f} {statistics.median(means):>16.1f} "
             f"{statistics.median(locks):>10.1f} {statistics.median(p95s):>8.0f}  "

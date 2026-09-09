@@ -36,6 +36,14 @@ python3 load-tests/transaction-history-benchmark.py --rows 1000000
 ```
 
 ```bash
+# M-009 취소 경합. 처리량 기준 문장이 결제가 아니라 취소이므로 --count-statement를 함께 줍니다.
+python3 load-tests/lock-wait-experiment.py --reps 3 --modes same-wallet \
+  --script load-tests/cancellation-contention.js \
+  --count-statement "insert into payment_cancellation " \
+  --jar before=/tmp/before.jar --jar after=/tmp/after.jar
+```
+
+```bash
 # 크래시 실험. 스크립트가 앱을 직접 띄우고 죽이고 다시 띄웁니다.
 # docker compose up -d 로 postgres·redpanda가 떠 있어야 하고, bootJar가 필요합니다.
 ./gradlew :apps:pay-api:bootJar
@@ -71,6 +79,7 @@ docker run --rm -i --add-host=host.docker.internal:host-gateway \
 | `lock-wait-experiment.py` | 같은 부하를 주면서 DB 안쪽(느린 문장·대기 이벤트·커넥션 풀)을 봄 | M-007 |
 | `transaction-timeline.py` | 결제 한 건의 문장 순서와 지갑 행 잠금 보유 구간 | M-007 |
 | `transaction-history-benchmark.py` | 거래내역 커서 조회의 깊은 페이지 비용 (OFFSET과 비교) | M-008 |
+| `cancellation-contention.js` | 한 지갑에서 승인과 취소가 같은 행을 두고 만나는 부하 | M-009 |
 
 ## 결과를 기록할 때
 

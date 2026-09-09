@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""M-007: 결제 한 건이 트랜잭션 안에서 어떤 순서로 문장을 보내는지 봅니다.
+"""M-007: 결제·취소 한 건이 트랜잭션 안에서 어떤 순서로 문장을 보내는지 봅니다.
 
 `lock-wait-experiment.py`는 부하를 주고 **집계**를 봅니다. 집계로는 "잠금을 얼마나 오래 쥐고
 있는가"를 알 수 없습니다. 여기서는 반대로 부하를 주지 않고 **한 건**을 문장 단위로 봅니다.
@@ -13,6 +13,7 @@ PostgreSQL에 모든 문장을 기록하게 한 뒤 결제 하나를 보내고, 
 
 사용:
     python3 load-tests/transaction-timeline.py --port 8080
+    python3 load-tests/transaction-timeline.py --port 8080 --operation cancel
 
 근거: reports/11 M-007
 """
@@ -29,6 +30,9 @@ from datetime import datetime
 
 CONTAINER = os.environ.get("PG_CONTAINER", "paritypay-postgres")
 PASSWORD = "load-test-password"
+# 차감은 JDBC가, 증가는 JPQL이 만듭니다. Hibernate는 별칭을 붙여
+# `set available_amount=(wbje1_0.available_amount+$1)` 형태로 내보내므로 문자열로 맞출 수 없습니다.
+BALANCE_CHANGE = re.compile(r"(?is)update\s+wallet_balance\b.*available_amount")
 HEAD = re.compile(
     r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+) UTC \[(\d+)\] LOG:  duration: ([\d.]+) ms  (\w+)[^:]*:\s*(.*)$"
 )
@@ -108,20 +112,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--amount", type=int, default=1000)
+    parser.add_argument("--operation", choices=("approve", "cancel"), default="approve")
     args = parser.parse_args()
     base = f"http://localhost:{args.port}"
 
     wallet_id, token, stamp = provision(base)
-    # `ALTER DATABASE`는 **새 커넥션부터** 적용됩니다. 앱의 커넥션 풀은 기동 때 이미 열려 있으므로
-    # 그 방식으로는 결제 문장이 하나도 기록되지 않습니다. 설정 파일을 고치고 reload해야 이미 열린
-    # 백엔드에도 적용됩니다.
-    psql("ALTER SYSTEM SET log_min_duration_statement = 0")
-    psql("SELECT pg_reload_conf()")
-    time.sleep(1)
-    try:
-        key = f"timeline-pay-{stamp}"
-        started = time.monotonic()
-        post(
+    # 취소를 보려면 취소할 결제가 먼저 있어야 합니다. 그 결제는 기록을 켜기 전에 만듭니다.
+    payment_id = None
+    if args.operation == "cancel":
+        key = f"timeline-prepay-{stamp}"
+        payment_id = post(
             base,
             "/api/v1/payments",
             {
@@ -134,7 +134,39 @@ def main():
             },
             token,
             key,
-        )
+        )["paymentId"]
+    # `ALTER DATABASE`는 **새 커넥션부터** 적용됩니다. 앱의 커넥션 풀은 기동 때 이미 열려 있으므로
+    # 그 방식으로는 결제 문장이 하나도 기록되지 않습니다. 설정 파일을 고치고 reload해야 이미 열린
+    # 백엔드에도 적용됩니다.
+    psql("ALTER SYSTEM SET log_min_duration_statement = 0")
+    psql("SELECT pg_reload_conf()")
+    time.sleep(1)
+    try:
+        key = f"timeline-{args.operation}-{stamp}"
+        started = time.monotonic()
+        if args.operation == "cancel":
+            post(
+                base,
+                f"/api/v1/payments/{payment_id}/cancellations",
+                {"amount": args.amount, "currency": "KRW", "reason": "timeline"},
+                token,
+                key,
+            )
+        else:
+            post(
+                base,
+                "/api/v1/payments",
+                {
+                    "orderId": f"order-{key}",
+                    "walletId": wallet_id,
+                    "merchantId": "11111111-2222-3333-4444-555555555555",
+                    "amount": args.amount,
+                    "currency": "KRW",
+                    "method": "PAY_MONEY",
+                },
+                token,
+                key,
+            )
         elapsed = (time.monotonic() - started) * 1000
         time.sleep(1)
         # postgres는 stderr로 기록하지만 이미지에 따라 다를 수 있어 둘 다 봅니다.
@@ -145,9 +177,9 @@ def main():
         psql("SELECT pg_reload_conf()")
 
     entries = parse_log(log)
-    hits = [i for i, e in enumerate(entries) if "available_amount = available_amount" in e["sql"] and e["kind"] == "execute"]
+    hits = [i for i, e in enumerate(entries) if BALANCE_CHANGE.search(e["sql"]) and e["kind"] == "execute"]
     if not hits:
-        print("잔액 차감 문장을 찾지 못했습니다. 앱이 이 postgres를 쓰고 있는지 확인하세요.", file=sys.stderr)
+        print("잔액 문장을 찾지 못했습니다. 앱이 이 postgres를 쓰고 있는지 확인하세요.", file=sys.stderr)
         return 1
 
     pid = entries[hits[-1]]["pid"]
@@ -164,16 +196,16 @@ def main():
         return datetime.strptime(item["ts"], "%Y-%m-%d %H:%M:%S.%f")
 
     t0 = at(own[start])
-    print(f"결제 응답 {elapsed:.0f} ms / 백엔드 pid {pid}")
+    print(f"{args.operation} 응답 {elapsed:.0f} ms / 백엔드 pid {pid}")
     print(f"{'경과ms':>8} {'실행ms':>7}  문장")
     marked = None
     for item in own[start : end + 1]:
         offset = (at(item) - t0).total_seconds() * 1000
         sql = " ".join(item["sql"].split())[:82]
         note = ""
-        if "available_amount = available_amount" in item["sql"]:
+        if BALANCE_CHANGE.search(item["sql"]):
             marked = offset
-            note = "   <<< 잔액 차감: 여기부터 지갑 행 잠금"
+            note = "   <<< 잔액 변경: 여기부터 지갑 행 잠금"
         if sql.startswith("COMMIT") and marked is not None:
             note = f"   <<< 커밋: 잠금 해제 (보유 {offset - marked:.0f} ms)"
         print(f"{offset:8.1f} {item['dur']:7.3f}  {sql}{note}")
