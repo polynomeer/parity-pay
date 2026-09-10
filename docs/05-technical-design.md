@@ -14,7 +14,7 @@ ParityPay의 기술 구조는 금융 불변조건 보호, 실패 격리, 추적 
 | 영역 | 선택 | 목적 |
 |---|---|---|
 | Language | Java 21 | 장기지원 버전과 현대적 언어 기능 |
-| Framework | Spring Boot 3.x | 트랜잭션, 보안, 관측성 생태계 |
+| Framework | Spring Boot 4.1 | 트랜잭션, 보안, 관측성 생태계 (3.5 → 4.1 판올림은 §10 뒤 참고) |
 | Persistence | Spring Data JPA + 선택적 jOOQ/JDBC | 도메인 쓰기와 복잡 조회 분리 |
 | Database | PostgreSQL | ACID, 제약조건, 잠금과 운영 도구 |
 | Migration | Flyway | 재현 가능한 스키마 버전 관리 |

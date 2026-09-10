@@ -15,7 +15,7 @@ ParityPay는 플랫폼 내장형 페이머니 서비스를 구현하는 백엔�
 
 ## 목표 아키텍처
 
-초기 구현은 Java 21, Spring Boot, PostgreSQL 기반 모듈러 모놀리스입니다. 결제·지갑·원장은 동일 DB 트랜잭션으로 핵심 불변조건을 보호하고, 후속 처리는 Transactional Outbox와 Kafka/Redpanda를 통해 비동기로 연결합니다.
+구현은 Java 21, Spring Boot 4, PostgreSQL 기반 모듈러 모놀리스입니다. 결제·지갑·원장은 동일 DB 트랜잭션으로 핵심 불변조건을 보호하고, 후속 처리는 Transactional Outbox와 Kafka/Redpanda를 통해 비동기로 연결합니다.
 
 ```mermaid
 flowchart TD
@@ -54,23 +54,35 @@ AI 에이전트(Claude Code)로 이 저장소에서 작업한다면 [CLAUDE.md](
 - [거래 정합성·장애 복구 설계서](docs/09-consistency-recovery.md)
 - [테스트 전략서](docs/10-test-strategy.md)
 - [구현 체크리스트](docs/13-implementation-checklist.md)
+- [프론트엔드 설계서](docs/14-frontend-design.md)
+- [UI 화면 계획](docs/15-ui-screen-plan.md)
+- [UI 구현 계획서](docs/16-ui-implementation-plan.md)
 - [ADR](docs/adr/README.md)
 - [성능·장애 테스트 보고서 템플릿](reports/11-performance-failure-report-template.md)
 - [포트폴리오 기술 보고서 초안](reports/12-portfolio-technical-report-draft.md)
 
 ## 현재 상태
 
-Phase 0~8이 모두 구현되었고, 설계 문서가 예고한 장애 시나리오 F-001~F-011을 전부 실행했습니다.
-실험은 매번 결함을 찾아냈고 그 목록과 수치는 [성능·장애 보고서](reports/11-performance-failure-report-template.md)에
-있습니다 — 통과한 것만이 아니라 틀렸던 가설과 측정 방법의 실수도 함께 적혀 있습니다.
+Phase 0~9가 모두 구현되었고, 설계 문서가 예고한 장애 시나리오 F-001~F-011을 전부 실행했습니다.
+부하·장애 실험 25종이 결함 10건(A~J)을 찾아냈고, 그 목록과 수치는
+[성능·장애 보고서](reports/11-performance-failure-report-template.md)에 있습니다 — 통과한 것만이
+아니라 틀렸던 가설과 측정 방법의 실수도 함께 적혀 있습니다.
+
+**결함 10건 중 문서나 코드를 읽어서 나온 것은 하나도 없습니다.** 넷은 "대비되어 있다"고 문서에
+적혀 있던 것이었고, 하나(결함 J)는 시험이 **있었는데도** 통과했습니다 — 그 시험이 증명할 수 있는
+것보다 적게 주장하고 있었기 때문입니다.
 
 외부기관(Mock Bank·Mock PG)은 별도 프로세스이고 **자기 데이터베이스**를 씁니다. 대사와 타임라인은
 기관의 API로 받으며, 그래서 "기관에 물어보지 못했다"와 "기관에 기록이 없다"가 코드에서 구분됩니다.
 
-**검증 현황** (2026-09-09): 277개 테스트, 실패 0건. PR과 main 푸시마다
-[CI](.github/workflows/ci.yml)가 전체 테스트, 마이그레이션 검증, 문서 링크·불변조건 추적,
-비밀값 검사를 실행합니다.
-(`./gradlew build --rerun-tasks --no-build-cache`).
+**검증 현황** (2026-09-10): 백엔드 **297개**, 프론트엔드 **43개**, E2E **2개**, 실패 0건.
+PR과 main 푸시마다 [CI](.github/workflows/ci.yml)가 전체 테스트, 마이그레이션 검증, 문서 링크·불변조건
+추적, 비밀값 검사, 프론트엔드(생성 타입 드리프트·타입 검사·빌드)를 실행합니다
+(`./gradlew build --rerun-tasks --no-build-cache`, `pnpm -r test`).
+
+[E2E](.github/workflows/e2e.yml)와 [벤치마크](.github/workflows/benchmark.yml)는 PR 게이트가 아니라
+주간·수동 실행입니다. E2E는 실제 스택 전부와 브라우저가 필요해 무겁고, PR마다 돌려 빨간불이
+잦아지면 아무도 보지 않게 되기 때문입니다.
 
 | 영역 | 상태 |
 |---|---|
@@ -88,15 +100,20 @@ Phase 0~8이 모두 구현되었고, 설계 문서가 예고한 장애 시나리
 | 통합 거래 타임라인, 불변조건 상시 지표, Prometheus·Grafana·Jaeger | 동작 |
 | 인증·인가 (JWT, 역할 6종, 이중 승인, 로그인 잠금) | 동작 |
 | HTTP 부하 실험 | 실측 완료 — 기준선은 [reports/11](reports/11-performance-failure-report-template.md) |
+| 고객 앱 (Shop·충전·결제·취소·거래내역·판매자 정산) | 동작 |
+| 운영 콘솔 (거래 검색·타임라인·원장 탐색기·미확정 거래·대사·보정 분개) | 동작 |
+| 장애 시뮬레이터와 불변조건 모니터 | 동작 |
+| E2E (목 없이 실제 스택 한 바퀴) | 동작 — 주간 실행 |
 
 
 
-성능 수치와 장애 복구 결과는 아직 측정하지 않았으며 문서에 성공한 것처럼 기재하지 않습니다.
-자세한 진행 상황은 [구현 체크리스트](docs/13-implementation-checklist.md)에 있습니다.
+문서에 적힌 수치는 전부 실측값입니다. 재지 않은 것은 재지 않았다고 적어 두었고, 판정하지 못한
+실험도 그렇게 남겼습니다. 자세한 진행 상황은 [구현 체크리스트](docs/13-implementation-checklist.md)에
+있습니다.
 
 ## 실행 방법
 
-**필요 도구**: JDK 21, Docker.
+**필요 도구**: JDK 21, Docker. (화면까지 보려면 Node 20+와 pnpm)
 
 `./gradlew`는 Gradle 8.14.2를 사용하므로 `JAVA_HOME`이 Java 21을 가리켜야 합니다. 다른 버전이 기본값이면
 아래처럼 지정합니다.
@@ -120,6 +137,25 @@ SPRING_PROFILES_ACTIVE=local ./gradlew :apps:pay-api:bootRun
 ```
 
 운영 환경에서는 `PARITYPAY_JWT_SECRET`을 주입하고 `paritypay.security.bootstrap-operators`를 비웁니다.
+
+화면까지 보려면 **Node 20+와 pnpm**이 필요합니다. 두 앱은 서로 다른 오리진에 둡니다 — 운영 콘솔의
+코드가 고객 브라우저로 내려갈 이유가 없습니다.
+
+```bash
+pnpm install
+pnpm --filter @paritypay/web-customer dev    # 고객 앱      http://localhost:5173
+pnpm --filter @paritypay/web-ops dev         # 운영 콘솔    http://localhost:5174
+```
+
+운영 콘솔은 `local` 프로필이 만드는 운영자 계정으로 들어갑니다(`ops-operator@paritypay.local`).
+장애 시뮬레이터에서 시나리오를 적용하고 고객 앱에서 충전·결제를 실행하면, 미확정 거래가 복구되는
+동안 불변조건 카드가 계속 정상으로 유지되는 것을 볼 수 있습니다.
+
+한 바퀴를 자동으로 돌려 보려면 아래 하나면 됩니다. 스택을 띄우고 브라우저로 검증한 뒤 정리합니다.
+
+```bash
+load-tests/run-e2e.sh
+```
 
 테스트는 Testcontainers로 PostgreSQL과 Redpanda를 띄우고, 외부 기관도 별도 Spring 컨텍스트로 실제로
 띄웁니다. 기관에는 **자기 데이터베이스**가 따로 만들어지므로 우리 코드가 기관의 표를 조인할 수

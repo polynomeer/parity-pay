@@ -65,11 +65,13 @@ MVP 완료 전에는 다음 기능을 구현하지 않습니다.
 ## 4. MVP API 표면
 
 호출자는 `Authorization: Bearer` 토큰으로 자신을 밝힙니다(Phase 7, 2026-09-07). `X-Member-Id`
-헤더는 제거했습니다. 지갑 경로는 아직 `me` 대신 `{walletId}`를 사용합니다.
+헤더는 제거했습니다. 지갑은 `me`로도 조회합니다 — 프론트엔드(FE-M1)를 붙이면서 `walletId`가
+가입 응답에만 있어 다른 기기에서 로그인하면 자기 지갑을 찾을 수 없다는 것이 드러났습니다(2026-09-10).
 
 ```text
 POST /api/v1/members
 POST /api/v1/auth/tokens
+GET  /api/v1/wallets/me
 GET  /api/v1/wallets/{walletId}
 GET  /api/v1/wallets/{walletId}/transactions
 POST /api/v1/bank-accounts

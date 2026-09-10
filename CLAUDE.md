@@ -4,11 +4,13 @@
 
 ## 1. 프로젝트
 
-ParityPay는 플랫폼 내장형 페이머니 결제·원장 백엔드입니다. Java 21 / Spring Boot 3.x / PostgreSQL 기반 모듈러 모놀리스이며, 충전·결제·취소·정산·대사를 이중부기 원장 위에서 처리합니다.
+ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다. Java 21 / Spring Boot 4 / PostgreSQL 기반 모듈러 모놀리스이며, 충전·결제·취소·정산·대사를 이중부기 원장 위에서 처리합니다. 고객 앱과 운영 콘솔(React·TypeScript)이 같은 저장소에 있습니다.
 
 이 프로젝트의 목표는 "정상 결제가 되는 것"이 아니라 **중복 요청, 동시 잔액 차감, 외부 승인 후 응답 유실, 이벤트 중복 전달, 프로세스 재시작 상황에서도 금융 불변조건이 깨지지 않는 것**입니다. 모든 구현 판단은 이 기준으로 합니다.
 
-현재 상태: **구현 전 설계 기준선**. 코드는 아직 없고 문서만 있습니다.
+현재 상태: **Phase 0~9 구현 완료** (2026-09-10). 백엔드 297 테스트·프론트엔드 43 테스트·E2E 2건이
+실패 없이 돕니다. 부하·장애 실험 25종을 실행해 결함 10건(A~J)을 찾아 고쳤고, 결과는
+[reports/11](reports/11-performance-failure-report-template.md)에 있습니다.
 
 ## 2. 절대 규칙 (INV) — 어떤 코드도 이것을 깰 수 없습니다
 
@@ -55,6 +57,9 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 백엔드입니다.
 | 멱등성·동시성·Outbox·복구 | [docs/09-consistency-recovery.md](docs/09-consistency-recovery.md) |
 | 테스트 작성 | [docs/10-test-strategy.md](docs/10-test-strategy.md) |
 | 다음에 할 일 | [docs/13-implementation-checklist.md](docs/13-implementation-checklist.md) |
+| 클라이언트 계약·앱 구분 | [docs/14-frontend-design.md](docs/14-frontend-design.md) |
+| 화면에 무엇을 보여줄지 | [docs/15-ui-screen-plan.md](docs/15-ui-screen-plan.md) |
+| UI 구현 순서·백엔드 격차 | [docs/16-ui-implementation-plan.md](docs/16-ui-implementation-plan.md) |
 | 왜 이렇게 결정했는지 | [docs/adr/README.md](docs/adr/README.md) |
 
 전체 문서 관계는 [docs/00-document-map.md](docs/00-document-map.md)에 있습니다.
@@ -123,6 +128,22 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)   # Gradle 8.14.2는 Java 21에
 docker compose up -d                 # PostgreSQL, Redpanda, Redis
 ```
 
+프론트엔드는 pnpm입니다.
+
+```bash
+pnpm install
+pnpm generate                        # docs/api/openapi.json → TypeScript 타입 (생성물은 커밋합니다)
+pnpm -r test                         # 프론트엔드 전체 테스트
+pnpm typecheck
+pnpm --filter @paritypay/web-customer dev    # 고객 앱 (5173)
+pnpm --filter @paritypay/web-ops dev         # 운영 콘솔 (5174)
+load-tests/run-e2e.sh                # 실제 스택 E2E. 스택을 띄우고 돌리고 정리합니다 (약 1분)
+```
+
+- 백엔드 API를 바꾸면 `UPDATE_OPENAPI_SNAPSHOT=1 ./gradlew :apps:pay-api:test --tests "*OpenApiSnapshotTest*"`로
+  스냅샷을 갱신하고 `pnpm generate`를 돌립니다. 둘이 어긋나면 CI가 막습니다.
+- E2E는 PR 게이트가 아니라 주간·수동 실행입니다. 실제 스택 전부가 필요해 무겁기 때문입니다.
+
 - 항상 `./gradlew` 래퍼를 사용합니다. 기본 `JAVA_HOME`이 Java 21이 아니면 위처럼 지정합니다.
 - 통합 테스트는 Testcontainers가 PostgreSQL을 직접 띄우므로 `docker compose` 없이도 실행됩니다.
 - 테스트 결과가 캐시(`FROM-CACHE`)로 표시되면 실제로 실행된 것이 아닙니다. 결과를 보고하기 전에
@@ -135,11 +156,24 @@ docker compose up -d                 # PostgreSQL, Redpanda, Redis
 ### 현재 모듈 구조
 
 ```text
-modules/shared-kernel   Money, 타입 ID, 오류 코드, 멱등성 포트 (순수 자바)
-modules/ledger          이중부기 원장: 도메인·전기 서비스·JPA 어댑터
-modules/wallet          지갑·잔액 스냅샷·충전
-apps/pay-api            조립 지점: 마이그레이션, 멱등성 저장소, Mock Bank, 가입 API
+modules/shared-kernel   Money, 타입 ID, 오류 코드, 멱등성·이벤트 포트 (순수 자바)
+modules/ledger          이중부기 원장: 도메인·전기 서비스·조회 API·JPA 어댑터
+modules/wallet          지갑·잔액 스냅샷·충전·복구·거래내역 프로젝션
+modules/payment         결제·취소·구매확정
+modules/settlement      정산 계산·판매자 지급·지급 복구
+modules/reconciliation  내부·외부 대사와 보정
+apps/pay-api            조립 지점: 마이그레이션 20개, 인증, Outbox, 운영 API
+apps/mock-bank          외부 은행 대역 — 별도 프로세스, 자기 데이터베이스
+apps/mock-pg            카드 PG 대역 — 별도 프로세스, 자기 데이터베이스
+
+apps/web-customer       고객 앱 (Shop · My Pay · 판매자 정산)
+apps/web-ops            운영 콘솔 (거래 검색 · 원장 · 대사 · 장애 시뮬레이터)
+apps/e2e                Playwright — 목 없이 실제 스택을 도는 유일한 시험
+packages/api-client     생성된 API 타입 + 멱등 키·토큰·폴링 계약
 ```
+
+프론트엔드는 pnpm 워크스페이스이며 Gradle과 분리되어 있습니다. 클라이언트가 지켜야 하는 계약은
+[DOC-14](docs/14-frontend-design.md) §3에 있고, 어기면 서버의 INV-004가 무의미해집니다.
 
 ## 8. 커밋 규칙 (Conventional Commits)
 
@@ -167,7 +201,7 @@ apps/pay-api            조립 지점: 마이그레이션, 멱등성 저장소, 
 | `chore` | 그 외 잡무 |
 | `revert` | 이전 커밋 되돌리기 |
 
-**scope**: `wallet`, `payment`, `ledger`, `settlement`, `reconciliation`, `risk`, `operations`, `outbox`, `api`, `docs`, `deps`
+**scope**: `wallet`, `payment`, `ledger`, `settlement`, `reconciliation`, `risk`, `operations`, `outbox`, `api`, `web`, `e2e`, `docs`, `deps`
 
 **subject**: 영문 소문자, 명령형 현재시제, 마침표 없음, 50자 이내 (헤더 전체 72자 이하)
 
