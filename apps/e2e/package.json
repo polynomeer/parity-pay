@@ -1,0 +1,16 @@
+{
+  "name": "@paritypay/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "echo 'E2E는 실제 스택이 필요합니다. pnpm e2e 로 실행하세요.' && exit 0",
+    "e2e": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^22.20.1",
+    "typescript": "^5.9.2"
+  }
+}

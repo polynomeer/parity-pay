@@ -52,6 +52,12 @@ python3 load-tests/recovery-latency-experiment.py \
 ```
 
 ```bash
+# E2E. 실제 pay-api·기관·브라우저로 한 바퀴 돕니다. 목을 쓰지 않습니다.
+# 스크립트가 의존성·앱·프론트를 전부 띄우고 끝나면 정리합니다. 약 1분.
+load-tests/run-e2e.sh
+```
+
+```bash
 # 크래시 실험. 스크립트가 앱을 직접 띄우고 죽이고 다시 띄웁니다.
 # docker compose up -d 로 postgres·redpanda가 떠 있어야 하고, bootJar가 필요합니다.
 ./gradlew :apps:pay-api:bootJar
@@ -89,6 +95,7 @@ docker run --rm -i --add-host=host.docker.internal:host-gateway \
 | `transaction-history-benchmark.py` | 거래내역 커서 조회의 깊은 페이지 비용 (OFFSET과 비교) | M-008 |
 | `cancellation-contention.js` | 한 지갑에서 승인과 취소가 같은 행을 두고 만나는 부하 | M-009 |
 | `recovery-latency-experiment.py` | 미확정 거래가 확정되기까지의 시간 (충전·카드 결제) | M-011 |
+| `run-e2e.sh` | 실제 스택으로 Shop→결제→장애 주입→복구 한 바퀴 (목 없음) | 결함 J |
 
 ## 결과를 기록할 때
 

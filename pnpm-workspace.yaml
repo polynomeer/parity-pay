@@ -3,6 +3,7 @@
 packages:
   - "packages/*"
   - "apps/web-*"
+  - "apps/e2e"
 # 설치 스크립트 실행을 명시적으로 허용하는 목록입니다. 기본은 금지이며, 여기 없는 패키지의
 # postinstall은 돌지 않습니다. esbuild는 플랫폼별 바이너리를 연결하는 용도이고 Vite·Vitest가
 # 이것 없이는 돌지 않습니다.
