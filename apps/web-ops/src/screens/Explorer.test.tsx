@@ -55,7 +55,6 @@ afterAll(() => server.close());
 function renderExplorer() {
   tokenStore.write({
     accessToken: "a",
-    refreshToken: "r",
     expiresIn: 900,
     memberId: "m-1",
     roles: ["OPS_VIEWER"],

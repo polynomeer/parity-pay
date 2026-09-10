@@ -8,15 +8,16 @@
  * 근거: docs/14-frontend-design.md §9
  */
 import { describe, expect, it, vi } from "vitest";
+import { createAuth, login } from "./auth.js";
 import { ApiClient } from "./client.js";
 import { ApiError, UnknownResultError, classify } from "./errors.js";
 import { beginIntent, endIntent, memoryIntentStore, pendingIntent } from "./idempotency.js";
 import { DEFAULT_POLLING, pollUntilSettled } from "./polling.js";
 import { createTokenManager, memoryTokenStore, type Tokens } from "./tokens.js";
 
+// 리프레시 토큰이 여기 없는 것이 ADR-010입니다. 쿠키에 있어 자바스크립트가 볼 수 없습니다.
 const tokens: Tokens = {
   accessToken: "access-1",
-  refreshToken: "refresh-1",
   expiresIn: 900,
   memberId: "m-1",
   roles: ["CUSTOMER"],
@@ -134,7 +135,7 @@ describe("FE-008 재발급은 단일 비행입니다", () => {
     const store = memoryTokenStore(tokens);
     const call = vi.fn(async (): Promise<Tokens> => {
       await new Promise((resolve) => setTimeout(resolve, 10));
-      return { ...tokens, accessToken: "access-2", refreshToken: "refresh-2" };
+      return { ...tokens, accessToken: "access-2" };
     });
     const manager = createTokenManager(store, call);
 
@@ -219,5 +220,59 @@ describe("FE-003 폴링은 측정값을 따릅니다 (M-011)", () => {
     );
     // 던지지 않는 것이 요점입니다. 호출부가 이것을 오류로 다루면 사용자가 다시 결제합니다.
     expect(result).toEqual({ state: "pending" });
+  });
+});
+
+describe("ADR-010 리프레시 토큰은 자바스크립트가 만지지 않습니다", () => {
+  it("로그인이 보관하는 것에는 리프레시 값이 없습니다", async () => {
+    const store = memoryTokenStore();
+    const manager = createTokenManager(store, () => Promise.reject(new Error("불려선 안 됩니다")));
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      // 서버가 실수로 본문에 담아 보내더라도 클라이언트가 주워 담지 않아야 합니다.
+      jsonResponse(200, {
+        accessToken: "access-1",
+        refreshToken: "새어 나온 값",
+        expiresIn: 900,
+        memberId: "m-1",
+        roles: ["CUSTOMER"],
+      }),
+    );
+    const client = new ApiClient({ baseUrl: "http://x", tokens: manager, fetchImpl });
+
+    await login(client, manager, { email: "a@example.com", password: "password1234" });
+
+    expect(JSON.stringify(store.read())).not.toContain("새어 나온 값");
+  });
+
+  it("재발급은 본문 없이 쿠키를 실어 보냅니다", async () => {
+    const store = memoryTokenStore(tokens);
+    let sent: RequestInit | undefined;
+    const fetchImpl = vi.fn<typeof fetch>().mockImplementation((_url, init) => {
+      sent = init;
+      return Promise.resolve(jsonResponse(200, { accessToken: "access-2", expiresIn: 900 }));
+    });
+    // createAuth가 만드는 내부 클라이언트를 시험에서 갈아 끼울 수 없으므로, 같은 조립을
+    // 손으로 합니다 — 확인하려는 것은 재발급 호출이 무엇을 보내는가입니다.
+    const bare = new ApiClient({ baseUrl: "http://x", fetchImpl });
+    const manager = createTokenManager(store, async () => {
+      const response = await bare.publicWrite<{ accessToken: string; expiresIn: number }>(
+        "/api/v1/auth/tokens/refresh",
+        {},
+      );
+      return { ...tokens, accessToken: response.data.accessToken };
+    });
+
+    await manager.refresh();
+
+    // 본문에 토큰이 실리면 값이 자바스크립트로 돌아왔다는 뜻입니다.
+    expect(sent?.body).toBe("{}");
+    // 쿠키가 실리지 않으면 배포에서 "로그인은 되는데 15분 뒤 로그아웃"이 됩니다.
+    expect(sent?.credentials).toBe("include");
+  });
+
+  it("createAuth가 만드는 재발급 호출은 인자를 받지 않습니다", () => {
+    // 인자가 다시 생기면 어딘가에서 값을 읽어 넘기고 있다는 뜻입니다.
+    const manager = createAuth("http://x", memoryTokenStore());
+    expect(manager.refresh.length).toBe(0);
   });
 });

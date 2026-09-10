@@ -31,7 +31,6 @@ afterAll(() => server.close());
 function renderList(optimistic: Parameters<typeof Transactions>[0]["optimistic"] = []) {
   tokenStore.write({
     accessToken: "a",
-    refreshToken: "r",
     expiresIn: 900,
     memberId: "m-1",
     roles: ["CUSTOMER"],

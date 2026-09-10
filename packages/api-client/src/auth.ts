@@ -17,11 +17,10 @@ export type RegisterMemberResponse = Schemas["RegisterMemberResponse"];
 export type WalletBalanceResponse = Schemas["WalletBalanceResponse"];
 type TokenResponse = Schemas["TokenResponse"];
 
-/** 서버 응답을 클라이언트가 보관하는 형태로 옮깁니다. */
+/** 서버 응답을 클라이언트가 보관하는 형태로 옮깁니다. 리프레시 토큰은 응답에 없습니다(ADR-010). */
 function toTokens(response: TokenResponse): Tokens {
   return {
     accessToken: response.accessToken ?? "",
-    refreshToken: response.refreshToken ?? "",
     expiresIn: response.expiresIn ?? 0,
     memberId: response.memberId ?? "",
     roles: response.roles ?? [],
@@ -35,10 +34,9 @@ function toTokens(response: TokenResponse): Tokens {
  */
 export function createAuth(baseUrl: string, store: TokenStore): TokenManager {
   const bare = new ApiClient({ baseUrl });
-  return createTokenManager(store, async (refreshToken) => {
-    const response = await bare.publicWrite<TokenResponse>("/api/v1/auth/tokens/refresh", {
-      refreshToken,
-    });
+  // 본문이 비어 있습니다. 리프레시 토큰은 브라우저가 쿠키로 붙입니다(ADR-010).
+  return createTokenManager(store, async () => {
+    const response = await bare.publicWrite<TokenResponse>("/api/v1/auth/tokens/refresh", {});
     return toTokens(response.data);
   });
 }

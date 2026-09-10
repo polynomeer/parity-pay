@@ -48,7 +48,6 @@ afterAll(() => server.close());
 function renderWorkbench() {
   tokenStore.write({
     accessToken: "a",
-    refreshToken: "r",
     expiresIn: 900,
     memberId: OPERATOR,
     roles: ["OPS_OPERATOR"],

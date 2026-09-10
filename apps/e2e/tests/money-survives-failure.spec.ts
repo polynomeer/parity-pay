@@ -78,6 +78,52 @@ async function setBankMode(token: string, mode: string): Promise<void> {
   expect(response.status).toBe(204);
 }
 
+/**
+ * ADR-010은 **브라우저만 증명할 수 있습니다.**
+ *
+ * 백엔드 시험은 `Set-Cookie` 문자열을 읽고 손으로 되돌려 보내고, jsdom 시험은 `fetch`를 흉내
+ * 냅니다. 둘 다 통과하면서도 실제 브라우저가 쿠키를 저장하지 않거나 돌려보내지 않을 수 있습니다 —
+ * `Path`가 어긋나거나 `Secure`가 http에서 걸리면 그렇게 됩니다. 증상은 "로그인은 되는데 15분 뒤
+ * 로그아웃"이라 원인을 찾기 어렵습니다.
+ */
+test.describe("리프레시 토큰은 스크립트가 만지지 못한다 (ADR-010)", () => {
+  test("쿠키는 저장되지만 읽히지 않고, 그것만으로 재발급된다", async ({ page, context }) => {
+    await signUpAndLinkAccount(page, "110-7777-8888");
+
+    const cookie = (await context.cookies()).find((c) => c.name === "paritypay_refresh");
+    expect(cookie, "브라우저가 리프레시 쿠키를 저장하지 않았습니다").toBeDefined();
+    expect(cookie!.httpOnly).toBe(true);
+    expect(cookie!.sameSite).toBe("Lax");
+    expect(cookie!.path).toBe("/api/v1/auth");
+
+    // 이 결정의 전부입니다 — 스크립트가 뚫려도 값이 나가지 않습니다.
+    expect(await page.evaluate(() => document.cookie)).not.toContain("paritypay_refresh");
+    // 앱이 보관하는 것에도 없어야 합니다.
+    expect(await page.evaluate(() => localStorage.getItem("paritypay.tokens") ?? "")).not.toContain(
+      "refresh",
+    );
+
+    // 본문 없이, 쿠키만으로 재발급됩니다. 브라우저가 알아서 붙입니다.
+    const refreshed = await page.evaluate(async () => {
+      const response = await fetch("/api/v1/auth/tokens/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+        credentials: "include",
+      });
+      return { status: response.status, body: (await response.json()) as Record<string, unknown> };
+    });
+
+    expect(refreshed.status).toBe(200);
+    expect(refreshed.body["accessToken"]).toBeTruthy();
+    expect(refreshed.body).not.toHaveProperty("refreshToken");
+
+    // 회전했으므로 브라우저가 들고 있는 쿠키도 새 값이어야 합니다.
+    const rotated = (await context.cookies()).find((c) => c.name === "paritypay_refresh");
+    expect(rotated!.value).not.toBe(cookie!.value);
+  });
+});
+
 test.describe("돈은 장애를 견딘다", () => {
   test.afterEach(async () => {
     // 다음 시험을 장애 모드 위에서 시작하지 않습니다.

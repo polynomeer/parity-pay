@@ -72,7 +72,6 @@ afterAll(() => server.close());
 function renderCheckout() {
   tokenStore.write({
     accessToken: "a",
-    refreshToken: "r",
     expiresIn: 900,
     memberId: "m-1",
     roles: ["CUSTOMER"],

@@ -97,7 +97,11 @@ export class ApiClient {
     return this.request<T>({ method, path, body, extraHeaders: headers });
   }
 
-  /** 인증이 필요 없고 멱등 키도 없는 쓰기입니다 (가입·로그인·토큰 재발급). */
+  /**
+   * 인증이 필요 없고 멱등 키도 없는 쓰기입니다 (가입·로그인·토큰 재발급).
+   *
+   * 재발급은 여기를 지나며 본문이 비어 있습니다 — 자격은 쿠키가 들고 갑니다(ADR-010).
+   */
   publicWrite<T>(path: string, body: unknown, signal?: AbortSignal): Promise<ApiResponse<T>> {
     return this.request<T>({
       method: "POST",
@@ -129,6 +133,10 @@ export class ApiClient {
       response = await this.send(this.baseUrl + options.path, {
         method: options.method,
         headers,
+        // 리프레시 쿠키를 실어 보냅니다. 개발·E2E에서는 Vite가 프록시해 같은 오리진이라
+        // 기본값으로도 실리지만, 배포에서 오리진이 갈리면 조용히 빠집니다 — 그때 증상은
+        // "로그인은 되는데 15분 뒤 로그아웃"이라 원인을 찾기 어렵습니다. 근거: ADR-010
+        credentials: "include",
         ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
         ...(options.signal ? { signal: options.signal } : {}),
       });

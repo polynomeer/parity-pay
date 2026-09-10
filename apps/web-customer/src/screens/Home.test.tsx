@@ -31,7 +31,6 @@ afterAll(() => server.close());
 function renderHome() {
   tokenStore.write({
     accessToken: "a",
-    refreshToken: "r",
     expiresIn: 900,
     memberId: "22222222-2222-2222-2222-222222222222",
     roles: ["CUSTOMER"],

@@ -6,13 +6,20 @@
  * 시도해 로그아웃됩니다.**
  *
  * 그래서 재발급은 앱 전체에서 한 번에 하나만 진행하고, 나머지는 그 결과를 기다립니다.
+ * 회전이 쿠키 안에서 일어나도 이 문제는 그대로입니다 — 브라우저가 들고 있는 쿠키는 하나뿐이고,
+ * 동시에 두 번 교환하면 늦은 쪽이 이미 회전된 값을 보냅니다.
  *
- * 근거: docs/14-frontend-design.md §3 FE-008
+ * 근거: docs/14-frontend-design.md §3 FE-008, ADR-010
  */
 
+/**
+ * 클라이언트가 보관하는 세션입니다.
+ *
+ * **리프레시 토큰은 여기 없습니다.** `HttpOnly` 쿠키에 있어 자바스크립트가 읽을 수 없고, 그것이
+ * ADR-010의 요점입니다. 이 인터페이스에 다시 넣으면 그 결정을 되돌리는 것입니다.
+ */
 export interface Tokens {
   readonly accessToken: string;
-  readonly refreshToken: string;
   /** 액세스 토큰 만료까지 남은 초입니다. 서버가 `expiresIn`으로 줍니다. */
   readonly expiresIn: number;
   readonly memberId: string;
@@ -30,9 +37,8 @@ const STORAGE_KEY = "paritypay.tokens";
 /**
  * 브라우저 저장소 구현입니다.
  *
- * **알려진 한계**: 리프레시 토큰이 `localStorage`에 있으면 XSS에 노출됩니다. 이상적인 형태는
- * `httpOnly` 쿠키지만 지금 서버는 토큰을 응답 **본문**으로 주므로 서버 변경이 필요합니다.
- * 모르는 채로 두지 않기 위해 여기에 적어 둡니다. 근거: docs/14-frontend-design.md §10, §13 열린 질문 1
+ * 여기 남는 것은 **액세스 토큰뿐**입니다(15분). 스크립트가 읽어 가도 15분짜리이고, 계속 갱신할
+ * 수단인 리프레시 토큰은 `HttpOnly` 쿠키에 있어 읽히지 않습니다. 근거: ADR-010
  */
 export function browserTokenStore(storage: Storage = localStorage): TokenStore {
   return {
@@ -62,8 +68,13 @@ export function memoryTokenStore(initial: Tokens | null = null): TokenStore {
   };
 }
 
-/** 실제 재발급 호출입니다. 순환 의존을 피하려고 주입받습니다. */
-export type RefreshCall = (refreshToken: string) => Promise<Tokens>;
+/**
+ * 실제 재발급 호출입니다. 순환 의존을 피하려고 주입받습니다.
+ *
+ * **인자가 없습니다.** 리프레시 토큰은 브라우저가 쿠키로 붙이며 이 코드는 값을 보지 못합니다.
+ * 여기에 인자가 다시 생기면 값이 자바스크립트로 돌아왔다는 뜻입니다(ADR-010).
+ */
+export type RefreshCall = () => Promise<Tokens>;
 
 export interface TokenManager {
   current(): Tokens | null;
@@ -89,11 +100,12 @@ export function createTokenManager(store: TokenStore, call: RefreshCall): TokenM
       if (inFlight !== null) {
         return inFlight;
       }
-      const tokens = store.read();
-      if (tokens === null) {
-        return Promise.reject(new Error("no refresh token"));
+      // 보관된 세션이 없으면 로그아웃 상태입니다. 쿠키가 살아 있을 수는 있지만, 그때는
+      // 다시 로그인하는 것이 맞습니다 — 어느 회원의 세션인지 알 수 없기 때문입니다.
+      if (store.read() === null) {
+        return Promise.reject(new Error("no session"));
       }
-      inFlight = call(tokens.refreshToken)
+      inFlight = call()
         .then((next) => {
           store.write(next);
           return next;

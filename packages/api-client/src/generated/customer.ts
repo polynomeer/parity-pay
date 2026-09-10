@@ -483,9 +483,6 @@ export interface components {
             /** @enum {string} */
             status?: "READY" | "PROCESSING" | "APPROVED" | "PARTIALLY_CANCELED" | "CANCELED" | "FAILED" | "UNKNOWN";
         };
-        RefreshRequest: {
-            refreshToken: string;
-        };
         RegisterMemberRequest: {
             /** Format: email */
             email: string;
@@ -539,7 +536,6 @@ export interface components {
             expiresIn?: number;
             /** Format: uuid */
             memberId?: string;
-            refreshToken?: string;
             roles?: string[];
             tokenType?: string;
         };
@@ -720,13 +716,12 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RefreshRequest"];
+            cookie: {
+                /** @description 리프레시 토큰. 브라우저가 자동으로 붙입니다 (ADR-010). */
+                paritypay_refresh: string;
             };
         };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

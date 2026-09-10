@@ -64,7 +64,6 @@ afterAll(() => server.close());
 function renderSettlements() {
   tokenStore.write({
     accessToken: "a",
-    refreshToken: "r",
     expiresIn: 900,
     memberId: "m-1",
     roles: ["MERCHANT"],
