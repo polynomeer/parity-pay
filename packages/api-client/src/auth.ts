@@ -4,7 +4,9 @@
  * 응답 타입은 손으로 쓰지 않고 `generated/customer.ts`에서 가져옵니다. 백엔드가 필드를 바꾸면
  * 여기가 먼저 깨집니다. 근거: docs/14-frontend-design.md §8
  */
+import type { ApiResponse } from "./client.js";
 import { ApiClient } from "./client.js";
+import type { IdempotencyKey } from "./idempotency.js";
 import type { components } from "./generated/customer.js";
 import { createTokenManager, type TokenManager, type TokenStore, type Tokens } from "./tokens.js";
 
@@ -69,4 +71,48 @@ export async function register(
 export async function getMyWallet(client: ApiClient): Promise<WalletBalanceResponse> {
   const response = await client.get<WalletBalanceResponse>("/api/v1/wallets/me");
   return response.data;
+}
+
+// ---- 금융 쓰기 ----
+// 전부 멱등 키를 **인자로 요구합니다.** 키 없이 부를 수 없는 것이 요점입니다(FE-001).
+
+export type TopUpRequest = Schemas["TopUpRequest"];
+export type TopUpResponse = Schemas["TopUpResponse"];
+export type ApprovePaymentRequest = Schemas["ApprovePaymentRequest"];
+export type PaymentResponse = Schemas["PaymentResponse"];
+export type CancelPaymentRequest = Schemas["CancelPaymentRequest"];
+export type TransactionPageResponse = Schemas["TransactionPageResponse"];
+
+export function requestTopUp(
+  client: ApiClient,
+  request: TopUpRequest,
+  key: IdempotencyKey,
+): Promise<ApiResponse<TopUpResponse>> {
+  return client.write<TopUpResponse>("POST", "/api/v1/top-ups", request, key);
+}
+
+export async function getTopUp(client: ApiClient, topUpId: string): Promise<TopUpResponse> {
+  return (await client.get<TopUpResponse>(`/api/v1/top-ups/${topUpId}`)).data;
+}
+
+export function approvePayment(
+  client: ApiClient,
+  request: ApprovePaymentRequest,
+  key: IdempotencyKey,
+): Promise<ApiResponse<PaymentResponse>> {
+  return client.write<PaymentResponse>("POST", "/api/v1/payments", request, key);
+}
+
+export async function getPayment(client: ApiClient, paymentId: string): Promise<PaymentResponse> {
+  return (await client.get<PaymentResponse>(`/api/v1/payments/${paymentId}`)).data;
+}
+
+/** 거래내역입니다. `nextCursor`는 **불투명 문자열**이므로 만들거나 파싱하지 않습니다(FE-004). */
+export async function listTransactions(
+  client: ApiClient,
+  walletId: string,
+  cursor?: string,
+): Promise<TransactionPageResponse> {
+  const query = cursor === undefined ? "" : `?cursor=${encodeURIComponent(cursor)}`;
+  return (await client.get<TransactionPageResponse>(`/api/v1/wallets/${walletId}/transactions${query}`)).data;
 }
