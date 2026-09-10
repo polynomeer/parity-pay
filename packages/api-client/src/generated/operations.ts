@@ -8,6 +8,22 @@
  * 그것이 이 파일을 커밋하는 이유입니다.
  */
 export interface paths {
+    "/api/v1/admin/ledger/transactions/{transactionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getTransaction"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/merchants": {
         parameters: {
             query?: never;
@@ -439,8 +455,38 @@ export interface components {
             /** Format: date */
             periodStart: string;
         };
+        EntryResponse: {
+            accountCode?: string;
+            /** Format: int64 */
+            amount?: number;
+            direction?: string;
+            /** Format: uuid */
+            entryId?: string;
+            /** Format: uuid */
+            ownerId?: string;
+        };
         HoldRequest: {
             reason: string;
+        };
+        LedgerTransactionResponse: {
+            balanced?: boolean;
+            /** Format: int64 */
+            creditTotal?: number;
+            currency?: string;
+            /** Format: int64 */
+            debitTotal?: number;
+            /** Format: date-time */
+            effectiveAt?: string;
+            entries?: components["schemas"]["EntryResponse"][];
+            /** Format: uuid */
+            referenceId?: string;
+            referenceType?: string;
+            /** Format: uuid */
+            reversalOfTransactionId?: string;
+            status?: string;
+            /** Format: uuid */
+            transactionId?: string;
+            transactionType?: string;
         };
         MerchantRegistrationResponse: {
             /** Format: uuid */
@@ -646,6 +692,28 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getTransaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transactionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LedgerTransactionResponse"];
+                };
+            };
+        };
+    };
     registerMerchant: {
         parameters: {
             query?: never;

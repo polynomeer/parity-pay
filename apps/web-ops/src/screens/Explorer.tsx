@@ -12,6 +12,7 @@
 import { getTimeline, resolveIdentifier, type SearchResult, type Timeline } from "@paritypay/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { LedgerTransaction } from "./LedgerTransaction";
 import { api } from "../api";
 import { formatInstant, formatWon } from "../format";
 
@@ -32,6 +33,7 @@ export function Explorer() {
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [ledgerId, setLedgerId] = useState<string | null>(null);
 
   const search = useQuery<SearchResult>({
     queryKey: ["resolve", submitted],
@@ -52,6 +54,7 @@ export function Explorer() {
         onSubmit={(event) => {
           event.preventDefault();
           setSelected(null);
+          setLedgerId(null);
           setSubmitted(query.trim());
         }}
       >
@@ -111,7 +114,16 @@ export function Explorer() {
             {(timeline.data.entries ?? []).map((entry, index) => (
               <tr key={`${entry.kind}-${entry.id}-${index}`} data-testid="timeline-row">
                 <td>{entry.occurredAt === undefined ? "" : formatInstant(entry.occurredAt)}</td>
-                <td>{entry.kind}</td>
+                <td>
+                  {entry.kind === "LEDGER" ? (
+                    // 원장 줄에서 원장 상세로 바로 넘어갑니다. DOC-15 §4.3이 요구한 연결입니다.
+                    <button type="button" data-testid="open-ledger" onClick={() => setLedgerId(entry.id ?? null)}>
+                      원장
+                    </button>
+                  ) : (
+                    entry.kind
+                  )}
+                </td>
                 <td>{entry.status}</td>
                 <td>{entry.amount === undefined || entry.amount === null ? "" : formatWon(entry.amount)}</td>
                 <td>{entry.detail}</td>
@@ -120,6 +132,7 @@ export function Explorer() {
           </tbody>
         </table>
       )}
+      {ledgerId !== null && <LedgerTransaction transactionId={ledgerId} />}
     </section>
   );
 }

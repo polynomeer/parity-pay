@@ -11,6 +11,7 @@ export type SearchResult = Schemas["SearchResult"];
 export type Timeline = Schemas["Timeline"];
 export type UnresolvedTopUpResponse = Schemas["UnresolvedTopUpResponse"];
 export type UnresolvedPaymentResponse = Schemas["UnresolvedPaymentResponse"];
+export type LedgerTransactionResponse = Schemas["LedgerTransactionResponse"];
 
 /** 식별자가 무엇인지 알아내고 타임라인을 열 수 있는 참조를 받습니다. */
 export async function resolveIdentifier(client: ApiClient, query: string): Promise<SearchResult> {
@@ -47,4 +48,19 @@ export async function resolveTopUpNow(client: ApiClient, topUpId: string): Promi
 
 export async function resolvePaymentNow(client: ApiClient, paymentId: string): Promise<void> {
   await client.publicWrite(`/api/v1/admin/payments/${paymentId}/resolve`, {});
+}
+
+/**
+ * 원장 거래 하나입니다.
+ *
+ * 항목마다 계정 코드가 함께 오고, 차변·대변 합계와 균형 여부는 **서버가 계산합니다.** 화면이
+ * 스스로 더하면 그 계산이 진실과 어긋날 수 있습니다.
+ */
+export async function getLedgerTransaction(
+  client: ApiClient,
+  transactionId: string,
+): Promise<LedgerTransactionResponse> {
+  return (
+    await client.get<LedgerTransactionResponse>(`/api/v1/admin/ledger/transactions/${transactionId}`)
+  ).data;
 }

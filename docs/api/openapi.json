@@ -1267,6 +1267,29 @@
           "required" : [ "merchantId", "periodEnd", "periodStart" ],
           "type" : "object"
         },
+        "EntryResponse" : {
+          "properties" : {
+            "accountCode" : {
+              "type" : "string"
+            },
+            "amount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "direction" : {
+              "type" : "string"
+            },
+            "entryId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "ownerId" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "HoldRequest" : {
           "properties" : {
             "reason" : {
@@ -1275,6 +1298,56 @@
             }
           },
           "required" : [ "reason" ],
+          "type" : "object"
+        },
+        "LedgerTransactionResponse" : {
+          "properties" : {
+            "balanced" : {
+              "type" : "boolean"
+            },
+            "creditTotal" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "debitTotal" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "effectiveAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "entries" : {
+              "items" : {
+                "$ref" : "#/components/schemas/EntryResponse"
+              },
+              "type" : "array"
+            },
+            "referenceId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "referenceType" : {
+              "type" : "string"
+            },
+            "reversalOfTransactionId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            },
+            "transactionId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "transactionType" : {
+              "type" : "string"
+            }
+          },
           "type" : "object"
         },
         "MerchantRegistrationResponse" : {
@@ -1781,6 +1854,33 @@
     },
     "openapi" : "3.1.0",
     "paths" : {
+      "/api/v1/admin/ledger/transactions/{transactionId}" : {
+        "get" : {
+          "operationId" : "getTransaction",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "transactionId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/LedgerTransactionResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "ledger-admin-controller" ]
+        }
+      },
       "/api/v1/admin/merchants" : {
         "post" : {
           "operationId" : "registerMerchant",
