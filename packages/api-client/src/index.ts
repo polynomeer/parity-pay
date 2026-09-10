@@ -1,6 +1,7 @@
 export * from "./client.js";
 export * from "./errors.js";
 export * from "./idempotency.js";
+export * from "./operations.js";
 export * from "./polling.js";
 export * from "./tokens.js";
 export * from "./auth.js";

@@ -48,6 +48,7 @@ class OperationsController {
 
     private final TopUpRecoveryService recoveryService;
     private final TransactionTimelineService timelineService;
+    private final TransactionSearchService searchService;
     private final TopUpRecoveryRepository recoveryRepository;
     private final RebuildBalanceUseCase rebuildBalance;
     private final PaymentRecoveryService paymentRecoveryService;
@@ -61,6 +62,7 @@ class OperationsController {
     OperationsController(
             TopUpRecoveryService recoveryService,
             TransactionTimelineService timelineService,
+            TransactionSearchService searchService,
             TopUpRecoveryRepository recoveryRepository,
             RebuildBalanceUseCase rebuildBalance,
             PaymentRecoveryService paymentRecoveryService,
@@ -72,6 +74,7 @@ class OperationsController {
             CurrentPrincipal currentPrincipal) {
         this.recoveryService = recoveryService;
         this.timelineService = timelineService;
+        this.searchService = searchService;
         this.recoveryRepository = recoveryRepository;
         this.rebuildBalance = rebuildBalance;
         this.paymentRecoveryService = paymentRecoveryService;
@@ -92,6 +95,20 @@ class OperationsController {
     @GetMapping("/transactions/{referenceId}/timeline")
     ResponseEntity<TransactionTimelineService.Timeline> timeline(@PathVariable String referenceId) {
         return ResponseEntity.ok(timelineService.of(referenceId));
+    }
+
+    /**
+     * 식별자 해석. 근거: docs/16-ui-implementation-plan.md §4 FE-M4
+     *
+     * <p>운영자는 고객이 들고 온 값이 무엇인지 모릅니다. 결제 ID든 주문 ID든 지갑 ID든 이벤트
+     * ID든 넣으면, 그것이 무엇인지와 타임라인을 열 수 있는 참조를 돌려줍니다.
+     *
+     * <p>타임라인과 나눈 이유는 지갑·회원이 거래 <b>여럿</b>을 가리키기 때문입니다. 하나로 합칠 수
+     * 없는 것을 하나인 척하지 않습니다.
+     */
+    @GetMapping("/transactions/resolve")
+    ResponseEntity<TransactionSearchService.SearchResult> resolve(@RequestParam String query) {
+        return ResponseEntity.ok(searchService.resolve(query));
     }
 
     /** 아직 최종 상태에 도달하지 못한 충전 목록입니다. */

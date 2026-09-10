@@ -344,6 +344,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/transactions/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["resolve_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/wallets/{walletId}/balance-rebuild": {
         parameters: {
             query?: never;
@@ -509,6 +525,11 @@ export interface components {
             /** Format: uuid */
             topUpId?: string;
         };
+        Reference: {
+            kind?: string;
+            referenceId?: string;
+            summary?: string;
+        };
         RegisterMerchantRequest: {
             name: string;
             ownerEmail: string;
@@ -536,6 +557,11 @@ export interface components {
             mismatchCount?: number;
             /** Format: uuid */
             runId?: string;
+        };
+        SearchResult: {
+            kind?: string;
+            query?: string;
+            references?: components["schemas"]["Reference"][];
         };
         SettlementResponse: {
             /** Format: int64 */
@@ -1135,6 +1161,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Timeline"];
+                };
+            };
+        };
+    };
+    resolve_2: {
+        parameters: {
+            query: {
+                query: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SearchResult"];
                 };
             };
         };

@@ -1479,6 +1479,20 @@
           },
           "type" : "object"
         },
+        "Reference" : {
+          "properties" : {
+            "kind" : {
+              "type" : "string"
+            },
+            "referenceId" : {
+              "type" : "string"
+            },
+            "summary" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "RegisterMerchantRequest" : {
           "properties" : {
             "name" : {
@@ -1550,6 +1564,23 @@
             "runId" : {
               "format" : "uuid",
               "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "SearchResult" : {
+          "properties" : {
+            "kind" : {
+              "type" : "string"
+            },
+            "query" : {
+              "type" : "string"
+            },
+            "references" : {
+              "items" : {
+                "$ref" : "#/components/schemas/Reference"
+              },
+              "type" : "array"
             }
           },
           "type" : "object"
@@ -2423,6 +2454,32 @@
                 "*/*" : {
                   "schema" : {
                     "$ref" : "#/components/schemas/RecoveryOutcomeResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
+      "/api/v1/admin/transactions/resolve" : {
+        "get" : {
+          "operationId" : "resolve_2",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "query",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/SearchResult"
                   }
                 }
               },
