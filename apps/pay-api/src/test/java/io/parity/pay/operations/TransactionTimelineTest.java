@@ -118,11 +118,11 @@ class TransactionTimelineTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("주문 ID로도 같은 거래를 찾을 수 있다")
+    @DisplayName("주문 ID로 찾아도 결제 ID로 찾은 것과 같은 것이 나온다")
     void timelineByOrderId() {
         requestTopUp.requestTopUp(new TopUpCommand(
                 memberId, walletId, bankAccountId, Money.krw(100_000), IdempotencyKey.of("timeline-topup-002")));
-        approvePayment.approve(new ApprovePaymentCommand(
+        PaymentView payment = approvePayment.approve(new ApprovePaymentCommand(
                 memberId,
                 "order-timeline-2",
                 walletId,
@@ -130,11 +130,25 @@ class TransactionTimelineTest extends AbstractIntegrationTest {
                 Money.krw(20_000),
                 PaymentMethod.PAY_MONEY,
                 IdempotencyKey.of("timeline-payment-002")));
+        cancelPayment.cancel(new CancelPaymentCommand(
+                memberId,
+                payment.paymentId(),
+                Money.krw(5_000),
+                "PARTIAL_RETURN",
+                IdempotencyKey.of("timeline-cancel-002")));
+        drainOutbox();
 
-        TransactionTimelineService.Timeline timeline = timelineService.of("order-timeline-2");
+        TransactionTimelineService.Timeline byOrder = timelineService.of("order-timeline-2");
+        TransactionTimelineService.Timeline byPayment =
+                timelineService.of(payment.paymentId().toString());
 
-        assertThat(timeline.countsByKind()).containsKey("PAYMENT");
-        assertThat(timeline.entries())
+        // 고객은 보통 주문번호를 들고 옵니다. 그때 원장이 빠지면 운영자는 결제 ID를 따로 찾아
+        // 다시 검색해야 합니다. 전에는 실제로 그랬습니다.
+        assertThat(byOrder.countsByKind()).containsKeys("PAYMENT", "PAYMENT_CANCELLATION", "LEDGER", "EVENT");
+        assertThat(byOrder.countsByKind().get("LEDGER")).isEqualTo(2L);
+        // 어느 식별자로 들어오든 같은 거래를 봅니다.
+        assertThat(byOrder.countsByKind()).isEqualTo(byPayment.countsByKind());
+        assertThat(byOrder.entries())
                 .anySatisfy(entry -> assertThat(entry.detail()).contains("order-timeline-2"));
     }
 

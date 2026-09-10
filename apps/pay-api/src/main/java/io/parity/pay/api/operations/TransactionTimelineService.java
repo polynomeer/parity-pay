@@ -5,9 +5,13 @@ import io.parity.pay.api.mockbank.MockBankClient;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,6 +49,10 @@ public class TransactionTimelineService {
      */
     @Transactional(readOnly = true)
     public Timeline of(String referenceId) {
+        // 입력값 하나가 아니라 **그것과 한 거래를 이루는 ID 전부**로 찾습니다. 아래 참고를 보십시오.
+        List<String> ids = relatedIds(referenceId);
+        String in = placeholders(ids.size());
+        Object[] args = ids.toArray();
         List<TimelineEntry> entries = new ArrayList<>();
 
         entries.addAll(query(
@@ -54,9 +62,10 @@ public class TransactionTimelineService {
                        coalesce(t.completed_at, t.requested_at) AS occurred_at,
                        'wallet=' || t.wallet_id AS detail
                   FROM top_up t
-                 WHERE t.top_up_id::text = ?
-                """,
-                referenceId));
+                 WHERE t.top_up_id::text IN (%s)
+                """
+                        .formatted(in),
+                args));
 
         entries.addAll(query(
                 """
@@ -65,10 +74,10 @@ public class TransactionTimelineService {
                        coalesce(p.approved_at, p.created_at) AS occurred_at,
                        'order=' || p.order_id || ' merchant=' || p.merchant_id AS detail
                   FROM payment p
-                 WHERE p.payment_id::text = ? OR p.order_id = ?
-                """,
-                referenceId,
-                referenceId));
+                 WHERE p.payment_id::text IN (%s)
+                """
+                        .formatted(in),
+                args));
 
         entries.addAll(query(
                 """
@@ -77,12 +86,10 @@ public class TransactionTimelineService {
                        coalesce(c.completed_at, c.requested_at) AS occurred_at,
                        'payment=' || c.payment_id AS detail
                   FROM payment_cancellation c
-                  JOIN payment p ON p.payment_id = c.payment_id
-                 WHERE c.cancellation_id::text = ? OR c.payment_id::text = ? OR p.order_id = ?
-                """,
-                referenceId,
-                referenceId,
-                referenceId));
+                 WHERE c.cancellation_id::text IN (%s)
+                """
+                        .formatted(in),
+                args));
 
         entries.addAll(query(
                 """
@@ -93,12 +100,10 @@ public class TransactionTimelineService {
                        lt.currency, lt.effective_at AS occurred_at,
                        lt.transaction_type || ' ref=' || lt.reference_id AS detail
                   FROM ledger_transaction lt
-                 WHERE lt.reference_id::text = ?
-                    OR lt.reference_id IN (SELECT c.cancellation_id FROM payment_cancellation c
-                                            WHERE c.payment_id::text = ?)
-                """,
-                referenceId,
-                referenceId));
+                 WHERE lt.reference_id::text IN (%s)
+                """
+                        .formatted(in),
+                args));
 
         entries.addAll(institutionEntries(referenceId));
 
@@ -108,10 +113,11 @@ public class TransactionTimelineService {
                        NULL::bigint AS amount, NULL AS currency, o.occurred_at,
                        o.event_type AS detail
                   FROM outbox_event o
-                 WHERE o.aggregate_id = ?
-                    OR o.payload::text LIKE '%' || ? || '%'
-                """,
-                referenceId, referenceId));
+                 WHERE o.aggregate_id IN (%s)
+                    OR o.payload::text LIKE '%%' || ? || '%%'
+                """
+                        .formatted(in),
+                append(args, referenceId)));
 
         entries.addAll(query(
                 """
@@ -119,9 +125,10 @@ public class TransactionTimelineService {
                        NULL::bigint AS amount, NULL AS currency, a.created_at AS occurred_at,
                        a.actor || ' ' || a.action || ' reason=' || coalesce(a.reason, '') AS detail
                   FROM audit_log a
-                 WHERE a.resource_id = ?
-                """,
-                referenceId));
+                 WHERE a.resource_id IN (%s)
+                """
+                        .formatted(in),
+                args));
 
         entries.addAll(query(
                 """
@@ -130,12 +137,53 @@ public class TransactionTimelineService {
                        m.detected_at AS occurred_at,
                        m.mismatch_type || ' ' || coalesce(m.detail, '') AS detail
                   FROM reconciliation_mismatch m
-                 WHERE m.reference_id = ?
-                """,
-                referenceId));
+                 WHERE m.reference_id IN (%s)
+                """
+                        .formatted(in),
+                args));
 
         entries.sort(Comparator.comparing(TimelineEntry::occurredAt));
         return new Timeline(referenceId, entries);
+    }
+
+    /**
+     * 입력값과 한 거래를 이루는 ID 전부입니다.
+     *
+     * <p>전에는 쿼리마다 "무엇이 관련되는가"를 제각각 정의했습니다. 결제 쿼리는 주문 ID를 알았지만
+     * 원장 쿼리는 몰랐고, 그래서 <b>주문번호로 검색하면 원장 줄이 나오지 않았습니다</b> — 원장의
+     * {@code reference_id}는 결제 ID이기 때문입니다. 감사 로그와 대사도 같은 이유로 빠졌습니다.
+     * 고객은 보통 주문번호를 들고 오므로 실제로 걸리는 경로였습니다.
+     *
+     * <p>이제 관련 ID를 <b>한 번</b> 해석하고 모든 쿼리가 같은 목록을 씁니다. 새 쿼리를 더할 때도
+     * 관련성 규칙을 다시 쓰지 않습니다.
+     */
+    private List<String> relatedIds(String referenceId) {
+        Set<String> ids = new LinkedHashSet<>();
+        ids.add(referenceId);
+
+        // 주문 ID로 들어오면 그 주문의 결제를 더합니다. 원장·감사·이벤트는 결제 ID로 기록됩니다.
+        ids.addAll(jdbcTemplate.queryForList(
+                "SELECT payment_id::text FROM payment WHERE order_id = ?", String.class, referenceId));
+
+        // 결제(직접 입력이든 주문에서 찾은 것이든)의 취소를 더합니다. 취소도 자기 분개를 만듭니다.
+        List<String> payments = List.copyOf(ids);
+        ids.addAll(jdbcTemplate.queryForList(
+                "SELECT cancellation_id::text FROM payment_cancellation WHERE payment_id::text IN (%s)"
+                        .formatted(placeholders(payments.size())),
+                String.class,
+                payments.toArray()));
+
+        return List.copyOf(ids);
+    }
+
+    private static String placeholders(int count) {
+        return String.join(", ", Collections.nCopies(count, "?"));
+    }
+
+    private static Object[] append(Object[] args, Object extra) {
+        Object[] combined = Arrays.copyOf(args, args.length + 1);
+        combined[args.length] = extra;
+        return combined;
     }
 
     /**
