@@ -9,7 +9,11 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-export JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 21)}"
+# macOS에서는 java_home으로 찾고, CI(Linux)에서는 setup-java가 이미 넣어 줍니다.
+if [ -z "${JAVA_HOME:-}" ] && [ -x /usr/libexec/java_home ]; then
+  JAVA_HOME="$(/usr/libexec/java_home -v 21)"
+fi
+export JAVA_HOME
 OUT=${OUT:-/tmp/paritypay-e2e}
 mkdir -p "$OUT"
 
@@ -20,8 +24,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
+echo "== 기관 jar"
+# 기관 컨테이너는 build/libs를 마운트해 실행합니다. 빌드하지 않으면 컨테이너가 뜨자마자 죽습니다.
+# 로컬에는 이미 있어서 오래 드러나지 않았습니다.
+./gradlew :apps:mock-bank:bootJar :apps:mock-pg:bootJar -q
+
 echo "== 의존성"
-docker compose up -d postgres redpanda mock-bank mock-pg
+docker compose up -d postgres redpanda
 # 기관 데이터베이스는 볼륨이 비어 있을 때만 만들어집니다. 이미 있는 볼륨이면 직접 만듭니다.
 docker exec paritypay-postgres psql -U paritypay -d postgres -c \
   "CREATE DATABASE paritypay_bank OWNER paritypay" >/dev/null 2>&1 || true

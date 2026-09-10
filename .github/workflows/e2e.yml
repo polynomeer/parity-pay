@@ -1,0 +1,63 @@
+# E2E는 PR 게이트가 아닙니다.
+#
+# 실제 스택 전부(PostgreSQL·Redpanda·기관 둘·pay-api·앱 둘)와 브라우저가 필요해서 다른 잡보다
+# 무겁고, 그만큼 흔들릴 여지도 큽니다. PR마다 돌려 빨간불이 잦아지면 사람들이 보지 않게 됩니다.
+#
+# 대신 **목이 덮을 수 없는 것**을 주기적으로 확인합니다 — 실제 응답이 화면이 기대하는 모양인가.
+# 결함 J가 그 자리에서 나왔습니다: 목이 타임라인 응답을 만들어 주는 바람에, 원장 줄이 서버에서
+# 오지 않는다는 사실이 프론트 시험 43개에 전혀 보이지 않았습니다.
+#
+# 근거: reports/11 결함 J, docs/14-frontend-design.md §9
+name: E2E
+
+on:
+  schedule:
+    # 벤치마크와 같은 시간대에 두되 겹치지 않게 한 시간 뒤입니다.
+    - cron: '0 19 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  walkthrough:
+    name: 실제 스택 한 바퀴
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # 브라우저는 캐시하지 않습니다. 주간 실행이라 받는 시간보다 캐시가 어긋날 위험이 큽니다.
+      - name: Install browser
+        run: pnpm --filter @paritypay/e2e exec playwright install --with-deps chromium
+
+      # 스크립트가 의존성·앱·프론트를 띄우고, 끝나면 정리까지 합니다.
+      - name: Run E2E
+        run: load-tests/run-e2e.sh
+
+      # 실패하면 화면과 트레이스가 있어야 원인을 압니다. 로그도 함께 남깁니다.
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-failure
+          path: |
+            apps/e2e/test-results/
+            /tmp/paritypay-e2e/
+          retention-days: 30
