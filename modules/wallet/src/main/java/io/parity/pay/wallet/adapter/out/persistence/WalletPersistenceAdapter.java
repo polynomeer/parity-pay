@@ -122,6 +122,16 @@ class WalletPersistenceAdapter implements WalletRepository, WalletBalanceReposit
      */
     @Override
     public int decreaseAvailableIfSufficient(WalletId walletId, Money amount) {
+        // 이 UPDATE가 지갑 행을 잠그고, 잠금은 커밋까지 풀리지 않습니다. 보류 중인 JPA 쓰기를
+        // 먼저 내보내지 않으면 그것들이 커밋 시점에 flush되어 **잠금 안에서** 실행됩니다.
+        //
+        // 문장 순서를 직접 찍어 확인했습니다(M-010): 이 flush가 없으면 원장 3건과 결제 insert가
+        // 차감 뒤로 밀려 잠금 보유가 26 ms였고, 있으면 차감 앞으로 나와 1 ms입니다.
+        //
+        // 대가: 원장·결제의 제약 위반이 커밋이 아니라 여기서 드러납니다. 어느 쪽이든 트랜잭션은
+        // 되돌아가지만, 예외가 지갑 어댑터에서 나오므로 원인을 읽을 때 한 번 더 짚어야 합니다.
+        // INV-001은 지연 제약 트리거라 그대로 커밋 시점에 검사됩니다.
+        entityManager.flush();
         return switch (strategySelector.current()) {
             case CONDITIONAL_UPDATE -> decreaseConditionally(walletId, amount);
             case PESSIMISTIC_LOCK -> decreaseWithRowLock(walletId, amount);

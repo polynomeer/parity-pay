@@ -108,11 +108,98 @@ def parse_log(text):
     return entries
 
 
+def holds_from_log(log):
+    """로그에서 (잠금 보유 ms, 트랜잭션 ms) 쌍을 전부 뽑습니다."""
+    entries = parse_log(log)
+    results = []
+    for index, entry in enumerate(entries):
+        if not (BALANCE_CHANGE.search(entry["sql"]) and entry["kind"] == "execute"):
+            continue
+        pid = entry["pid"]
+        # 같은 백엔드에서 이 차감 뒤 처음 오는 COMMIT까지가 잠금 보유 구간입니다.
+        commit = next(
+            (
+                e
+                for e in entries[index + 1 :]
+                if e["pid"] == pid and e["kind"] in ("execute", "statement") and e["sql"].strip().startswith("COMMIT")
+            ),
+            None,
+        )
+        if commit is None:
+            continue
+        begin = next(
+            (
+                e
+                for e in reversed(entries[:index])
+                if e["pid"] == pid and e["sql"].strip().startswith("BEGIN")
+            ),
+            None,
+        )
+        at = lambda item: datetime.strptime(item["ts"], "%Y-%m-%d %H:%M:%S.%f")
+        results.append(
+            {
+                "holdMs": (at(commit) - at(entry)).total_seconds() * 1000,
+                "txMs": None if begin is None else (at(commit) - at(begin)).total_seconds() * 1000,
+            }
+        )
+    return results
+
+
+def repeated(base, wallet_id, token, stamp, args):
+    """결제를 여러 번 하고 잠금 보유 구간의 분포를 냅니다.
+
+    처리량이 아니라 **보유 구간**을 보는 이유는, 처리량이 기계 상태에 크게 흔들려 M-010에서
+    판정을 못 했기 때문입니다. 보유 구간은 한 트랜잭션 안의 두 시각 차이라 훨씬 덜 흔들립니다.
+    """
+    import statistics
+
+    # 로그에 표식을 남깁니다. `docker logs`는 앞 실행의 거래까지 긁어 오므로, 표식 뒤만 봐야
+    # 이번 실행의 표본이 됩니다. 처음에 이것을 빼먹어 n이 20→140으로 누적됐습니다.
+    marker = f"M010-MARK-{stamp}"
+    psql(f"SELECT '{marker}'", db="paritypay")
+
+    for i in range(args.repeat):
+        key = f"timeline-repeat-{stamp}-{i}"
+        post(
+            base,
+            "/api/v1/payments",
+            {
+                "orderId": f"order-{key}",
+                "walletId": wallet_id,
+                "merchantId": "11111111-2222-3333-4444-555555555555",
+                "amount": args.amount,
+                "currency": "KRW",
+                "method": "PAY_MONEY",
+            },
+            token,
+            key,
+        )
+    time.sleep(1)
+    captured = subprocess.run(["docker", "logs", "--since", "10m", CONTAINER], capture_output=True, text=True)
+    log = captured.stderr + captured.stdout
+    # 표식 뒤부터가 이번 실행입니다.
+    _, _, after_marker = log.rpartition(marker)
+    holds = [h["holdMs"] for h in holds_from_log(after_marker)]
+    if not holds:
+        print("잠금 보유 구간을 찾지 못했습니다.", file=sys.stderr)
+        return 1
+    holds.sort()
+    print(f"n={len(holds)}  최소 {holds[0]:.1f}  중앙값 {statistics.median(holds):.1f}  최대 {holds[-1]:.1f} (ms)")
+    print("각 건: " + ", ".join(f"{h:.1f}" for h in holds))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--amount", type=int, default=1000)
     parser.add_argument("--operation", choices=("approve", "cancel"), default="approve")
+    parser.add_argument(
+        "--repeat",
+        type=int,
+        default=1,
+        help="결제를 이 횟수만큼 하고 잠금 보유 구간의 분포를 냅니다. M-010처럼 비교할 때 씁니다.",
+    )
     args = parser.parse_args()
     base = f"http://localhost:{args.port}"
 
@@ -142,6 +229,9 @@ def main():
     psql("SELECT pg_reload_conf()")
     time.sleep(1)
     try:
+        if args.repeat > 1:
+            return repeated(base, wallet_id, token, stamp, args)
+
         key = f"timeline-{args.operation}-{stamp}"
         started = time.monotonic()
         if args.operation == "cancel":
