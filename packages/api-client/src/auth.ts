@@ -116,3 +116,32 @@ export async function listTransactions(
   const query = cursor === undefined ? "" : `?cursor=${encodeURIComponent(cursor)}`;
   return (await client.get<TransactionPageResponse>(`/api/v1/wallets/${walletId}/transactions${query}`)).data;
 }
+
+export type CancellationResponse = Schemas["CancellationResponse"];
+export type OrderConfirmationResponse = Schemas["OrderConfirmationResponse"];
+
+export function cancelPayment(
+  client: ApiClient,
+  paymentId: string,
+  request: CancelPaymentRequest,
+  key: IdempotencyKey,
+): Promise<ApiResponse<CancellationResponse>> {
+  return client.write<CancellationResponse>(
+    "POST",
+    `/api/v1/payments/${paymentId}/cancellations`,
+    request,
+    key,
+  );
+}
+
+/** 구매확정입니다. 정산 대상이 됩니다. 멱등 키가 없는 경로입니다. */
+export async function confirmOrder(
+  client: ApiClient,
+  paymentId: string,
+): Promise<OrderConfirmationResponse> {
+  const response = await client.publicWrite<OrderConfirmationResponse>(
+    `/api/v1/payments/${paymentId}/confirmation`,
+    {},
+  );
+  return response.data;
+}
