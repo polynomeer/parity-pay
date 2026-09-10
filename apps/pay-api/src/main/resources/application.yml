@@ -84,11 +84,18 @@ paritypay:
     base-backoff: 1s
     max-backoff: 5m
   webhook:
-    # 기관과 나눠 가진 비밀입니다. 운영에서는 반드시 환경변수로 주입합니다.
-    secret: ${PARITYPAY_WEBHOOK_SECRET:local-development-only-webhook-secret}
+    # 기관과 나눠 가진 비밀입니다. **기본값이 없습니다** — 주입하지 않으면 뜨지 않습니다.
+    # 기본값을 두면 배포가 알려진 값으로 조용히 뜨고, 그러면 아무나 웹훅에 서명할 수 있습니다.
+    # 로컬용 값은 local 프로필에 있습니다. 근거: ADR-011
+    secret: ${PARITYPAY_WEBHOOK_SECRET:}
     # 서명된 시각의 허용 오차입니다. 좁을수록 재전송 창이 작아지지만, 기관과 우리 시계 차이보다
     # 좁으면 정상 웹훅이 거절됩니다. 중복 자체는 webhook_receipt가 막습니다.
     tolerance: 5m
+  security:
+    # **이미지 안에 값이 없습니다.** 주입하지 않으면 32자 검사에 걸려 뜨지 않습니다.
+    # 로컬용 값은 local 프로필에 있고, 배포는 프로필 없이 뜨므로 거기에 닿지 않습니다.
+    # 근거: ADR-011, docs/05 §13
+    jwt-secret: ${PARITYPAY_JWT_SECRET:}
   observability:
     # 불변조건 지표를 다시 계산하는 주기입니다. 게이지는 캐시된 값을 읽으므로 스크레이프 횟수와
     # 무관하게 이 주기만큼만 DB를 씁니다. 근거: reports/11 M-006
@@ -218,6 +225,8 @@ paritypay:
     read-timeout: 3s
   events:
     validate-schema: true
+  webhook:
+    secret: local-development-only-webhook-secret
   security:
     # 로컬 전용 값입니다. 운영에서는 반드시 PARITYPAY_JWT_SECRET으로 주입합니다.
     jwt-secret: local-development-only-secret-key-do-not-use-in-production

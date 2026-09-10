@@ -20,6 +20,9 @@ import org.springframework.context.ConfigurableApplicationContext;
  */
 final class MockPgProcess {
 
+    /** pay-api와 기관이 나눠 갖는 웹훅 서명 비밀입니다. `application-test.yml`과 같아야 합니다. */
+    static final String WEBHOOK_SECRET = "test-only-webhook-secret";
+
     private static ConfigurableApplicationContext context;
     private static int port;
 
@@ -40,6 +43,10 @@ final class MockPgProcess {
         properties.put("MOCK_PG_DB_URL", jdbcUrl);
         properties.put("MOCK_PG_DB_USERNAME", username);
         properties.put("MOCK_PG_DB_PASSWORD", password);
+        // 웹훅 서명은 **나눠 가진 비밀**입니다. 양쪽이 같아야 서명이 맞고, 다르면 웹훅이 조용히
+        // 거절되어 결제가 UNKNOWN에 남습니다. 예전에는 양쪽 기본값이 우연히 같아서 맞았는데,
+        // 기본값을 없애자(ADR-011) 그 우연이 사라졌습니다. 이제 시험이 양쪽에 같은 값을 넣습니다.
+        properties.put("MOCK_PG_WEBHOOK_SECRET", WEBHOOK_SECRET);
         properties.put("spring.main.banner-mode", "off");
         properties.put("management.endpoints.web.exposure.include", "");
 
