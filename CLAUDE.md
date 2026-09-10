@@ -40,6 +40,9 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 - **DB 트랜잭션 안에서 외부 네트워크 호출을 하지 않습니다.**
 - **금액에 `float`·`double`을 쓰지 않습니다.** KRW 원 단위 `long` / `BIGINT`입니다.
 - **로그·이벤트 payload에 비밀번호, 토큰, 전체 계좌번호, 민감 개인정보를 남기지 않습니다.**
+- **비밀값에 기본값을 두지 않습니다.** 없으면 뜨지 않아야 합니다. 기본값이 있으면 배포가 알려진
+  값으로 조용히 뜹니다. 근거: ADR-011
+- **CORS 설정을 추가하지 않습니다.** 필요해졌다면 배포 형태를 어긴 것입니다. 근거: ADR-011
 - **측정하지 않은 성능 수치나 테스트 통과 결과를 문서에 쓰지 않습니다.** 미측정 항목은 `TBD`입니다.
 
 ## 4. 작업별로 읽을 문서
@@ -60,6 +63,7 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 | 클라이언트 계약·앱 구분 | [docs/14-frontend-design.md](docs/14-frontend-design.md) |
 | 화면에 무엇을 보여줄지 | [docs/15-ui-screen-plan.md](docs/15-ui-screen-plan.md) |
 | UI 구현 순서·백엔드 격차 | [docs/16-ui-implementation-plan.md](docs/16-ui-implementation-plan.md) |
+| 배포 형태·오리진·비밀값 | [docs/adr/011-deployment-shape.md](docs/adr/011-deployment-shape.md) |
 | 왜 이렇게 결정했는지 | [docs/adr/README.md](docs/adr/README.md) |
 
 전체 문서 관계는 [docs/00-document-map.md](docs/00-document-map.md)에 있습니다.
@@ -138,6 +142,7 @@ pnpm typecheck
 pnpm --filter @paritypay/web-customer dev    # 고객 앱 (5173)
 pnpm --filter @paritypay/web-ops dev         # 운영 콘솔 (5174)
 load-tests/run-e2e.sh                # 실제 스택 E2E. 스택을 띄우고 돌리고 정리합니다 (약 1분)
+deploy/run.sh                        # 배포 형태로 띄웁니다 (이미지 빌드 포함). down으로 정리
 ```
 
 - 백엔드 API를 바꾸면 `UPDATE_OPENAPI_SNAPSHOT=1 ./gradlew :apps:pay-api:test --tests "*OpenApiSnapshotTest*"`로
