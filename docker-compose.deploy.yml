@@ -1,0 +1,149 @@
+# 배포 형태입니다. 근거: ADR-011
+#
+# docker-compose.yml은 **로컬 개발용 의존성**(DB·브로커·관측)입니다. 이 파일은 다릅니다 —
+# 배포했을 때의 모양을 그대로 띄웁니다. 두 앱이 각자 오리진에서 뜨고, 각자 /api를 pay-api로
+# 넘기고, pay-api는 바깥에 열리지 않습니다.
+#
+# 실행: deploy/run.sh   (비밀값을 만들고 띄우고 기다립니다)
+name: paritypay-deploy
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: paritypay
+      POSTGRES_USER: paritypay
+      POSTGRES_PASSWORD: ${PARITYPAY_DB_PASSWORD:?비밀번호가 필요합니다}
+      TZ: UTC
+    volumes:
+      - deploy-postgres:/var/lib/postgresql/data
+      - ./deploy/postgres/init-institutions.sql:/docker-entrypoint-initdb.d/10-institutions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paritypay -d paritypay"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redpanda:
+    image: redpandadata/redpanda:v24.3.6
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --overprovisioned
+      - --memory=1G
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:29092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:29092
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  pay-api:
+    build:
+      context: .
+      dockerfile: deploy/jvm/Dockerfile
+      args:
+        APP: pay-api
+    # **포트를 열지 않습니다.** 브라우저는 앱 오리진의 /api로만 닿습니다. 근거: ADR-011
+    expose:
+      - "8080"
+    environment:
+      PARITYPAY_DB_URL: jdbc:postgresql://postgres:5432/paritypay
+      PARITYPAY_DB_USERNAME: paritypay
+      PARITYPAY_DB_PASSWORD: ${PARITYPAY_DB_PASSWORD:?비밀번호가 필요합니다}
+      PARITYPAY_KAFKA_SERVERS: redpanda:29092
+      PARITYPAY_MOCK_BANK_URL: http://mock-bank:8090
+      PARITYPAY_MOCK_PG_URL: http://mock-pg:8091
+      # 이미지 안에 없습니다. 없으면 애플리케이션이 뜨지 않습니다. 근거: ADR-011
+      PARITYPAY_JWT_SECRET: ${PARITYPAY_JWT_SECRET:?32자 이상이 필요합니다}
+      PARITYPAY_WEBHOOK_SECRET: ${PARITYPAY_WEBHOOK_SECRET:?웹훅 비밀값이 필요합니다}
+      # 트레이스를 내보낼 곳이 이 스택에는 없습니다. 켜 두면 매 요청마다 실패 로그가 쌓입니다.
+      PARITYPAY_TRACE_SAMPLING: "0.0"
+      # 첫 운영자입니다. 운영자를 만들 권한은 운영자에게 있으므로 하나는 밖에서 넣어야 합니다
+      # (OperatorBootstrap). 실제 운영에서 말하는 "별도 절차"의 자리를 이 스택에서는 생성된
+      # 비밀번호가 대신합니다. **설정 파일이 아니라 주입입니다.**
+      PARITYPAY_SECURITY_BOOTSTRAPOPERATORS_0_EMAIL: ops-operator@paritypay.local
+      PARITYPAY_SECURITY_BOOTSTRAPOPERATORS_0_PASSWORD: ${PARITYPAY_OPS_PASSWORD:?운영자 비밀번호가 필요합니다}
+      PARITYPAY_SECURITY_BOOTSTRAPOPERATORS_0_ROLES_0: OPS_VIEWER
+      PARITYPAY_SECURITY_BOOTSTRAPOPERATORS_0_ROLES_1: OPS_OPERATOR
+      PARITYPAY_SECURITY_BOOTSTRAPOPERATORS_1_EMAIL: ops-approver@paritypay.local
+      PARITYPAY_SECURITY_BOOTSTRAPOPERATORS_1_PASSWORD: ${PARITYPAY_OPS_PASSWORD:?운영자 비밀번호가 필요합니다}
+      PARITYPAY_SECURITY_BOOTSTRAPOPERATORS_1_ROLES_0: OPS_VIEWER
+      PARITYPAY_SECURITY_BOOTSTRAPOPERATORS_1_ROLES_1: OPS_APPROVER
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+
+  web-customer:
+    build:
+      context: .
+      dockerfile: deploy/web/Dockerfile
+      args:
+        APP: web-customer
+    ports:
+      # 8081·8082는 흔히 쓰입니다. 실제로 첫 기동에서 부딪혔습니다.
+      - "${PARITYPAY_CUSTOMER_PORT:-8181}:80"
+    depends_on:
+      - pay-api
+
+  web-ops:
+    build:
+      context: .
+      dockerfile: deploy/web/Dockerfile
+      args:
+        APP: web-ops
+    # **다른 오리진입니다.** 운영 콘솔 번들이 고객 앱과 섞이면 안 됩니다(DOC-14 §2).
+    ports:
+      - "${PARITYPAY_OPS_PORT:-8182}:80"
+    depends_on:
+      - pay-api
+
+  # 외부 기관 대역입니다. 운영에서는 진짜 기관이 이 자리에 옵니다.
+  mock-bank:
+    build:
+      context: .
+      dockerfile: deploy/jvm/Dockerfile
+      args:
+        APP: mock-bank
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MOCK_BANK_DB_URL: jdbc:postgresql://postgres:5432/paritypay_bank
+      MOCK_BANK_DB_USERNAME: paritypay
+      MOCK_BANK_DB_PASSWORD: ${PARITYPAY_DB_PASSWORD:?비밀번호가 필요합니다}
+      MOCK_BANK_PORT: 8090
+    expose:
+      - "8090"
+
+  mock-pg:
+    build:
+      context: .
+      dockerfile: deploy/jvm/Dockerfile
+      args:
+        APP: mock-pg
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MOCK_PG_DB_URL: jdbc:postgresql://postgres:5432/paritypay_pg
+      MOCK_PG_DB_USERNAME: paritypay
+      MOCK_PG_DB_PASSWORD: ${PARITYPAY_DB_PASSWORD:?비밀번호가 필요합니다}
+      MOCK_PG_PORT: 8091
+    expose:
+      - "8091"
+
+volumes:
+  deploy-postgres:

@@ -12,8 +12,9 @@ import { expect, test, type Page } from "@playwright/test";
 
 const OPS_URL = process.env["E2E_OPS_URL"] ?? "http://localhost:5174";
 const API_URL = process.env["E2E_API_URL"] ?? "http://localhost:8080";
-const OPS_EMAIL = "ops-operator@paritypay.local";
-const OPS_PASSWORD = "local-ops-password";
+// 배포 스택에서는 운영자 비밀번호가 생성됩니다(ADR-011). 기본값은 local 프로필의 값입니다.
+const OPS_EMAIL = process.env["E2E_OPS_EMAIL"] ?? "ops-operator@paritypay.local";
+const OPS_PASSWORD = process.env["E2E_OPS_PASSWORD"] ?? "local-ops-password";
 
 /**
  * React가 관찰하는 방식으로 입력값을 채웁니다.

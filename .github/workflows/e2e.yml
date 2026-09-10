@@ -61,3 +61,50 @@ jobs:
             apps/e2e/test-results/
             /tmp/paritypay-e2e/
           retention-days: 30
+
+  deploy:
+    name: 배포 형태 한 바퀴
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browser
+        run: pnpm --filter @paritypay/e2e exec playwright install --with-deps chromium
+
+      # 이미지 안에서 Gradle·pnpm 빌드가 돕니다. 호스트에 JDK를 깔지 않는 것이 요점입니다 —
+      # 배포는 저장소만 있으면 서야 합니다. 근거: ADR-011
+      - name: Bring up the deployment
+        run: deploy/run.sh
+
+      # 개발 서버가 아니라 nginx 뒤에서 같은 시험을 돕니다. 프록시가 경로를 다시 쓰거나
+      # 쿠키가 빠지면 여기서 드러납니다.
+      - name: Run E2E against it
+        env:
+          E2E_CUSTOMER_URL: http://localhost:8181
+          E2E_OPS_URL: http://localhost:8182
+          E2E_API_URL: http://localhost:8182
+        run: |
+          E2E_OPS_PASSWORD=$(grep PARITYPAY_OPS_PASSWORD deploy/.env | cut -d= -f2) \
+            pnpm --filter @paritypay/e2e exec playwright test
+
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: deploy-failure
+          path: apps/e2e/test-results/
+          retention-days: 30
+
+      - name: Tear down
+        if: always()
+        run: deploy/run.sh down

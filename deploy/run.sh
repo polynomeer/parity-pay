@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# 배포 형태를 띄웁니다. 근거: ADR-011
+#
+# 비밀값은 이미지 안에 없고, 없으면 애플리케이션이 뜨지 않습니다. 이 스크립트는 **로컬 확인용**
+# 값을 만들어 넣습니다. 운영에서는 비밀 관리 도구가 이 자리를 대신합니다.
+#
+# 사용: deploy/run.sh [up|down|logs]
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+COMPOSE=(docker compose -f docker-compose.deploy.yml)
+ENV_FILE=deploy/.env
+
+# 비밀값을 한 번 만들어 두고 재사용합니다. 매번 새로 만들면 재시작할 때마다 기존 세션과
+# 웹훅 서명이 전부 무효가 됩니다.
+if [ ! -f "$ENV_FILE" ]; then
+  echo "== 비밀값 생성 ($ENV_FILE)"
+  {
+    echo "# deploy/run.sh가 만든 로컬 확인용 값입니다. 커밋되지 않습니다."
+    echo "PARITYPAY_DB_PASSWORD=$(openssl rand -hex 16)"
+    echo "PARITYPAY_JWT_SECRET=$(openssl rand -hex 32)"
+    echo "PARITYPAY_WEBHOOK_SECRET=$(openssl rand -hex 16)"
+    # 첫 운영자의 비밀번호입니다. 운영에서는 비밀 관리 도구가 이 자리를 대신합니다.
+    echo "PARITYPAY_OPS_PASSWORD=$(openssl rand -hex 12)"
+  } > "$ENV_FILE"
+  chmod 600 "$ENV_FILE"
+fi
+COMPOSE+=(--env-file "$ENV_FILE")
+
+case "${1:-up}" in
+  down)
+    # 볼륨까지 지웁니다. 확인용 스택이라 남겨 둘 이유가 없습니다.
+    "${COMPOSE[@]}" down -v
+    exit 0
+    ;;
+  logs)
+    shift
+    "${COMPOSE[@]}" logs "$@"
+    exit 0
+    ;;
+esac
+
+echo "== 빌드와 기동"
+"${COMPOSE[@]}" up -d --build
+
+echo "== pay-api 대기"
+for _ in $(seq 1 60); do
+  status=$("${COMPOSE[@]}" ps --format '{{.Health}}' pay-api 2>/dev/null || true)
+  [ "$status" = "healthy" ] && break
+  sleep 3
+done
+[ "$("${COMPOSE[@]}" ps --format '{{.Health}}' pay-api)" = "healthy" ] || {
+  echo "pay-api가 뜨지 않았습니다:"
+  "${COMPOSE[@]}" logs --tail 40 pay-api
+  exit 1
+}
+
+CUSTOMER_PORT=${PARITYPAY_CUSTOMER_PORT:-8181}
+OPS_PORT=${PARITYPAY_OPS_PORT:-8182}
+echo "== 준비됨"
+echo "   고객 앱   http://localhost:${CUSTOMER_PORT}"
+echo "   운영 콘솔 http://localhost:${OPS_PORT}"
+echo "   pay-api는 바깥에 열려 있지 않습니다 (ADR-011)"
+echo
+echo "   운영자 ops-operator@paritypay.local / $(grep PARITYPAY_OPS_PASSWORD "$ENV_FILE" | cut -d= -f2)"
