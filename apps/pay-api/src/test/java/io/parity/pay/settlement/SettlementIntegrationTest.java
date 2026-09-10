@@ -16,11 +16,11 @@ import io.parity.pay.payment.application.port.in.CancelPaymentUseCase.CancelPaym
 import io.parity.pay.payment.application.port.in.ConfirmOrderUseCase;
 import io.parity.pay.payment.domain.PaymentMethod;
 import io.parity.pay.settlement.adapter.in.messaging.SettlementItemConsumer;
+import io.parity.pay.settlement.application.port.in.SettlementQuery;
 import io.parity.pay.settlement.application.port.in.SettlementView;
 import io.parity.pay.settlement.application.service.SettlementPayoutService;
 import io.parity.pay.settlement.application.service.SettlementRecoveryService;
 import io.parity.pay.settlement.application.service.SettlementService;
-import io.parity.pay.settlement.domain.SettlementItem;
 import io.parity.pay.settlement.domain.SettlementStatus;
 import io.parity.pay.shared.error.BusinessException;
 import io.parity.pay.shared.id.BankAccountId;
@@ -167,8 +167,10 @@ class SettlementIntegrationTest extends AbstractIntegrationTest {
         assertThat(settlement.feeAmount()).isEqualTo(Money.krw(5_000));
         assertThat(settlement.netAmount()).isEqualTo(Money.krw(45_000));
 
-        List<SettlementItem> items = settlementService.itemsOf(settlement.settlementId());
-        assertThat(items.stream().mapToLong(SettlementItem::amount).sum())
+        List<SettlementQuery.SettlementItemView> items = settlementService.itemsOf(settlement.settlementId());
+        assertThat(items.stream()
+                        .mapToLong(SettlementQuery.SettlementItemView::amount)
+                        .sum())
                 .isEqualTo(settlement.netAmount().amount());
 
         // JE-007: 수수료만큼 판매자 지급예정금이 줄고 플랫폼 수익이 잡힙니다.

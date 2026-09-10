@@ -145,3 +145,25 @@ export async function confirmOrder(
   );
   return response.data;
 }
+
+export type SettlementResponse = Schemas["SettlementResponse"];
+export type SettlementItemResponse = Schemas["SettlementItemResponse"];
+
+export async function listMerchantSettlements(client: ApiClient): Promise<SettlementResponse[]> {
+  return (await client.get<SettlementResponse[]>("/api/v1/merchant/settlements")).data;
+}
+
+/**
+ * 정산액의 근거입니다.
+ *
+ * 금액은 부호가 있습니다 — SALE(+), CANCELLATION(-), FEE(-), ADJUSTMENT(+/-).
+ * 항목 합계가 곧 순액입니다(INV-008).
+ */
+export async function listSettlementItems(
+  client: ApiClient,
+  settlementId: string,
+): Promise<SettlementItemResponse[]> {
+  return (
+    await client.get<SettlementItemResponse[]>(`/api/v1/merchant/settlements/${settlementId}/items`)
+  ).data;
+}

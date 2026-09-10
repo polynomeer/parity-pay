@@ -305,6 +305,39 @@
           },
           "type" : "object"
         },
+        "SettlementItemResponse" : {
+          "properties" : {
+            "amount" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "currency" : {
+              "type" : "string"
+            },
+            "itemId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "itemType" : {
+              "type" : "string"
+            },
+            "occurredAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "paymentId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "sourceReferenceId" : {
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "SettlementResponse" : {
           "properties" : {
             "adjustmentAmount" : {
@@ -785,6 +818,36 @@
                 "*/*" : {
                   "schema" : {
                     "$ref" : "#/components/schemas/SettlementResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "merchant-controller" ]
+        }
+      },
+      "/api/v1/merchant/settlements/{settlementId}/items" : {
+        "get" : {
+          "operationId" : "getSettlementItems",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "settlementId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "$ref" : "#/components/schemas/SettlementItemResponse"
+                    },
+                    "type" : "array"
                   }
                 }
               },

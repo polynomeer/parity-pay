@@ -36,6 +36,7 @@ interface RequestOptions {
   readonly signal?: AbortSignal;
   /** 401에서 토큰을 재발급하고 한 번 더 시도할지. 재발급 호출 자신은 false입니다. */
   readonly retryOnUnauthorized?: boolean;
+  readonly extraHeaders?: Record<string, string>;
 }
 
 export class ApiClient {
@@ -81,6 +82,21 @@ export class ApiClient {
     return this.request<T>({ method, path, body, idempotencyKey, ...(signal ? { signal } : {}) });
   }
 
+  /**
+   * 추가 헤더가 필요한 쓰기입니다 (예: 보정 분개의 `X-Approver-Id`).
+   *
+   * 멱등 키를 받지 않습니다 — 이 경로들은 금융 효과를 **새 분개로** 만들고 서버가 중복을
+   * 업무 제약으로 막습니다.
+   */
+  writeWithHeaders<T>(
+    method: "POST" | "PUT" | "PATCH" | "DELETE",
+    path: string,
+    body: unknown,
+    headers: Record<string, string>,
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>({ method, path, body, extraHeaders: headers });
+  }
+
   /** 인증이 필요 없고 멱등 키도 없는 쓰기입니다 (가입·로그인·토큰 재발급). */
   publicWrite<T>(path: string, body: unknown, signal?: AbortSignal): Promise<ApiResponse<T>> {
     return this.request<T>({
@@ -99,6 +115,9 @@ export class ApiClient {
     }
     if (options.idempotencyKey !== undefined) {
       headers["Idempotency-Key"] = options.idempotencyKey;
+    }
+    if (options.extraHeaders !== undefined) {
+      Object.assign(headers, options.extraHeaders);
     }
     const tokens = this.tokens?.current();
     if (tokens !== null && tokens !== undefined) {

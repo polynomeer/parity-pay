@@ -66,6 +66,48 @@ class MerchantController {
         return ResponseEntity.ok(SettlementResponse.from(view));
     }
 
+    /**
+     * 정산액의 근거입니다. 근거: docs/15-ui-screen-plan.md §3.3
+     *
+     * <p>합계만으로는 판매자가 금액을 확인할 수 없습니다. 어떤 결제가 얼마를 만들었고 수수료와
+     * 취소가 얼마를 빼갔는지 항목으로 보여 줍니다. 항목 합계가 곧 순액입니다(INV-008).
+     */
+    @GetMapping("/settlements/{settlementId}/items")
+    ResponseEntity<List<SettlementItemResponse>> getSettlementItems(@PathVariable UUID settlementId) {
+        Merchant merchant = merchantDirectory.requireCurrentMerchant();
+        SettlementView view = settlements.get(SettlementId.of(settlementId));
+        // 남의 정산 항목을 볼 수 없습니다. 헤더 조회와 같은 규칙입니다.
+        if (!view.merchantId().equals(merchant.id())) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "settlement not found");
+        }
+        return ResponseEntity.ok(settlements.itemsOf(SettlementId.of(settlementId)).stream()
+                .map(SettlementItemResponse::from)
+                .toList());
+    }
+
+    record SettlementItemResponse(
+            UUID itemId,
+            UUID paymentId,
+            String itemType,
+            long amount,
+            String currency,
+            String status,
+            String sourceReferenceId,
+            Instant occurredAt) {
+
+        static SettlementItemResponse from(SettlementQuery.SettlementItemView item) {
+            return new SettlementItemResponse(
+                    item.itemId(),
+                    item.paymentId(),
+                    item.itemType(),
+                    item.amount(),
+                    item.currency(),
+                    item.status(),
+                    item.sourceReferenceId(),
+                    item.occurredAt());
+        }
+    }
+
     record MerchantResponse(UUID merchantId, String name, String status, Instant createdAt) {}
 
     record SettlementResponse(

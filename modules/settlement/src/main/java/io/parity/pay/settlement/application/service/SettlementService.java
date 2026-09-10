@@ -7,6 +7,7 @@ import io.parity.pay.ledger.domain.JournalFactory;
 import io.parity.pay.ledger.domain.LedgerAccount;
 import io.parity.pay.settlement.application.event.SettlementEvents;
 import io.parity.pay.settlement.application.port.in.SettlementQuery;
+import io.parity.pay.settlement.application.port.in.SettlementQuery.SettlementItemView;
 import io.parity.pay.settlement.application.port.in.SettlementView;
 import io.parity.pay.settlement.application.port.out.SettlementItemRepository;
 import io.parity.pay.settlement.application.port.out.SettlementRepository;
@@ -131,10 +132,26 @@ public class SettlementService implements SettlementQuery {
                 .toList();
     }
 
-    /** 정산 항목 상세입니다. INV-008(항목 합 = 헤더 순액) 검증에 사용합니다. */
+    /**
+     * 정산 항목 상세입니다. INV-008(항목 합 = 헤더 순액) 검증과 판매자 화면이 함께 씁니다.
+     *
+     * <p>합계만 주면 판매자가 금액을 확인할 방법이 없습니다. DOC-15 §3.3이 요구한 것은 정산
+     * 금액의 <b>근거를 추적</b>할 수 있게 하는 것이고, 그러려면 항목이 필요합니다.
+     */
     @Transactional(readOnly = true)
-    public List<SettlementItem> itemsOf(SettlementId settlementId) {
-        return itemRepository.findBySettlementId(settlementId);
+    @Override
+    public List<SettlementItemView> itemsOf(SettlementId settlementId) {
+        return itemRepository.findBySettlementId(settlementId).stream()
+                .map(item -> new SettlementItemView(
+                        item.itemId(),
+                        item.paymentId().value(),
+                        item.type().name(),
+                        item.amount(),
+                        item.currency().name(),
+                        item.status().name(),
+                        item.sourceReferenceId(),
+                        item.occurredAt()))
+                .toList();
     }
 
     Settlement load(SettlementId settlementId) {

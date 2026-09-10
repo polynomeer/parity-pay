@@ -2,6 +2,7 @@ import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { Explorer } from "./screens/Explorer";
 import { Unresolved } from "./screens/Unresolved";
 import { Lab } from "./screens/Lab";
+import { Reconciliation } from "./screens/Reconciliation";
 import { Login } from "./screens/Login";
 import { tokenStore } from "./api";
 
@@ -16,7 +17,7 @@ export function App() {
   return (
     <>
       <nav>
-        <Link to="/">거래 검색</Link> <Link to="/unresolved">미확정 거래</Link> <Link to="/lab">장애 시뮬레이터</Link>
+        <Link to="/">거래 검색</Link> <Link to="/unresolved">미확정 거래</Link> <Link to="/lab">장애 시뮬레이터</Link> <Link to="/reconciliation">대사</Link>
       </nav>
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -25,6 +26,14 @@ export function App() {
           element={
             <RequireOps>
               <Explorer />
+            </RequireOps>
+          }
+        />
+        <Route
+          path="/reconciliation"
+          element={
+            <RequireOps>
+              <Reconciliation />
             </RequireOps>
           }
         />

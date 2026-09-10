@@ -13,6 +13,24 @@ export type UnresolvedTopUpResponse = Schemas["UnresolvedTopUpResponse"];
 export type UnresolvedPaymentResponse = Schemas["UnresolvedPaymentResponse"];
 export type LedgerTransactionResponse = Schemas["LedgerTransactionResponse"];
 export type InvariantSnapshot = Schemas["InvariantSnapshot"];
+export type MismatchResponse = Schemas["MismatchResponse"];
+export type AdjustmentRequest = Schemas["AdjustmentRequest"];
+/** 보정 분개에 쓸 수 있는 계정입니다. 생성된 계약에서 나오므로 없는 계정을 고를 수 없습니다. */
+export type AdjustmentAccount = NonNullable<AdjustmentRequest["debitAccount"]>;
+export const ADJUSTMENT_ACCOUNTS: readonly AdjustmentAccount[] = [
+  "BANK_DEPOSIT",
+  "PG_RECEIVABLE",
+  "MERCHANT_RECEIVABLE",
+  "USER_PAY_MONEY",
+  "PAYMENT_HOLDING",
+  "MERCHANT_PAYABLE",
+  "POINT_LIABILITY",
+  "UNIDENTIFIED_DEPOSIT",
+  "EQUITY_ADJUSTMENT",
+  "PLATFORM_FEE_REVENUE",
+  "PROVIDER_FEE_EXPENSE",
+  "SETTLEMENT_CLEARING",
+];
 
 /** 식별자가 무엇인지 알아내고 타임라인을 열 수 있는 참조를 받습니다. */
 export async function resolveIdentifier(client: ApiClient, query: string): Promise<SearchResult> {
@@ -96,4 +114,31 @@ export async function applyPgMode(
   body: { mode?: string; statusQueryAvailable?: boolean; webhookMode?: string },
 ): Promise<void> {
   await client.publicWrite("/api/v1/admin/mock-pg/mode", body);
+}
+
+export async function listOpenMismatches(client: ApiClient): Promise<MismatchResponse[]> {
+  return (await client.get<MismatchResponse[]>("/api/v1/admin/reconciliation/mismatches")).data;
+}
+
+/**
+ * 보정 분개로 해결합니다.
+ *
+ * **승인자는 요청자와 달라야 합니다.** 서버가 거부하지만, 화면도 미리 막습니다 — 서버가 막으니
+ * 괜찮다고 두면 운영자는 실패한 뒤에야 알게 됩니다(FE-010).
+ *
+ * 금액을 직접 고치는 것이 아니라 **새 분개를 만드는 것**입니다. 확정 원장은 수정하지 않습니다.
+ */
+export async function requestAdjustment(
+  client: ApiClient,
+  mismatchId: string,
+  approverId: string,
+  request: AdjustmentRequest,
+): Promise<MismatchResponse> {
+  const response = await client.writeWithHeaders<MismatchResponse>(
+    "POST",
+    `/api/v1/admin/reconciliation/mismatches/${mismatchId}/adjustments`,
+    request,
+    { "X-Approver-Id": approverId },
+  );
+  return response.data;
 }
