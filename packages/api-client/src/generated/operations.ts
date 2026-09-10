@@ -8,6 +8,22 @@
  * 그것이 이 파일을 커밋하는 이유입니다.
  */
 export interface paths {
+    "/api/v1/admin/invariants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["invariants"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/ledger/transactions/{transactionId}": {
         parameters: {
             query?: never;
@@ -468,6 +484,21 @@ export interface components {
         HoldRequest: {
             reason: string;
         };
+        InvariantSnapshot: {
+            /** Format: int64 */
+            ageSeconds?: number;
+            /** Format: int64 */
+            refreshDurationMillis?: number;
+            /** Format: date-time */
+            refreshedAt?: string;
+            values?: components["schemas"]["InvariantValue"][];
+        };
+        InvariantValue: {
+            description?: string;
+            name?: string;
+            /** Format: int64 */
+            value?: number;
+        };
         LedgerTransactionResponse: {
             balanced?: boolean;
             /** Format: int64 */
@@ -526,6 +557,7 @@ export interface components {
             /** @enum {string} */
             mode?: "NORMAL" | "EXPLICIT_DECLINE" | "TIMEOUT_BEFORE_APPROVAL" | "TIMEOUT_AFTER_APPROVAL";
             statusQueryAvailable?: boolean;
+            webhookMode?: string;
         };
         OutboxEventSummary: {
             aggregateId?: string;
@@ -692,6 +724,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    invariants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InvariantSnapshot"];
+                };
+            };
+        };
+    };
     getTransaction: {
         parameters: {
             query?: never;

@@ -79,9 +79,16 @@ class OnboardingController {
     /** Mock PG의 장애 주입입니다. Mock Bank와 같은 이유로 운영자 권한 아래 둡니다. */
     @PostMapping("/admin/mock-pg/mode")
     ResponseEntity<Void> setMockPgMode(@RequestBody MockPgModeRequest request) {
-        mockPgBehavior.setMode(request.mode());
+        if (request.mode() != null) {
+            mockPgBehavior.setMode(request.mode());
+        }
         if (request.statusQueryAvailable() != null) {
             mockPgBehavior.setStatusQueryAvailable(request.statusQueryAvailable());
+        }
+        // 웹훅 중복·역순은 기관이 실제로 만듭니다. 우리가 같은 요청을 두 번 보내는 것과 다릅니다.
+        // `MockPgBehavior`에는 이미 있었는데 이 API가 전달하지 않아 화면에서 쓸 수 없었습니다.
+        if (request.webhookMode() != null) {
+            mockPgBehavior.setWebhookMode(request.webhookMode());
         }
         return ResponseEntity.noContent().build();
     }
@@ -100,5 +107,10 @@ class OnboardingController {
 
     record MockBankModeRequest(MockBankBehavior.Mode mode) {}
 
-    record MockPgModeRequest(MockPgBehavior.Mode mode, Boolean statusQueryAvailable) {}
+    /**
+     * PG 장애 주입입니다.
+     *
+     * @param webhookMode NORMAL · DUPLICATE · OUT_OF_ORDER · NONE
+     */
+    record MockPgModeRequest(MockPgBehavior.Mode mode, Boolean statusQueryAvailable, String webhookMode) {}
 }

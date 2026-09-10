@@ -2,6 +2,7 @@ package io.parity.pay.api.operations;
 
 import io.parity.pay.api.merchant.Merchant;
 import io.parity.pay.api.merchant.MerchantDirectory;
+import io.parity.pay.api.observability.InvariantMetrics;
 import io.parity.pay.api.outbox.OutboxAdminService;
 import io.parity.pay.payment.application.service.PaymentRecoveryService;
 import io.parity.pay.shared.id.PaymentId;
@@ -49,6 +50,7 @@ class OperationsController {
     private final TopUpRecoveryService recoveryService;
     private final TransactionTimelineService timelineService;
     private final TransactionSearchService searchService;
+    private final InvariantMetrics invariantMetrics;
     private final TopUpRecoveryRepository recoveryRepository;
     private final RebuildBalanceUseCase rebuildBalance;
     private final PaymentRecoveryService paymentRecoveryService;
@@ -63,6 +65,7 @@ class OperationsController {
             TopUpRecoveryService recoveryService,
             TransactionTimelineService timelineService,
             TransactionSearchService searchService,
+            InvariantMetrics invariantMetrics,
             TopUpRecoveryRepository recoveryRepository,
             RebuildBalanceUseCase rebuildBalance,
             PaymentRecoveryService paymentRecoveryService,
@@ -75,6 +78,7 @@ class OperationsController {
         this.recoveryService = recoveryService;
         this.timelineService = timelineService;
         this.searchService = searchService;
+        this.invariantMetrics = invariantMetrics;
         this.recoveryRepository = recoveryRepository;
         this.rebuildBalance = rebuildBalance;
         this.paymentRecoveryService = paymentRecoveryService;
@@ -109,6 +113,18 @@ class OperationsController {
     @GetMapping("/transactions/resolve")
     ResponseEntity<TransactionSearchService.SearchResult> resolve(@RequestParam String query) {
         return ResponseEntity.ok(searchService.resolve(query));
+    }
+
+    /**
+     * 불변조건 현황. 근거: docs/15-ui-screen-plan.md §5.4
+     *
+     * <p>지금까지 이 값들은 Prometheus 지표로만 나갔습니다. 운영 콘솔이 읽을 수 있게 같은 캐시를
+     * JSON으로도 엽니다. <b>다시 계산하지 않습니다</b> — 읽을 때마다 원장 전체를 집계하던 것이
+     * 결함 G였습니다(reports/11 M-006).
+     */
+    @GetMapping("/invariants")
+    ResponseEntity<InvariantMetrics.InvariantSnapshot> invariants() {
+        return ResponseEntity.ok(invariantMetrics.snapshot());
     }
 
     /** 아직 최종 상태에 도달하지 못한 충전 목록입니다. */

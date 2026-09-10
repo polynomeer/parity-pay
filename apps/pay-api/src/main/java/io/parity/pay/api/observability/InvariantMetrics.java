@@ -164,5 +164,50 @@ public class InvariantMetrics {
         return value == null ? 0.0d : value.doubleValue();
     }
 
+    /**
+     * 캐시에 들어 있는 값을 그대로 돌려줍니다.
+     *
+     * <p>지표는 Prometheus로만 나가고 있었습니다. 운영 콘솔의 불변조건 모니터(DOC-15 §5.4)가
+     * 읽을 수 있게 같은 캐시를 JSON으로도 엽니다. <b>다시 계산하지 않습니다</b> — 읽을 때마다
+     * 원장 전체를 집계하던 것이 결함 G였습니다.
+     *
+     * @return 값이 아직 없으면 {@code value}가 null입니다. 0으로 채우지 않습니다 — 확인하지 못한
+     *     것과 위반이 0건인 것은 다릅니다
+     */
+    public InvariantSnapshot snapshot() {
+        Instant at = refreshedAt;
+        List<InvariantValue> readings = PROBES.stream()
+                .map(probe -> new InvariantValue(
+                        probe.name(),
+                        probe.description(),
+                        values.containsKey(probe.name())
+                                ? Long.valueOf(values.get(probe.name()).longValue())
+                                : null))
+                .toList();
+        return new InvariantSnapshot(
+                at,
+                at == null
+                        ? null
+                        : Long.valueOf(Duration.between(at, clock.instant()).toSeconds()),
+                lastRefreshMillis,
+                readings);
+    }
+
+    /**
+     * 불변조건 현황입니다.
+     *
+     * @param refreshedAt 마지막 계산 시각. null이면 아직 한 번도 계산하지 않았습니다
+     * @param ageSeconds 계산이 얼마나 오래됐는지. 캐시가 멈춘 것을 화면이 알아볼 수 있어야 합니다
+     */
+    public record InvariantSnapshot(
+            Instant refreshedAt, Long ageSeconds, long refreshDurationMillis, List<InvariantValue> values) {}
+
+    /**
+     * 불변조건 하나입니다.
+     *
+     * @param value 위반 건수. null이면 아직 확인하지 못한 것입니다
+     */
+    public record InvariantValue(String name, String description, Long value) {}
+
     private record Probe(String name, String description, String sql) {}
 }

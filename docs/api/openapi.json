@@ -1300,6 +1300,44 @@
           "required" : [ "reason" ],
           "type" : "object"
         },
+        "InvariantSnapshot" : {
+          "properties" : {
+            "ageSeconds" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "refreshDurationMillis" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "refreshedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "values" : {
+              "items" : {
+                "$ref" : "#/components/schemas/InvariantValue"
+              },
+              "type" : "array"
+            }
+          },
+          "type" : "object"
+        },
+        "InvariantValue" : {
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string"
+            },
+            "value" : {
+              "format" : "int64",
+              "type" : "integer"
+            }
+          },
+          "type" : "object"
+        },
         "LedgerTransactionResponse" : {
           "properties" : {
             "balanced" : {
@@ -1439,6 +1477,9 @@
             },
             "statusQueryAvailable" : {
               "type" : "boolean"
+            },
+            "webhookMode" : {
+              "type" : "string"
             }
           },
           "type" : "object"
@@ -1854,6 +1895,24 @@
     },
     "openapi" : "3.1.0",
     "paths" : {
+      "/api/v1/admin/invariants" : {
+        "get" : {
+          "operationId" : "invariants",
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/InvariantSnapshot"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
       "/api/v1/admin/ledger/transactions/{transactionId}" : {
         "get" : {
           "operationId" : "getTransaction",
