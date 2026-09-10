@@ -19,6 +19,8 @@ public record SecurityProperties(
         int maxLoginFailures,
         Duration loginLockDuration,
         Duration passwordResetTtl,
+        // 로컬 http 개발을 막지 않으려고 설정으로 둡니다. 운영에서는 반드시 true입니다.
+        Boolean refreshCookieSecure,
         List<BootstrapOperator> bootstrapOperators) {
 
     public SecurityProperties {
@@ -28,6 +30,8 @@ public record SecurityProperties(
         loginLockDuration = loginLockDuration == null ? Duration.ofMinutes(10) : loginLockDuration;
         // 재설정 토큰은 짧게 삽니다. 메일함에 오래 남아 있는 토큰은 그 자체가 위험입니다.
         passwordResetTtl = passwordResetTtl == null ? Duration.ofMinutes(30) : passwordResetTtl;
+        // 기본은 안전한 쪽입니다. 로컬에서만 application.yml이 false로 내립니다.
+        refreshCookieSecure = refreshCookieSecure == null ? Boolean.TRUE : refreshCookieSecure;
         bootstrapOperators = bootstrapOperators == null ? List.of() : List.copyOf(bootstrapOperators);
         if (jwtSecret == null || jwtSecret.length() < 32) {
             throw new IllegalStateException("paritypay.security.jwt-secret must be at least 32 characters");

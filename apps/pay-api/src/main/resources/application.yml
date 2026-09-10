@@ -221,6 +221,9 @@ paritypay:
   security:
     # 로컬 전용 값입니다. 운영에서는 반드시 PARITYPAY_JWT_SECRET으로 주입합니다.
     jwt-secret: local-development-only-secret-key-do-not-use-in-production
+    # 로컬은 http라 Secure 쿠키가 아예 저장되지 않습니다. **운영에서는 반드시 true입니다.**
+    # 기본값이 true이므로 이 줄을 지우면 안전한 쪽으로 돌아갑니다. 근거: ADR-010
+    refresh-cookie-secure: false
     bootstrap-operators:
       - email: ops-viewer@paritypay.local
         password: local-ops-password

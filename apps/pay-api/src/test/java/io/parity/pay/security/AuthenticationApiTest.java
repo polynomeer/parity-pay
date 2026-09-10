@@ -6,6 +6,7 @@ import io.parity.pay.ParityPayApplication;
 import io.parity.pay.api.security.OperatorBootstrap;
 import io.parity.pay.support.AbstractIntegrationTest;
 import io.parity.pay.support.ApiAuth;
+import io.parity.pay.support.RefreshCookies;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -72,8 +73,53 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
         assertThat(tokens.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(tokens.getBody().get("tokenType")).isEqualTo("Bearer");
         assertThat(tokens.getBody().get("accessToken")).isNotNull();
-        assertThat(tokens.getBody().get("refreshToken")).isNotNull();
         assertThat((List<Object>) tokens.getBody().get("roles")).containsExactly((Object) "CUSTOMER");
+
+        // ADR-010: 리프레시 토큰은 본문에 없습니다. 다시 넣으면 localStorage로 돌아가는 것입니다.
+        assertThat(tokens.getBody()).doesNotContainKey("refreshToken");
+        assertThat(RefreshCookies.setCookie(tokens)).isNotBlank();
+    }
+
+    @Test
+    @DisplayName("리프레시 쿠키는 스크립트가 읽을 수 없고 인증 경로 밖으로 나가지 않는다")
+    void refreshCookieCarriesItsProtections() {
+        restTemplate.postForEntity(
+                "/api/v1/members", Map.of("email", "auth-cookie@example.com", "password", "password1234"), Map.class);
+
+        ResponseEntity<Map> tokens = restTemplate.postForEntity(
+                "/api/v1/auth/tokens",
+                Map.of("email", "auth-cookie@example.com", "password", "password1234"),
+                Map.class);
+
+        String cookie = RefreshCookies.setCookie(tokens);
+        // HttpOnly가 이 결정의 전부입니다 — 스크립트가 뚫려도 리프레시 토큰은 나가지 않습니다.
+        assertThat(cookie).containsIgnoringCase("HttpOnly");
+        // SameSite=Lax가 CSRF를 막습니다. 별도 CSRF 토큰을 두지 않는 근거입니다.
+        assertThat(cookie).contains("SameSite=Lax");
+        // 다른 API 요청에 실릴 이유가 없습니다.
+        assertThat(cookie).contains("Path=/api/v1/auth");
+    }
+
+    @Test
+    @DisplayName("쿠키가 없으면 재발급할 수 없다 — 본문으로는 우회할 수 없다")
+    void refreshWithoutTheCookieFails() {
+        ApiAuth.registerAndLogin(restTemplate, "auth-nocookie@example.com", "password1234");
+        ResponseEntity<Map> tokens = restTemplate.postForEntity(
+                "/api/v1/auth/tokens",
+                Map.of("email", "auth-nocookie@example.com", "password", "password1234"),
+                Map.class);
+
+        ResponseEntity<Map> missing = refresh(new HttpHeaders());
+
+        assertThat(missing.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(missing.getBody().get("code")).isEqualTo("INVALID_REQUEST");
+
+        // 본문으로 되돌아가는 경로가 남아 있으면 이 결정은 없는 것과 같습니다. 쿠키에서 값을
+        // 꺼내 본문으로 보내도 받아주지 않아야 합니다.
+        String token = RefreshCookies.value(tokens).split("=", 2)[1];
+        ResponseEntity<Map> viaBody =
+                restTemplate.postForEntity("/api/v1/auth/tokens/refresh", Map.of("refreshToken", token), Map.class);
+        assertThat(viaBody.getStatusCode().is2xxSuccessful()).isFalse();
     }
 
     @Test
@@ -131,15 +177,16 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
                 "/api/v1/auth/tokens",
                 Map.of("email", "auth-refresh@example.com", "password", "password1234"),
                 Map.class);
-        String refreshToken = (String) first.getBody().get("refreshToken");
+        // 브라우저가 하는 일을 손으로 합니다 — Set-Cookie를 받아 두었다가 Cookie로 돌려보냅니다.
+        String cookie = RefreshCookies.value(first);
 
-        ResponseEntity<Map> refreshed = restTemplate.postForEntity(
-                "/api/v1/auth/tokens/refresh", Map.of("refreshToken", refreshToken), Map.class);
+        ResponseEntity<Map> refreshed = refresh(RefreshCookies.carrying(cookie));
         assertThat(refreshed.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(refreshed.getBody().get("refreshToken")).isNotEqualTo(refreshToken);
+        // 새 쿠키가 심어지고, 값이 달라야 회전한 것입니다.
+        assertThat(RefreshCookies.value(refreshed)).isNotEqualTo(cookie);
+        assertThat(refreshed.getBody()).doesNotContainKey("refreshToken");
 
-        ResponseEntity<Map> reuse = restTemplate.postForEntity(
-                "/api/v1/auth/tokens/refresh", Map.of("refreshToken", refreshToken), Map.class);
+        ResponseEntity<Map> reuse = refresh(RefreshCookies.carrying(cookie));
         assertThat(reuse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(reuse.getBody().get("message").toString()).contains("revoked");
     }
@@ -152,17 +199,23 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
                 "/api/v1/auth/tokens",
                 Map.of("email", "auth-logout@example.com", "password", "password1234"),
                 Map.class);
-        String refreshToken = (String) tokens.getBody().get("refreshToken");
+        String cookie = RefreshCookies.value(tokens);
 
-        restTemplate.exchange(
+        ResponseEntity<Void> loggedOut = restTemplate.exchange(
                 "/api/v1/auth/logout",
                 HttpMethod.POST,
                 new HttpEntity<>(ApiAuth.bearer(session.accessToken())),
                 Void.class);
 
-        ResponseEntity<Map> refresh = restTemplate.postForEntity(
-                "/api/v1/auth/tokens/refresh", Map.of("refreshToken", refreshToken), Map.class);
-        assertThat(refresh.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(refresh(RefreshCookies.carrying(cookie)).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        // 서버에서 철회하는 것만으로는 브라우저에 죽은 쿠키가 남습니다. 함께 지웁니다.
+        assertThat(RefreshCookies.setCookie(loggedOut)).contains("Max-Age=0");
+    }
+
+    /** 브라우저처럼 쿠키만 들고 재발급을 요청합니다. 본문은 비어 있습니다. */
+    private ResponseEntity<Map> refresh(HttpHeaders headers) {
+        return restTemplate.exchange(
+                "/api/v1/auth/tokens/refresh", HttpMethod.POST, new HttpEntity<>(headers), Map.class);
     }
 
     @Test

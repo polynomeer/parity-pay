@@ -1,12 +1,18 @@
 package io.parity.pay.api.security;
 
+import io.parity.pay.shared.error.BusinessException;
+import io.parity.pay.shared.error.ErrorCode;
 import io.parity.pay.shared.security.CurrentPrincipal;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,31 +31,57 @@ class AuthController {
     private final AuthenticationService authenticationService;
     private final PasswordService passwordService;
     private final CurrentPrincipal currentPrincipal;
+    private final RefreshTokenCookie refreshTokenCookie;
 
     AuthController(
             AuthenticationService authenticationService,
             PasswordService passwordService,
-            CurrentPrincipal currentPrincipal) {
+            CurrentPrincipal currentPrincipal,
+            RefreshTokenCookie refreshTokenCookie) {
         this.authenticationService = authenticationService;
         this.passwordService = passwordService;
         this.currentPrincipal = currentPrincipal;
+        this.refreshTokenCookie = refreshTokenCookie;
     }
 
     @PostMapping("/tokens")
     ResponseEntity<TokenResponse> issue(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(TokenResponse.from(authenticationService.login(request.email(), request.password())));
+        return withRefreshCookie(authenticationService.login(request.email(), request.password()));
     }
 
+    /**
+     * 리프레시 토큰을 회전시킵니다. 근거: ADR-010
+     *
+     * <p>토큰은 <b>본문이 아니라 쿠키</b>로 옵니다. 브라우저가 자동으로 붙이므로 클라이언트 코드는
+     * 값을 만지지 않습니다. 만질 수 있게 만들면 `localStorage`로 돌아가는 것과 같습니다.
+     */
+    @Parameter(
+            in = ParameterIn.COOKIE,
+            name = RefreshTokenCookie.NAME,
+            required = true,
+            description = "리프레시 토큰. 브라우저가 자동으로 붙입니다 (ADR-010).")
     @PostMapping("/tokens/refresh")
-    ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request) {
-        return ResponseEntity.ok(TokenResponse.from(authenticationService.refresh(request.refreshToken())));
+    ResponseEntity<TokenResponse> refresh(HttpServletRequest request) {
+        String refreshToken = refreshTokenCookie
+                .read(request)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "refresh token cookie is missing"));
+        return withRefreshCookie(authenticationService.refresh(refreshToken));
     }
 
     /** 이 사용자의 리프레시 토큰을 모두 철회합니다. 액세스 토큰은 만료로 사라집니다. */
     @PostMapping("/logout")
     ResponseEntity<Void> logout() {
         authenticationService.logout(currentPrincipal.memberId());
-        return ResponseEntity.noContent().build();
+        // 서버에서 철회해도 브라우저에는 죽은 쿠키가 남습니다. 함께 지웁니다.
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.clear())
+                .build();
+    }
+
+    private ResponseEntity<TokenResponse> withRefreshCookie(TokenService.IssuedTokens tokens) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.issue(tokens.refreshToken()))
+                .body(TokenResponse.from(tokens));
     }
 
     /**
@@ -61,7 +93,10 @@ class AuthController {
     @PostMapping("/password")
     ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         passwordService.change(currentPrincipal.memberId(), request.currentPassword(), request.newPassword());
-        return ResponseEntity.noContent().build();
+        // 세션이 전부 철회됐습니다. 이 브라우저의 쿠키도 함께 지웁니다.
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.clear())
+                .build();
     }
 
     /**
@@ -92,20 +127,17 @@ class AuthController {
 
     record PasswordResetConfirmRequest(@NotBlank String token, @NotBlank @Size(min = 8, max = 72) String newPassword) {}
 
-    record RefreshRequest(@NotBlank String refreshToken) {}
-
-    record TokenResponse(
-            String accessToken,
-            String refreshToken,
-            String tokenType,
-            long expiresIn,
-            UUID memberId,
-            List<String> roles) {
+    /**
+     * 발급 결과입니다.
+     *
+     * <p><b>리프레시 토큰은 여기 없습니다.</b> `HttpOnly` 쿠키로 나가며, 본문에 다시 넣으면
+     * ADR-010을 되돌리는 것입니다.
+     */
+    record TokenResponse(String accessToken, String tokenType, long expiresIn, UUID memberId, List<String> roles) {
 
         static TokenResponse from(TokenService.IssuedTokens tokens) {
             return new TokenResponse(
                     tokens.accessToken(),
-                    tokens.refreshToken(),
                     "Bearer",
                     tokens.expiresInSeconds(),
                     tokens.memberId().value(),

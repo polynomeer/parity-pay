@@ -266,16 +266,6 @@
           },
           "type" : "object"
         },
-        "RefreshRequest" : {
-          "properties" : {
-            "refreshToken" : {
-              "minLength" : 1,
-              "type" : "string"
-            }
-          },
-          "required" : [ "refreshToken" ],
-          "type" : "object"
-        },
         "RegisterMemberRequest" : {
           "properties" : {
             "email" : {
@@ -396,9 +386,6 @@
             },
             "memberId" : {
               "format" : "uuid",
-              "type" : "string"
-            },
-            "refreshToken" : {
               "type" : "string"
             },
             "roles" : {
@@ -670,16 +657,12 @@
       "/api/v1/auth/tokens/refresh" : {
         "post" : {
           "operationId" : "refresh",
-          "requestBody" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/RefreshRequest"
-                }
-              }
-            },
+          "parameters" : [ {
+            "description" : "리프레시 토큰. 브라우저가 자동으로 붙입니다 (ADR-010).",
+            "in" : "cookie",
+            "name" : "paritypay_refresh",
             "required" : true
-          },
+          } ],
           "responses" : {
             "200" : {
               "content" : {

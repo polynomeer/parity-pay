@@ -17,6 +17,7 @@ ADR은 중요한 기술 선택의 맥락, 대안, 결정과 결과를 기록합�
 | [ADR-007](007-unknown-state.md) | 외부 결과 불명확 상태 UNKNOWN 도입 | Accepted (2026-09-06) |
 | [ADR-008](008-ledger-balance-snapshot.md) | 원장과 잔액 스냅샷 분리 | Accepted (2026-09-06) |
 | [ADR-009](009-reversal-adjustment.md) | 취소·보정을 새 분개로 기록 | Accepted (2026-09-06) |
+| [ADR-010](010-refresh-token-cookie.md) | 리프레시 토큰을 httpOnly 쿠키로 옮김 | Accepted (2026-09-10) |
 
 각 ADR 하단의 **Outcome** 절에 무엇을 실제로 검증했고 무엇을 아직 측정하지 않았는지 적혀
 있습니다. `Accepted`는 "결정을 채택했고 그 근거를 확인했다"는 뜻이며, "모든 Validation 항목을

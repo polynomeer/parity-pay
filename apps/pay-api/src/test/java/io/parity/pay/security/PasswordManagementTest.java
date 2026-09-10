@@ -7,6 +7,7 @@ import io.parity.pay.api.security.OperatorBootstrap;
 import io.parity.pay.api.security.RecordedPasswordResetDelivery;
 import io.parity.pay.support.AbstractIntegrationTest;
 import io.parity.pay.support.ApiAuth;
+import io.parity.pay.support.RefreshCookies;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -83,13 +84,14 @@ class PasswordManagementTest extends AbstractIntegrationTest {
         // 다른 기기의 세션입니다.
         ResponseEntity<Map> otherDevice = restTemplate.postForEntity(
                 "/api/v1/auth/tokens", Map.of("email", EMAIL, "password", OLD_PASSWORD), Map.class);
-        String otherRefreshToken = (String) otherDevice.getBody().get("refreshToken");
+        String otherCookie = RefreshCookies.value(otherDevice);
 
-        changePassword(session.accessToken(), OLD_PASSWORD, NEW_PASSWORD);
+        ResponseEntity<Void> changed = changePassword(session.accessToken(), OLD_PASSWORD, NEW_PASSWORD);
 
-        ResponseEntity<Map> refresh = restTemplate.postForEntity(
-                "/api/v1/auth/tokens/refresh", Map.of("refreshToken", otherRefreshToken), Map.class);
-        assertThat(refresh.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(refresh(otherCookie).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        // 세션이 전부 철회됐으니 이 브라우저의 쿠키도 지워야 합니다. 남겨 두면 다음 재발급이
+        // 죽은 쿠키를 들고 가서 사용자가 이유를 알 수 없는 401을 봅니다. 근거: ADR-010
+        assertThat(RefreshCookies.setCookie(changed)).contains("Max-Age=0");
         assertThat(jdbcTemplate.queryForObject(
                         "SELECT count(*) FROM refresh_token WHERE revoke_reason = 'PASSWORD_CHANGED'", Long.class))
                 .isPositive();
@@ -185,15 +187,13 @@ class PasswordManagementTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("재설정하면 남아 있던 세션과 남은 토큰이 함께 죽는다")
     void resetRevokesSessionsAndRemainingTokens() {
-        String refreshToken = issueRefreshToken();
+        String cookie = issueRefreshCookie();
         requestReset(EMAIL);
         String token = deliveredToken();
 
         confirmReset(token, NEW_PASSWORD);
 
-        ResponseEntity<Map> refresh = restTemplate.postForEntity(
-                "/api/v1/auth/tokens/refresh", Map.of("refreshToken", refreshToken), Map.class);
-        assertThat(refresh.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(refresh(cookie).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(jdbcTemplate.queryForObject(
                         "SELECT count(*) FROM password_reset_token WHERE used_at IS NULL"
                                 + " AND invalidated_at IS NULL",
@@ -242,10 +242,20 @@ class PasswordManagementTest extends AbstractIntegrationTest {
         assertThat(matches).isZero();
     }
 
-    private String issueRefreshToken() {
+    /** 로그인해서 브라우저가 받았을 리프레시 쿠키를 얻습니다. 값은 본문에 없습니다(ADR-010). */
+    private String issueRefreshCookie() {
         ResponseEntity<Map> tokens = restTemplate.postForEntity(
                 "/api/v1/auth/tokens", Map.of("email", EMAIL, "password", OLD_PASSWORD), Map.class);
-        return (String) tokens.getBody().get("refreshToken");
+        return RefreshCookies.value(tokens);
+    }
+
+    /** 브라우저처럼 쿠키만 들고 재발급을 요청합니다. */
+    private ResponseEntity<Map> refresh(String cookie) {
+        return restTemplate.exchange(
+                "/api/v1/auth/tokens/refresh",
+                HttpMethod.POST,
+                new HttpEntity<>(RefreshCookies.carrying(cookie)),
+                Map.class);
     }
 
     /** 사용자가 메일을 확인하는 자리입니다. 테스트 프로필에서는 메모리에 담깁니다. */
