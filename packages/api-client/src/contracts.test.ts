@@ -11,6 +11,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ApiClient } from "./client.js";
 import { ApiError, UnknownResultError, classify } from "./errors.js";
 import { beginIntent, endIntent, memoryIntentStore, pendingIntent } from "./idempotency.js";
+import { DEFAULT_POLLING, pollUntilSettled } from "./polling.js";
 import { createTokenManager, memoryTokenStore, type Tokens } from "./tokens.js";
 
 const tokens: Tokens = {
@@ -185,5 +186,38 @@ describe("FE-008 재발급은 단일 비행입니다", () => {
     expect(seen[0]?.auth).toBe("Bearer access-1");
     expect(seen[1]?.auth).toBe("Bearer access-2");
     expect(seen[1]?.key).toBe(seen[0]?.key);
+  });
+});
+
+describe("FE-003 폴링은 측정값을 따릅니다 (M-011)", () => {
+  it("기본값이 측정된 최악(45.4초)을 넉넉히 덮습니다", () => {
+    // 30초는 처음에 예시로 적었던 값인데, grace가 30초라 그때는 복구가 시작조차 하지
+    // 않습니다. 그 값으로 두면 매번 답이 오기 직전에 포기합니다.
+    expect(DEFAULT_POLLING.deadlineMs).toBeGreaterThan(45_400 * 1.5);
+    expect(DEFAULT_POLLING.intervalMs).toBeGreaterThanOrEqual(1_000);
+  });
+
+  it("종결 상태를 만나면 그 값을 돌려줍니다", async () => {
+    const statuses = ["UNKNOWN", "UNKNOWN", "SUCCEEDED"];
+    let i = 0;
+    const result = await pollUntilSettled(
+      () => Promise.resolve(statuses[i++] ?? "SUCCEEDED"),
+      (s) => s !== "UNKNOWN",
+      { intervalMs: 1, deadlineMs: 1_000 },
+    );
+    expect(result).toEqual({ state: "settled", value: "SUCCEEDED" });
+  });
+
+  it("한계를 넘으면 실패가 아니라 pending입니다", async () => {
+    let clock = 0;
+    const result = await pollUntilSettled(
+      () => Promise.resolve("UNKNOWN"),
+      (s) => s !== "UNKNOWN",
+      { intervalMs: 10, deadlineMs: 50 },
+      () => Promise.resolve(void (clock += 10)),
+      () => clock,
+    );
+    // 던지지 않는 것이 요점입니다. 호출부가 이것을 오류로 다루면 사용자가 다시 결제합니다.
+    expect(result).toEqual({ state: "pending" });
   });
 });
