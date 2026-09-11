@@ -24,7 +24,7 @@ M-011과 같은 기준입니다. 폴링 간격은 클라이언트가 실제로 �
 사용:
     ./gradlew :apps:pay-api:bootJar
     python3 load-tests/recovery-backlog-experiment.py \\
-        --jar apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar --sizes 50,200,500,1000
+        --jar apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar --sizes 50,200,500,1000 --target both
 
 근거: reports/11 M-011·M-012, docs/14-frontend-design.md §3 FE-003·§13 열린 질문 3
 """
@@ -46,28 +46,56 @@ _spec = importlib.util.spec_from_file_location(
 )
 _m011 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_m011)
-call, start_app, provision, set_bank_mode, OPERATOR = (
+call, start_app, provision, set_bank_mode, set_pg_mode, OPERATOR = (
     _m011.call,
     _m011.start_app,
     _m011.provision,
     _m011.set_bank_mode,
+    _m011.set_pg_mode,
     _m011.OPERATOR,
 )
+
+# 카드 결제 경로입니다. 복구 작업 네 개가 같은 구조라 같은 변경을 넣었지만, 같다고 적는 대신
+# 따로 잽니다 — M-011이 그렇게 했습니다.
+TARGETS = {
+    "top-up": {
+        "set_mode": set_bank_mode,
+        "inject_mode": "TIMEOUT_AFTER_WITHDRAWAL",
+        "path": "/api/v1/top-ups",
+        "body": lambda wallet_id, bank_account_id: {
+            "walletId": wallet_id, "bankAccountId": bank_account_id, "amount": 10_000, "currency": "KRW"},
+        "id_field": "topUpId",
+        "status_path": "/api/v1/top-ups/{}",
+        "final": ("SUCCEEDED", "FAILED"),
+    },
+    "payment": {
+        "set_mode": set_pg_mode,
+        "inject_mode": "TIMEOUT_AFTER_APPROVAL",
+        "path": "/api/v1/payments",
+        "body": lambda wallet_id, _bank: {
+            "orderId": f"order-backlog-{wallet_id}", "walletId": wallet_id,
+            "merchantId": "11111111-2222-3333-4444-555555555555",
+            "amount": 10_000, "currency": "KRW", "method": "EXTERNAL_PG"},
+        "id_field": "paymentId",
+        "status_path": "/api/v1/payments/{}",
+        "final": ("APPROVED", "FAILED", "CANCELED"),
+    },
+}
 
 # 클라이언트가 실제로 쓰는 값입니다(DOC-14 FE-003). 이 값을 넘긴 건이 곧 화면이 포기한 건입니다.
 CLIENT_POLL_INTERVAL = 2.0
 CLIENT_POLL_LIMIT = 90.0
 
 
-def inject_one(base, session, offset):
-    """미확정 충전 한 건을 만듭니다. 은행 모드는 호출자가 미리 맞춰 둡니다."""
+def inject_one(base, target, session, offset):
+    """미확정 한 건을 만듭니다. 기관 모드는 호출자가 미리 맞춰 둡니다."""
     wallet_id, bank_account_id, access = session
     started = time.monotonic()
     status, body = call(
         base,
         "POST",
-        "/api/v1/top-ups",
-        {"walletId": wallet_id, "bankAccountId": bank_account_id, "amount": 10_000, "currency": "KRW"},
+        target["path"],
+        target["body"](wallet_id, bank_account_id),
         token=access,
         idempotency_key=f"backlog-{offset}-{int(started * 1000)}",
     )
@@ -76,14 +104,14 @@ def inject_one(base, session, offset):
         "started": started,
         "accepted_at": time.monotonic(),
         "http": status,
-        "top_up_id": body.get("topUpId"),
+        "id": body.get(target["id_field"]),
         "access": access,
         "outcome": None,
         "seconds": None,
     }
 
 
-def poll_until_settled(base, items, deadline_seconds, workers):
+def poll_until_settled(base, target, items, deadline_seconds, workers):
     """각 건을 2초 간격으로 조회합니다. 워커 하나가 여러 건을 돌아가며 봅니다."""
     lock = threading.Lock()
     pending = [item for item in items if item["http"] == 202]
@@ -92,8 +120,8 @@ def poll_until_settled(base, items, deadline_seconds, workers):
         while mine:
             for item in list(mine):
                 elapsed = time.monotonic() - item["started"]
-                _, view = call(base, "GET", f"/api/v1/top-ups/{item['top_up_id']}", token=item["access"])
-                if view.get("status") in ("SUCCEEDED", "FAILED"):
+                _, view = call(base, "GET", target["status_path"].format(item["id"]), token=item["access"])
+                if view.get("status") in target["final"]:
                     with lock:
                         item["outcome"] = view["status"]
                         item["seconds"] = time.monotonic() - item["started"]
@@ -109,26 +137,27 @@ def poll_until_settled(base, items, deadline_seconds, workers):
         list(pool.map(worker, [c for c in chunks if c]))
 
 
-def run_size(base, operator_token, size, inject_workers, poll_workers, deadline):
-    print(f"== N={size}: 회원 {size}명 준비", flush=True)
+def run_size(base, operator_token, target_name, size, inject_workers, poll_workers, deadline):
+    target = TARGETS[target_name]
+    print(f"== {target_name} N={size}: 회원 {size}명 준비", flush=True)
     sessions = [provision(base, size * 10_000 + i) for i in range(size)]
 
-    set_bank_mode(base, operator_token, "TIMEOUT_AFTER_WITHDRAWAL")
+    target["set_mode"](base, operator_token, target["inject_mode"])
     print(f"== N={size}: 주입 (워커 {inject_workers})", flush=True)
     injection_started = time.monotonic()
     with ThreadPoolExecutor(max_workers=inject_workers) as pool:
-        items = list(pool.map(lambda pair: inject_one(base, pair[1], pair[0]), enumerate(sessions)))
+        items = list(pool.map(lambda pair: inject_one(base, target, pair[1], pair[0]), enumerate(sessions)))
     injection_window = time.monotonic() - injection_started
     # 조회는 정상이어야 복구가 확정할 수 있습니다. 마지막 응답을 받은 뒤 즉시 되돌립니다.
-    set_bank_mode(base, operator_token, "NORMAL")
+    target["set_mode"](base, operator_token, "NORMAL")
 
     accepted = sum(1 for i in items if i["http"] == 202)
     print(f"== N={size}: 202 {accepted}건, 주입 폭 {injection_window:.1f}초, 확정 대기", flush=True)
-    poll_until_settled(base, items, deadline, poll_workers)
+    poll_until_settled(base, target, items, deadline, poll_workers)
 
     for item in items:
         item.pop("access", None)
-    return {"size": size, "injection_window": injection_window, "items": items}
+    return {"target": target_name, "size": size, "injection_window": injection_window, "items": items}
 
 
 def summarize(run):
@@ -138,7 +167,7 @@ def summarize(run):
     for i in items:
         outcomes[i["outcome"] or f"HTTP {i['http']}"] = outcomes.get(i["outcome"] or f"HTTP {i['http']}", 0) + 1
     n = run["size"]
-    lines = [f"===== N={n} =====", f"결과: {', '.join(f'{k} {v}건' for k, v in sorted(outcomes.items()))}"]
+    lines = [f"===== {run['target']} N={n} =====", f"결과: {', '.join(f'{k} {v}건' for k, v in sorted(outcomes.items()))}"]
     lines.append(f"주입 폭: {run['injection_window']:.1f}초 (첫 요청부터 마지막 응답까지)")
     if not done:
         lines.append("확정된 건이 없어 분포를 낼 수 없습니다.")
@@ -177,13 +206,14 @@ def main():
     parser.add_argument("--java", default=os.environ.get("JAVA_BIN", "java"))
     parser.add_argument("--port", type=int, default=8093)
     parser.add_argument("--sizes", default="50,200,500")
+    parser.add_argument("--target", choices=("top-up", "payment", "both"), default="top-up")
     # 은행은 타임아웃된 요청을 read-timeout의 두 배 동안 스레드에 붙잡습니다(MockBankBehavior).
     # Tomcat 기본 200 스레드를 넘기면 뒤 요청은 처리되지 않고, 그러면 "응답만 유실"이 아니라
     # "기록 없음"이 되어 다른 경로를 재게 됩니다. 워커 50 × (읽기 타임아웃 0.5s, 붙잡기 1s)
     # = 동시 100건으로 그 아래에 둡니다.
     parser.add_argument("--inject-workers", type=int, default=50)
     parser.add_argument("--read-timeout", default="500ms",
-                        help="pay-api의 은행 읽기 타임아웃. 시험 설정과 같은 값이며 복구 지연에는 영향이 없습니다")
+                        help="pay-api의 기관 읽기 타임아웃. 시험 설정과 같은 값이며 복구 지연에는 영향이 없습니다")
     parser.add_argument("--poll-workers", type=int, default=50)
     parser.add_argument("--deadline", type=float, default=600.0, help="한 건을 포기하기까지의 초")
     parser.add_argument("--out", default="/tmp/m012")
@@ -196,19 +226,22 @@ def main():
 
     # 환경변수가 local 프로필의 3s보다 우선합니다.
     os.environ["PARITYPAY_MOCKBANK_READTIMEOUT"] = args.read_timeout
+    os.environ["PARITYPAY_MOCKPG_READTIMEOUT"] = args.read_timeout
     app = start_app(args.jar, args.port, out_dir / "app.log", args.java)
     try:
         _, operator = call(base, "POST", "/api/v1/auth/tokens", OPERATOR)
         operator_token = operator["accessToken"]
 
         report, raw = [], []
-        for size in sizes:
-            run = run_size(base, operator_token, size, args.inject_workers, args.poll_workers, args.deadline)
+        targets = ["top-up", "payment"] if args.target == "both" else [args.target]
+        for target_name, size in [(t, n) for t in targets for n in sizes]:
+            run = run_size(base, operator_token, target_name, size, args.inject_workers, args.poll_workers,
+                           args.deadline)
             text, stats = summarize(run)
             print(text, flush=True)
             report.append(text)
-            raw.append({"size": size, "injection_window": run["injection_window"], "stats": stats,
-                        "items": run["items"]})
+            raw.append({"target": target_name, "size": size, "injection_window": run["injection_window"],
+                        "stats": stats, "items": run["items"]})
             # 다음 크기가 이전 크기의 꼬리 위에서 시작하지 않게 합니다. 복구 큐가 비어야 합니다.
             time.sleep(10)
 
