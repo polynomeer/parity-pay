@@ -18,7 +18,9 @@ public record SettlementProperties(
         Duration recoveryBaseBackoff,
         Duration recoveryMaxBackoff,
         int recoveryMaxAttempts,
-        int recoveryNotFoundConfirmThreshold) {
+        int recoveryNotFoundConfirmThreshold,
+        // 한 틱에 이어서 처리할 배치 수입니다. 틱당 한 배치면 상한이 초당 10건으로 고정됩니다(M-012).
+        int recoveryMaxRoundsPerTick) {
 
     public SettlementProperties {
         feeBasisPoints = feeBasisPoints <= 0 ? 1_000 : feeBasisPoints;
@@ -28,5 +30,6 @@ public record SettlementProperties(
         recoveryMaxBackoff = recoveryMaxBackoff == null ? Duration.ofMinutes(10) : recoveryMaxBackoff;
         recoveryMaxAttempts = recoveryMaxAttempts <= 0 ? 8 : recoveryMaxAttempts;
         recoveryNotFoundConfirmThreshold = recoveryNotFoundConfirmThreshold <= 0 ? 3 : recoveryNotFoundConfirmThreshold;
+        recoveryMaxRoundsPerTick = recoveryMaxRoundsPerTick <= 0 ? 20 : recoveryMaxRoundsPerTick;
     }
 }

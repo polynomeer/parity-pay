@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class SettlementRecoveryService {
 
+    private static final int BATCH_SIZE = 50;
+
     private static final Logger log = LoggerFactory.getLogger(SettlementRecoveryService.class);
 
     private final SettlementRecoveryRepository recoveryRepository;
@@ -56,17 +58,40 @@ public class SettlementRecoveryService {
             return;
         }
         try {
-            resolveDue();
+            drainDue();
         } catch (RuntimeException e) {
             log.error("settlement payout recovery round failed", e);
         }
     }
 
+    /**
+     * 적체가 남아 있는 동안 배치를 이어서 처리하고, 확정된 건수의 합을 돌려줍니다.
+     *
+     * <p>배치가 가득 찼으면 적체가 더 있습니다. 다음 틱을 기다리지 않고 이어서 처리합니다(M-012).
+     */
+    public int drainDue() {
+        int settled = 0;
+        for (int round = 0; round < properties.recoveryMaxRoundsPerTick(); round++) {
+            Round result = resolveBatch();
+            settled += result.settled();
+            if (result.claimed() < BATCH_SIZE) {
+                break;
+            }
+        }
+        return settled;
+    }
+
     /** 미확정 지급을 조회로 확정합니다. 확정된 건수를 돌려줍니다. */
     public int resolveDue() {
+        return resolveBatch().settled();
+    }
+
+    private record Round(int claimed, int settled) {}
+
+    private Round resolveBatch() {
         Instant now = clock.instant();
         List<PendingPayoutRecovery> pending =
-                recoveryRepository.claimDue(now, now.plus(properties.recoveryLease()), 50);
+                recoveryRepository.claimDue(now, now.plus(properties.recoveryLease()), BATCH_SIZE);
 
         int settled = 0;
         for (PendingPayoutRecovery item : pending) {
@@ -74,7 +99,7 @@ public class SettlementRecoveryService {
                 settled++;
             }
         }
-        return settled;
+        return new Round(pending.size(), settled);
     }
 
     private boolean resolveOne(PendingPayoutRecovery item) {

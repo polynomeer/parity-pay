@@ -17,9 +17,15 @@ import io.parity.pay.wallet.application.port.in.RequestTopUpUseCase;
 import io.parity.pay.wallet.application.port.in.RequestTopUpUseCase.TopUpCommand;
 import io.parity.pay.wallet.application.port.in.RequestTopUpUseCase.TopUpView;
 import io.parity.pay.wallet.application.port.in.WalletQuery;
+import io.parity.pay.wallet.application.service.TopUpRecoveryProperties;
 import io.parity.pay.wallet.application.service.TopUpRecoveryService;
 import io.parity.pay.wallet.domain.TopUpStatus;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,6 +50,9 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private TopUpRecoveryService recoveryService;
+
+    @Autowired
+    private TopUpRecoveryProperties recoveryProperties;
 
     @Autowired
     private WalletQuery walletQuery;
@@ -103,6 +112,39 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
         assertThat(ledgerTransactionCount()).isEqualTo(1L);
         // 복구가 끝나면 스케줄 흔적을 남기지 않습니다.
         assertThat(recoveryRowCount()).isZero();
+    }
+
+    /**
+     * M-012가 찾은 결함 K. 복구 작업이 틱당 한 배치(50건)만 처리해 초당 10건이 상한이었고, 적체가
+     * 600건을 넘으면 클라이언트가 90초 안에 답을 받지 못했습니다. 배치가 가득 찼으면 다음 틱을
+     * 기다리지 않고 이어서 처리해야 합니다.
+     */
+    @Test
+    @DisplayName("M-012: 적체가 한 배치보다 많아도 한 틱에 전부 확정한다")
+    void drainsMoreThanOneBatchPerTick() throws Exception {
+        int backlog = recoveryProperties.batchSize() + 1;
+        mockBankBehavior.setMode(MockBankBehavior.Mode.TIMEOUT_AFTER_WITHDRAWAL);
+        // 한 건씩 넣으면 읽기 타임아웃만큼 기다려 51 × 0.4초입니다. 동시에 넣습니다.
+        ExecutorService pool = Executors.newVirtualThreadPerTaskExecutor();
+        List<Future<TopUpView>> futures = new ArrayList<>();
+        for (int i = 0; i < backlog; i++) {
+            String key = "recovery-backlog-%03d".formatted(i);
+            futures.add(pool.submit(() -> topUp(key, 1_000)));
+        }
+        for (Future<TopUpView> future : futures) {
+            assertThat(future.get().status()).isEqualTo(TopUpStatus.UNKNOWN);
+        }
+        pool.shutdown();
+        mockBankBehavior.reset();
+
+        // 스케줄러가 한 틱에 부르는 것이 이것입니다.
+        int settled = recoveryService.drainDue();
+
+        // 틱당 한 배치였다면 batchSize에서 멈추고 한 건이 다음 틱으로 넘어갑니다.
+        assertThat(settled).isEqualTo(backlog);
+        assertThat(recoveryRowCount()).isZero();
+        assertThat(availableBalance()).isEqualTo(1_000L * backlog);
+        assertThat(walletQuery.verifyAgainstLedger(walletId).matches()).isTrue();
     }
 
     @Test

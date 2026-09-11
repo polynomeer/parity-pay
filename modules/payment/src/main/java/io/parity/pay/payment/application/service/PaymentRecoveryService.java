@@ -69,10 +69,31 @@ public class PaymentRecoveryService {
             return;
         }
         try {
-            resolveDue();
+            drainDue();
         } catch (RuntimeException e) {
             log.error("payment recovery round failed", e);
         }
+    }
+
+    /**
+     * 적체가 남아 있는 동안 배치를 이어서 처리하고, 확정된 건수의 합을 돌려줍니다.
+     *
+     * <p>배치가 가득 찼다는 것은 적체가 더 있다는 뜻입니다. 다음 틱을 기다리지 않고 이어서
+     * 처리합니다. 틱당 한 배치면 기계·기관이 아무리 빨라도 초당 10건이 상한이고, 그 위에서는
+     * 클라이언트가 90초 안에 답을 받지 못합니다(M-012). Outbox 발행기와 같은 판단입니다.
+     * 기관이 죽어 있으면 배치 하나에 읽기 타임아웃 × 50이 걸리는데, 그것은 전과 같습니다. 이
+     * 루프는 배치 사이의 5초 공백을 없앨 뿐이고, 한 틱의 길이는 maxRoundsPerTick이 막습니다.
+     */
+    public int drainDue() {
+        int settled = 0;
+        for (int round = 0; round < properties.maxRoundsPerTick(); round++) {
+            Round result = resolveBatch();
+            settled += result.settled();
+            if (result.claimed() < properties.batchSize()) {
+                break;
+            }
+        }
+        return settled;
     }
 
     /**
@@ -81,6 +102,13 @@ public class PaymentRecoveryService {
      * <p>선점(트랜잭션 1) → 외부 조회(트랜잭션 밖) → 확정(건별 트랜잭션) 순서입니다.
      */
     public int resolveDue() {
+        return resolveBatch().settled();
+    }
+
+    /** 한 배치의 결과입니다. 선점한 건수가 배치 크기와 같으면 적체가 더 남아 있습니다. */
+    private record Round(int claimed, int settled) {}
+
+    private Round resolveBatch() {
         Instant now = clock.instant();
         List<PendingRecovery> pending = recoveryRepository.claimDue(
                 now, now.minus(properties.grace()), now.plus(properties.lease()), properties.batchSize());
@@ -91,7 +119,7 @@ public class PaymentRecoveryService {
                 settled++;
             }
         }
-        return settled;
+        return new Round(pending.size(), settled);
     }
 
     /** 운영자가 특정 건을 즉시 재조회하도록 요청할 때 사용합니다. 외부에 승인을 다시 보내지 않습니다. */
