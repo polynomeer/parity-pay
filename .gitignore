@@ -54,3 +54,6 @@ src/main/resources/application-secret*.yml
 
 # deploy/run.sh가 만드는 확인용 자체 서명 인증서입니다 (ADR-011)
 deploy/certs/
+
+# importlib로 M-011 스크립트를 불러오면 생깁니다
+__pycache__/
