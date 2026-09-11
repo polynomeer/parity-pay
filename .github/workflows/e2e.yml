@@ -90,9 +90,10 @@ jobs:
       # 쿠키가 빠지면 여기서 드러납니다.
       - name: Run E2E against it
         env:
-          E2E_CUSTOMER_URL: http://localhost:8181
-          E2E_OPS_URL: http://localhost:8182
-          E2E_API_URL: http://localhost:8182
+          # 호스트이름이 다르고 TLS입니다. 둘 다 ADR-011이 요구하는 것입니다.
+          E2E_CUSTOMER_URL: https://app.localhost:8181
+          E2E_OPS_URL: https://ops.localhost:8182
+          E2E_API_URL: https://localhost:8182
         run: |
           E2E_OPS_PASSWORD=$(grep PARITYPAY_OPS_PASSWORD deploy/.env | cut -d= -f2) \
             pnpm --filter @paritypay/e2e exec playwright test

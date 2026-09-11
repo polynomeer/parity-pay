@@ -51,3 +51,6 @@ src/main/resources/application-secret*.yml
 # Playwright
 /apps/e2e/test-results/
 /apps/e2e/playwright-report/
+
+# deploy/run.sh가 만드는 확인용 자체 서명 인증서입니다 (ADR-011)
+deploy/certs/

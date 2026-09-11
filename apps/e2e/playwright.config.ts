@@ -21,7 +21,11 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   use: {
-    baseURL: process.env["E2E_CUSTOMER_URL"] ?? "http://localhost:5173",
+    // 운영 콘솔(ops.localhost)과 **호스트이름이 다릅니다.** 포트만 다르면 쿠키가 서로 넘어갑니다.
+    // 근거: ADR-011
+    baseURL: process.env["E2E_CUSTOMER_URL"] ?? "http://app.localhost:5173",
+    // 배포 스택은 자체 서명 TLS입니다. 검증하려는 것은 인증서가 아니라 그 뒤의 동작입니다.
+    ignoreHTTPSErrors: true,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

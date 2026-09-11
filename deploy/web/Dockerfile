@@ -26,4 +26,4 @@ FROM nginx:1.27-alpine AS runtime
 ARG APP
 COPY --from=build /src/apps/${APP}/dist /usr/share/nginx/html
 COPY deploy/web/nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+EXPOSE 443

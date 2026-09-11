@@ -94,7 +94,10 @@ services:
         APP: web-customer
     ports:
       # 8081·8082는 흔히 쓰입니다. 실제로 첫 기동에서 부딪혔습니다.
-      - "${PARITYPAY_CUSTOMER_PORT:-8181}:80"
+      - "${PARITYPAY_CUSTOMER_PORT:-8181}:443"
+    volumes:
+      # deploy/run.sh가 만든 자체 서명 인증서입니다. 운영에서는 실제 인증서로 바꿉니다.
+      - ./deploy/certs:/etc/nginx/certs:ro
     depends_on:
       - pay-api
 
@@ -106,7 +109,9 @@ services:
         APP: web-ops
     # **다른 오리진입니다.** 운영 콘솔 번들이 고객 앱과 섞이면 안 됩니다(DOC-14 §2).
     ports:
-      - "${PARITYPAY_OPS_PORT:-8182}:80"
+      - "${PARITYPAY_OPS_PORT:-8182}:443"
+    volumes:
+      - ./deploy/certs:/etc/nginx/certs:ro
     depends_on:
       - pay-api
 

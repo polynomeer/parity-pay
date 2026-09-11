@@ -27,6 +27,19 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 COMPOSE+=(--env-file "$ENV_FILE")
 
+# 자체 서명 인증서입니다. 쿠키에 Secure가 붙어 있어 TLS 없이는 브라우저가 저장하지 않습니다.
+# 두 앱은 **호스트이름이 다릅니다** — app.localhost·ops.localhost. 포트만 다르면 쿠키가 서로
+# 넘어갑니다. *.localhost는 브라우저가 /etc/hosts 없이 루프백으로 풉니다. 근거: ADR-011
+CERT_DIR=deploy/certs
+if [ ! -f "$CERT_DIR/paritypay.crt" ]; then
+  echo "== 자체 서명 인증서 생성 ($CERT_DIR)"
+  mkdir -p "$CERT_DIR"
+  openssl req -x509 -newkey rsa:2048 -nodes -days 365 -quiet \
+    -keyout "$CERT_DIR/paritypay.key" -out "$CERT_DIR/paritypay.crt" \
+    -subj "/CN=paritypay.local" \
+    -addext "subjectAltName=DNS:app.localhost,DNS:ops.localhost,DNS:localhost" 2>/dev/null
+fi
+
 case "${1:-up}" in
   down)
     # 볼륨까지 지웁니다. 확인용 스택이라 남겨 둘 이유가 없습니다.
@@ -58,8 +71,9 @@ done
 CUSTOMER_PORT=${PARITYPAY_CUSTOMER_PORT:-8181}
 OPS_PORT=${PARITYPAY_OPS_PORT:-8182}
 echo "== 준비됨"
-echo "   고객 앱   http://localhost:${CUSTOMER_PORT}"
-echo "   운영 콘솔 http://localhost:${OPS_PORT}"
+echo "   고객 앱   https://app.localhost:${CUSTOMER_PORT}"
+echo "   운영 콘솔 https://ops.localhost:${OPS_PORT}"
 echo "   pay-api는 바깥에 열려 있지 않습니다 (ADR-011)"
+echo "   인증서는 자체 서명이라 브라우저가 한 번 경고합니다."
 echo
 echo "   운영자 ops-operator@paritypay.local / $(grep PARITYPAY_OPS_PASSWORD "$ENV_FILE" | cut -d= -f2)"

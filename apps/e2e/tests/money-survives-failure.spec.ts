@@ -8,9 +8,14 @@
  *
  * 근거: reports/11 결함 J, docs/14-frontend-design.md §9
  */
-import { expect, test, type Page } from "@playwright/test";
+import { expect, request, test, type Page } from "@playwright/test";
 
-const OPS_URL = process.env["E2E_OPS_URL"] ?? "http://localhost:5174";
+/**
+ * 두 앱은 **다른 호스트이름**에 있습니다. 포트만 다르면 쿠키가 서로 넘어갑니다(ADR-011).
+ * `*.localhost`는 브라우저가 /etc/hosts 없이 루프백으로 풀어 주므로 설치할 것이 없습니다.
+ */
+const OPS_URL = process.env["E2E_OPS_URL"] ?? "http://ops.localhost:5174";
+// Node 쪽 호출입니다. 쿠키와 무관하므로 호스트이름을 가를 이유가 없습니다.
 const API_URL = process.env["E2E_API_URL"] ?? "http://localhost:8080";
 // 배포 스택에서는 운영자 비밀번호가 생성됩니다(ADR-011). 기본값은 local 프로필의 값입니다.
 const OPS_EMAIL = process.env["E2E_OPS_EMAIL"] ?? "ops-operator@paritypay.local";
@@ -59,24 +64,41 @@ async function submitTopUp(page: Page): Promise<void> {
   });
 }
 
+/**
+ * 브라우저 밖에서 API를 부르는 통로입니다.
+ *
+ * 브라우저 컨텍스트와 **쿠키를 공유하지 않습니다.** 운영자로 로그인한 쿠키가 고객 브라우저에
+ * 들어가면 세션 분리 시험이 자기 손으로 오염됩니다. 배포 스택은 자체 서명 TLS라 검증을 끕니다.
+ */
+async function api() {
+  return request.newContext({ baseURL: API_URL, ignoreHTTPSErrors: true });
+}
+
 /** 운영자 토큰을 API로 직접 받습니다. 장애 주입은 화면이 아니라 계약을 확인하는 단계입니다. */
 async function operatorToken(): Promise<string> {
-  const response = await fetch(`${API_URL}/api/v1/auth/tokens`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: OPS_EMAIL, password: OPS_PASSWORD }),
-  });
-  const body = (await response.json()) as { accessToken: string };
-  return body.accessToken;
+  const client = await api();
+  try {
+    const response = await client.post("/api/v1/auth/tokens", {
+      data: { email: OPS_EMAIL, password: OPS_PASSWORD },
+    });
+    const body = (await response.json()) as { accessToken: string };
+    return body.accessToken;
+  } finally {
+    await client.dispose();
+  }
 }
 
 async function setBankMode(token: string, mode: string): Promise<void> {
-  const response = await fetch(`${API_URL}/api/v1/admin/mock-bank/mode`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ mode }),
-  });
-  expect(response.status).toBe(204);
+  const client = await api();
+  try {
+    const response = await client.post("/api/v1/admin/mock-bank/mode", {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { mode },
+    });
+    expect(response.status()).toBe(204);
+  } finally {
+    await client.dispose();
+  }
 }
 
 /**
@@ -123,6 +145,43 @@ test.describe("리프레시 토큰은 스크립트가 만지지 못한다 (ADR-0
     const rotated = (await context.cookies()).find((c) => c.name === "paritypay_refresh");
     expect(rotated!.value).not.toBe(cookie!.value);
   });
+
+  /**
+   * ADR-011: 두 앱의 세션은 **호스트이름**으로 갈립니다.
+   *
+   * 처음 확인용 스택은 `localhost:8181`·`localhost:8182`였고, 쿠키는 포트를 구분하지 않아
+   * 고객 앱의 리프레시 쿠키가 운영 콘솔로도 실려 갔습니다(실측 200). 이 시험은 호스트이름을
+   * 가른 뒤 그것이 실제로 막히는지 봅니다. 두 URL의 호스트가 같으면 시험이 의미 없으므로 먼저
+   * 그것부터 확인합니다.
+   */
+  test("고객 앱의 리프레시 쿠키는 운영 콘솔 호스트로 가지 않는다", async ({ page, context, baseURL }) => {
+    const customerHost = new URL(baseURL!).hostname;
+    const opsHost = new URL(OPS_URL).hostname;
+    expect(customerHost, "두 앱이 같은 호스트이름이면 이 시험은 아무것도 보지 못합니다").not.toBe(opsHost);
+
+    await signUpAndLinkAccount(page, "110-9999-0000");
+
+    const cookie = (await context.cookies()).find((c) => c.name === "paritypay_refresh");
+    expect(cookie!.domain).toBe(customerHost);
+
+    // 같은 브라우저(같은 쿠키 항아리)로 운영 콘솔 호스트에서 재발급을 시도합니다.
+    const ops = await context.newPage();
+    await ops.goto(`${OPS_URL}/login`);
+    const status = await ops.evaluate(async () => {
+      const response = await fetch("/api/v1/auth/tokens/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+        credentials: "include",
+      });
+      return response.status;
+    });
+
+    // 쿠키가 건너갔다면 200입니다. 포트만 다를 때 실제로 그랬습니다.
+    expect(status).toBe(400);
+    // 운영 콘솔 호스트로 가는 요청에는 쿠키 자체가 없어야 합니다.
+    expect((await context.cookies(OPS_URL)).find((c) => c.name === "paritypay_refresh")).toBeUndefined();
+  });
 });
 
 test.describe("돈은 장애를 견딘다", () => {
@@ -161,9 +220,11 @@ test.describe("돈은 장애를 견딘다", () => {
     const token = await page.evaluate(
       () => (JSON.parse(localStorage.getItem("paritypay.tokens") ?? "{}") as { accessToken: string }).accessToken,
     );
+    const client = await api();
     const wallet = (await (
-      await fetch(`${API_URL}/api/v1/wallets/me`, { headers: { Authorization: `Bearer ${token}` } })
+      await client.get("/api/v1/wallets/me", { headers: { Authorization: `Bearer ${token}` } })
     ).json()) as { available: number };
+    await client.dispose();
     expect(wallet.available).toBe(10_000);
   });
 
@@ -215,8 +276,9 @@ test.describe("돈은 장애를 견딘다", () => {
     const token = await ops.evaluate(
       () => (JSON.parse(localStorage.getItem("paritypay.tokens") ?? "{}") as { accessToken: string }).accessToken,
     );
+    const client = await api();
     const resolved = (await (
-      await fetch(`${API_URL}/api/v1/admin/transactions/resolve?query=${orderId}`, {
+      await client.get(`/api/v1/admin/transactions/resolve?query=${orderId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
     ).json()) as { references: unknown[] };
@@ -224,8 +286,9 @@ test.describe("돈은 장애를 견딘다", () => {
 
     // 장애를 겪은 뒤에도 불변조건은 전부 0이어야 합니다.
     const invariants = (await (
-      await fetch(`${API_URL}/api/v1/admin/invariants`, { headers: { Authorization: `Bearer ${token}` } })
+      await client.get("/api/v1/admin/invariants", { headers: { Authorization: `Bearer ${token}` } })
     ).json()) as { values: { name: string; value: number | null }[] };
+    await client.dispose();
     for (const value of invariants.values.filter((v) => v.name.startsWith("paritypay.invariant."))) {
       expect(value.value, value.name).toBe(0);
     }
