@@ -7,6 +7,7 @@ import io.parity.pay.reconciliation.application.service.ReconciliationService.Re
 import io.parity.pay.reconciliation.domain.MismatchType;
 import io.parity.pay.reconciliation.domain.ReconciliationMismatch;
 import io.parity.pay.shared.security.CurrentPrincipal;
+import io.parity.pay.shared.security.RecentAuthentication;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -37,14 +38,17 @@ class ReconciliationController {
     private final ReconciliationService reconciliationService;
     private final MismatchResolutionService resolutionService;
     private final CurrentPrincipal currentPrincipal;
+    private final RecentAuthentication recentAuthentication;
 
     ReconciliationController(
             ReconciliationService reconciliationService,
             MismatchResolutionService resolutionService,
-            CurrentPrincipal currentPrincipal) {
+            CurrentPrincipal currentPrincipal,
+            RecentAuthentication recentAuthentication) {
         this.reconciliationService = reconciliationService;
         this.resolutionService = resolutionService;
         this.currentPrincipal = currentPrincipal;
+        this.recentAuthentication = recentAuthentication;
     }
 
     @PostMapping("/runs")
@@ -81,8 +85,12 @@ class ReconciliationController {
     @PostMapping("/mismatches/{mismatchId}/adjustments")
     ResponseEntity<MismatchResponse> adjust(
             @RequestHeader("X-Approver-Id") String approvedBy,
+            @RequestHeader("X-Reauth-Token") String reauthToken,
             @PathVariable UUID mismatchId,
             @Valid @RequestBody AdjustmentRequest request) {
+        // 원장을 움직이는 유일한 운영 쓰기입니다. 세션만으로는 부족하고, 방금 비밀번호를 다시
+        // 확인했다는 증거가 있어야 합니다. 다른 어떤 검사보다 먼저입니다.
+        recentAuthentication.require(reauthToken);
         ReconciliationMismatch resolved = resolutionService.resolveWithAdjustment(
                 mismatchId,
                 currentPrincipal.actorId(),

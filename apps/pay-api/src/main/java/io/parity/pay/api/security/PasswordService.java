@@ -78,21 +78,37 @@ public class PasswordService {
      */
     @Transactional
     public void change(MemberId memberId, String currentPassword, String newPassword) {
-        MemberAccount account = memberAccountRepository
-                .findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "member not found"));
-        loginAttemptTracker.requireNotLocked(account.email());
-
-        if (!passwordEncoder.matches(currentPassword, account.passwordHash())) {
-            loginAttemptTracker.recordFailure(account.email());
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "current password is not correct");
-        }
+        MemberAccount account = verifyAndLoad(memberId, currentPassword);
         if (passwordEncoder.matches(newPassword, account.passwordHash())) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "the new password must differ from the current one");
         }
 
         applyNewPassword(account, newPassword, "PASSWORD_CHANGED");
         loginAttemptTracker.clearFailures(account.email());
+    }
+
+    /**
+     * 비밀번호가 맞는지만 확인합니다. 재인증(step-up)이 씁니다.
+     *
+     * <p>실패는 로그인 실패와 같이 셉니다. 비밀번호를 확인하는 경로가 하나라도 잠금 밖에 있으면
+     * 그 경로로 추측할 수 있습니다. 성공하면 실패 기록을 지웁니다 — 로그인 성공과 같습니다.
+     */
+    @Transactional
+    public void verify(MemberId memberId, String password) {
+        MemberAccount account = verifyAndLoad(memberId, password);
+        loginAttemptTracker.clearFailures(account.email());
+    }
+
+    private MemberAccount verifyAndLoad(MemberId memberId, String password) {
+        MemberAccount account = memberAccountRepository
+                .findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "member not found"));
+        loginAttemptTracker.requireNotLocked(account.email());
+        if (!passwordEncoder.matches(password, account.passwordHash())) {
+            loginAttemptTracker.recordFailure(account.email());
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "current password is not correct");
+        }
+        return account;
     }
 
     /**

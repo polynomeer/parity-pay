@@ -32,16 +32,31 @@ class AuthController {
     private final PasswordService passwordService;
     private final CurrentPrincipal currentPrincipal;
     private final RefreshTokenCookie refreshTokenCookie;
+    private final StepUpAuthentication stepUp;
 
     AuthController(
             AuthenticationService authenticationService,
             PasswordService passwordService,
             CurrentPrincipal currentPrincipal,
-            RefreshTokenCookie refreshTokenCookie) {
+            RefreshTokenCookie refreshTokenCookie,
+            StepUpAuthentication stepUp) {
         this.authenticationService = authenticationService;
         this.passwordService = passwordService;
         this.currentPrincipal = currentPrincipal;
         this.refreshTokenCookie = refreshTokenCookie;
+        this.stepUp = stepUp;
+    }
+
+    /**
+     * 재인증. 비밀번호를 다시 확인하고 짧게 사는 증거를 줍니다.
+     *
+     * <p>원장을 움직이는 운영 작업(보정 분개)이 {@code X-Reauth-Token}으로 이 증거를 요구합니다.
+     * 세션이 살아 있다는 것과 지금 자리에 그 사람이 있다는 것은 다른 말입니다.
+     */
+    @PostMapping("/reauth")
+    ResponseEntity<ReauthResponse> reauth(@Valid @RequestBody ReauthRequest request) {
+        StepUpAuthentication.Proof proof = stepUp.issue(currentPrincipal.memberId(), request.password());
+        return ResponseEntity.ok(new ReauthResponse(proof.token(), proof.expiresInSeconds()));
     }
 
     @PostMapping("/tokens")
@@ -119,6 +134,11 @@ class AuthController {
     }
 
     record LoginRequest(@NotBlank String email, @NotBlank String password) {}
+
+    record ReauthRequest(@NotBlank String password) {}
+
+    /** 재인증 증거입니다. 액세스 토큰이 아니며 그 자리에 쓸 수 없습니다. */
+    record ReauthResponse(String reauthToken, long expiresIn) {}
 
     record ChangePasswordRequest(
             @NotBlank String currentPassword, @NotBlank @Size(min = 8, max = 72) String newPassword) {}

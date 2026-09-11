@@ -62,6 +62,22 @@ public class ApiExceptionHandler {
     }
 
     /**
+     * 필수 헤더·쿼리 인자가 빠졌습니다. 호출자의 잘못이지 서버 고장이 아닙니다.
+     *
+     * <p>{@code X-Approver-Id}·{@code X-Reauth-Token}처럼 헤더로 받는 값이 빠지면 여기로 옵니다.
+     * 그동안은 500이 나가고 있었습니다 — 오류율 지표가 오염되고, 호출자는 무엇이 빠졌는지 알 수
+     * 없었습니다.
+     */
+    @ExceptionHandler(org.springframework.web.bind.ServletRequestBindingException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestPart(
+            org.springframework.web.bind.ServletRequestBindingException exception) {
+        countRejection(ErrorCode.INVALID_REQUEST);
+        ErrorResponse body =
+                ErrorResponse.of(ErrorCode.INVALID_REQUEST, exception.getMessage(), traceId(), java.util.Map.of());
+        return ResponseEntity.status(ErrorCode.INVALID_REQUEST.httpStatus()).body(body);
+    }
+
+    /**
      * 존재하지 않는 경로입니다.
      *
      * <p>이것을 500으로 응답하면 "서버가 고장났다"는 신호를 잘못 보냅니다. 경보와 오류율 지표가
