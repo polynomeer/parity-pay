@@ -105,6 +105,17 @@ export async function getPayment(client: ApiClient, paymentId: string): Promise<
   return (await client.get<PaymentResponse>(`/api/v1/payments/${paymentId}`)).data;
 }
 
+/**
+ * 주문번호로 결제를 찾습니다 (FR-006).
+ *
+ * 멱등 키를 잃은 사용자의 복구 경로입니다. 앱을 지웠거나 다른 기기라 이 브라우저에 주문도 키도
+ * 없을 때, 판매자가 알려 준 주문번호로 "결제됐는가, 확인 중인가, 안 됐는가"를 알 수 있습니다.
+ * 서버는 살아 있는 결제 → 미확정 시도 → 최신 시도 순으로 답합니다. 없으면 404입니다.
+ */
+export async function findPaymentByOrderId(client: ApiClient, orderId: string): Promise<PaymentResponse> {
+  return (await client.get<PaymentResponse>(`/api/v1/payments?orderId=${encodeURIComponent(orderId)}`)).data;
+}
+
 /** 거래내역입니다. `nextCursor`는 **불투명 문자열**이므로 만들거나 파싱하지 않습니다(FE-004). */
 export async function listTransactions(
   client: ApiClient,

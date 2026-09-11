@@ -184,6 +184,17 @@ Header: `Idempotency-Key: <unique-key>`
 
 결제 소유자 또는 허용된 운영자만 조회합니다. `ETag` 또는 버전을 선택적으로 제공합니다.
 
+### GET /api/v1/payments?orderId=...
+
+주문번호로 **호출자 자신의** 결제를 찾습니다(FR-006). 응답은 `GET /api/v1/payments/{paymentId}`와
+같습니다. 멱등 키를 잃은 사용자(앱 삭제, 다른 기기)의 복구 경로이며, 2026-09-11에 열었습니다.
+
+한 주문에 시도가 여럿일 수 있으므로(실패 뒤 재시도) 하나를 고릅니다: **살아 있는 결제**
+(`APPROVED`·`PARTIALLY_CANCELED`) → 없으면 **미확정 시도**(`READY`·`PROCESSING`·`UNKNOWN`) → 없으면
+최신 시도. 미확정을 실패보다 앞세우는 이유는 미확정이 나중에 승인으로 확정될 수 있기 때문입니다
+(ADR-007). 남의 주문번호는 `404`입니다 — `403`이면 그 주문번호가 존재한다는 사실이 새고, 주문번호는
+클라이언트가 만드는 값이라 추측이 쉽습니다.
+
 ### POST /api/v1/payments/{paymentId}/cancellations
 
 ```json

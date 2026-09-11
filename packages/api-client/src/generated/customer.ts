@@ -207,7 +207,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["getPaymentByOrderId"];
         put?: never;
         post: operations["approve"];
         delete?: never;
@@ -864,6 +864,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["SettlementItemResponse"][];
+                };
+            };
+        };
+    };
+    getPaymentByOrderId: {
+        parameters: {
+            query: {
+                orderId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PaymentResponse"];
                 };
             };
         };

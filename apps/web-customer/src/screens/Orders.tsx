@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { ORDER_STATUS_LABEL, listOrders, paymentStatusLabel } from "../shop/orders";
 import { formatWon } from "../format";
 import { usePayments } from "../usePayments";
+import { OrderLookup } from "./OrderLookup";
 
 export function Orders() {
   const orders = listOrders();
@@ -43,6 +44,7 @@ export function Orders() {
         </tbody>
       </table>
       {orders.length === 0 && <p>주문이 없습니다.</p>}
+      <OrderLookup />
     </section>
   );
 }
