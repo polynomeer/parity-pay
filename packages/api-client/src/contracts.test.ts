@@ -270,6 +270,44 @@ describe("ADR-010 리프레시 토큰은 자바스크립트가 만지지 않습�
     expect(sent?.credentials).toBe("include");
   });
 
+  it("앱이 뜰 때 토큰이 없으면 쿠키로 되살리고, 실패는 로그아웃일 뿐 오류가 아닙니다", async () => {
+    // 토큰이 메모리에만 있으므로 새로고침 직후가 이 상태입니다.
+    const store = memoryTokenStore();
+    const call = vi.fn(async (): Promise<Tokens> => ({ ...tokens, accessToken: "restored" }));
+    const manager = createTokenManager(store, call);
+
+    expect((await manager.restore())?.accessToken).toBe("restored");
+    expect(call).toHaveBeenCalledTimes(1);
+    // 이미 들고 있으면 다시 묻지 않습니다 — 매 화면 전환마다 회전시키면 안 됩니다.
+    expect((await manager.restore())?.accessToken).toBe("restored");
+    expect(call).toHaveBeenCalledTimes(1);
+
+    // 로그아웃하면 서버가 쿠키를 지우므로 재발급이 거절됩니다. 그것은 오류가 아니라 상태입니다.
+    const loggedOut = createTokenManager(memoryTokenStore(), () => Promise.reject(new Error("no cookie")));
+    await expect(loggedOut.restore()).resolves.toBeNull();
+  });
+
+  it("재발급은 탭 사이의 잠금 안에서 실행됩니다", async () => {
+    // 단일 비행은 한 탭 안에서만 통합니다. 탭 두 개가 같은 쿠키로 동시에 교환하면 회전 때문에
+    // 늦은 쪽이 거절되므로, 같은 오리진의 탭을 Web Locks로 줄 세웁니다.
+    const requested: string[] = [];
+    const fakeLocks = {
+      request: (name: string, cb: () => Promise<unknown>) => {
+        requested.push(name);
+        return cb();
+      },
+    };
+    const previous = globalThis.navigator;
+    Object.defineProperty(globalThis, "navigator", { value: { locks: fakeLocks }, configurable: true });
+    try {
+      const manager = createTokenManager(memoryTokenStore(), () => Promise.resolve(tokens));
+      await manager.refresh();
+      expect(requested).toEqual(["paritypay.refresh"]);
+    } finally {
+      Object.defineProperty(globalThis, "navigator", { value: previous, configurable: true });
+    }
+  });
+
   it("createAuth가 만드는 재발급 호출은 인자를 받지 않습니다", () => {
     // 인자가 다시 생기면 어딘가에서 값을 읽어 넘기고 있다는 뜻입니다.
     const manager = createAuth("http://x", memoryTokenStore());

@@ -32,33 +32,14 @@ export interface TokenStore {
   clear(): void;
 }
 
-const STORAGE_KEY = "paritypay.tokens";
-
 /**
- * 브라우저 저장소 구현입니다.
+ * 토큰은 **메모리에만** 둡니다. 브라우저 저장소 구현은 없습니다.
  *
- * 여기 남는 것은 **액세스 토큰뿐**입니다(15분). 스크립트가 읽어 가도 15분짜리이고, 계속 갱신할
- * 수단인 리프레시 토큰은 `HttpOnly` 쿠키에 있어 읽히지 않습니다. 근거: ADR-010
+ * 한때 `localStorage`에 두었습니다. 리프레시 토큰이 쿠키로 옮겨간 뒤(ADR-010)에도 액세스 토큰은
+ * 거기 남아 있었고, 15분짜리라 유한한 위험이었지만 스크립트가 읽을 수 있는 자격이 하나 남아 있는
+ * 상태였습니다. 이제 새로고침하면 토큰이 사라지고, 앱은 쿠키로 조용히 다시 받습니다
+ * ({@link TokenManager.restore}). 저장소 구현을 다시 만들면 그 자격이 돌아옵니다.
  */
-export function browserTokenStore(storage: Storage = localStorage): TokenStore {
-  return {
-    read() {
-      const raw = storage.getItem(STORAGE_KEY);
-      if (raw === null) {
-        return null;
-      }
-      try {
-        return JSON.parse(raw) as Tokens;
-      } catch {
-        storage.removeItem(STORAGE_KEY);
-        return null;
-      }
-    },
-    write: (tokens) => storage.setItem(STORAGE_KEY, JSON.stringify(tokens)),
-    clear: () => storage.removeItem(STORAGE_KEY),
-  };
-}
-
 export function memoryTokenStore(initial: Tokens | null = null): TokenStore {
   let current = initial;
   return {
@@ -86,39 +67,73 @@ export interface TokenManager {
    * 이것이 이 파일의 존재 이유입니다. 회전하는 리프레시 토큰에서는 동시 재발급이 곧 로그아웃입니다.
    */
   refresh(): Promise<Tokens>;
+  /**
+   * 앱이 뜰 때 세션을 되살립니다. 메모리에 토큰이 있으면 그것을, 없으면 쿠키로 재발급을 시도합니다.
+   *
+   * 실패는 예외가 아니라 `null`입니다 — 로그아웃 상태는 오류가 아니기 때문입니다. 로그아웃하면
+   * 서버가 쿠키를 지우므로(ADR-010) 그때는 여기서 `null`이 나옵니다.
+   */
+  restore(): Promise<Tokens | null>;
+}
+
+/** 탭 사이에 재발급을 직렬화하는 잠금 이름입니다. 같은 오리진의 탭이 공유합니다. */
+const REFRESH_LOCK = "paritypay.refresh";
+
+/**
+ * 탭 사이의 잠금입니다.
+ *
+ * 단일 비행은 **한 탭 안**의 동시 재발급만 막습니다. 토큰이 메모리에 있으므로 탭마다 뜰 때 재발급을
+ * 하고, 탭 두 개가 동시에 뜨면 같은 쿠키로 두 번 교환합니다 — 회전 때문에 늦은 쪽이 거절됩니다.
+ * Web Locks가 같은 오리진의 탭을 줄 세웁니다. 늦은 탭이 잠금을 받을 때는 브라우저 쿠키 항아리에
+ * 이미 회전된 새 쿠키가 있으므로 그것으로 성공합니다. 잠금이 없는 환경(jsdom)에서는 그냥 실행합니다.
+ */
+function withCrossTabLock<T>(run: () => Promise<T>): Promise<T> {
+  const locks = (globalThis.navigator as { locks?: LockManager } | undefined)?.locks;
+  if (locks === undefined) {
+    return run();
+  }
+  return locks.request(REFRESH_LOCK, run) as Promise<T>;
 }
 
 export function createTokenManager(store: TokenStore, call: RefreshCall): TokenManager {
   // 진행 중인 재발급입니다. null이면 진행 중이 아닙니다.
   let inFlight: Promise<Tokens> | null = null;
 
+  function exchange(): Promise<Tokens> {
+    if (inFlight !== null) {
+      return inFlight;
+    }
+    inFlight = withCrossTabLock(call)
+      .then((next) => {
+        store.write(next);
+        return next;
+      })
+      .catch((error: unknown) => {
+        // 재발급이 실패하면 세션은 끝입니다. 남은 토큰으로 계속 시도하면 잠금만 부릅니다.
+        store.clear();
+        throw error;
+      })
+      .finally(() => {
+        inFlight = null;
+      });
+    return inFlight;
+  }
+
   return {
     current: () => store.read(),
     set: (tokens) => store.write(tokens),
     clear: () => store.clear(),
-    refresh() {
-      if (inFlight !== null) {
-        return inFlight;
+    refresh: exchange,
+    async restore() {
+      const held = store.read();
+      if (held !== null) {
+        return held;
       }
-      // 보관된 세션이 없으면 로그아웃 상태입니다. 쿠키가 살아 있을 수는 있지만, 그때는
-      // 다시 로그인하는 것이 맞습니다 — 어느 회원의 세션인지 알 수 없기 때문입니다.
-      if (store.read() === null) {
-        return Promise.reject(new Error("no session"));
+      try {
+        return await exchange();
+      } catch {
+        return null;
       }
-      inFlight = call()
-        .then((next) => {
-          store.write(next);
-          return next;
-        })
-        .catch((error: unknown) => {
-          // 재발급이 실패하면 세션은 끝입니다. 남은 토큰으로 계속 시도하면 잠금만 부릅니다.
-          store.clear();
-          throw error;
-        })
-        .finally(() => {
-          inFlight = null;
-        });
-      return inFlight;
     },
   };
 }

@@ -40,11 +40,25 @@ async function submitForm(page: Page, values: Record<string, string>) {
  * 각 단계가 **끝난 것을 확인하고** 다음으로 갑니다. 기다리지 않고 넘어가면 토큰이 아직 없어
  * 보호된 경로가 로그인으로 되돌립니다 — 처음 이 시험을 쓸 때 실제로 그렇게 실패했습니다.
  */
-async function signUpAndLinkAccount(page: Page, accountNumber: string): Promise<void> {
+const PASSWORD = "password1234";
+
+/** 브라우저 밖에서 이 회원으로 API를 부를 때 씁니다. 토큰이 메모리에만 있어 화면에서 꺼낼 수 없습니다. */
+async function customerToken(email: string): Promise<string> {
+  const client = await api();
+  try {
+    const response = await client.post("/api/v1/auth/tokens", { data: { email, password: PASSWORD } });
+    return ((await response.json()) as { accessToken: string }).accessToken;
+  } finally {
+    await client.dispose();
+  }
+}
+
+async function signUpAndLinkAccount(page: Page, accountNumber: string): Promise<string> {
+  const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
   await page.goto("/signup");
   await submitForm(page, {
-    'input[type="email"]': `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`,
-    'input[type="password"]': "password1234",
+    'input[type="email"]': email,
+    'input[type="password"]': PASSWORD,
   });
   // 가입이 끝나면 홈으로 넘어갑니다. 여기까지 와야 토큰이 저장되어 있습니다.
   await expect(page.getByRole("heading", { name: "페이머니" })).toBeVisible();
@@ -52,6 +66,7 @@ async function signUpAndLinkAccount(page: Page, accountNumber: string): Promise<
   await page.goto("/pay");
   await submitForm(page, { "form input": accountNumber });
   await expect(page.getByRole("heading", { name: "충전" })).toBeVisible();
+  return email;
 }
 
 /** 충전 폼을 제출합니다. 화면의 제출 버튼은 빠른 금액 버튼과 문구가 겹칩니다. */
@@ -121,10 +136,8 @@ test.describe("리프레시 토큰은 스크립트가 만지지 못한다 (ADR-0
 
     // 이 결정의 전부입니다 — 스크립트가 뚫려도 값이 나가지 않습니다.
     expect(await page.evaluate(() => document.cookie)).not.toContain("paritypay_refresh");
-    // 앱이 보관하는 것에도 없어야 합니다.
-    expect(await page.evaluate(() => localStorage.getItem("paritypay.tokens") ?? "")).not.toContain(
-      "refresh",
-    );
+    // 브라우저 저장소에는 토큰이 아예 없습니다. 액세스 토큰도 메모리에만 있습니다.
+    expect(await page.evaluate(() => Object.keys(localStorage).filter((k) => k.includes("token")))).toEqual([]);
 
     // 본문 없이, 쿠키만으로 재발급됩니다. 브라우저가 알아서 붙입니다.
     const refreshed = await page.evaluate(async () => {
@@ -144,6 +157,52 @@ test.describe("리프레시 토큰은 스크립트가 만지지 못한다 (ADR-0
     // 회전했으므로 브라우저가 들고 있는 쿠키도 새 값이어야 합니다.
     const rotated = (await context.cookies()).find((c) => c.name === "paritypay_refresh");
     expect(rotated!.value).not.toBe(cookie!.value);
+  });
+
+  /**
+   * 액세스 토큰이 메모리에만 있으면 새로고침마다 사라집니다. 앱이 쿠키로 조용히 되살려야 하고,
+   * 그동안 보호된 경로가 로그인으로 튕기면 안 됩니다. 저장소 시험(jsdom)은 새로고침을 할 수 없습니다.
+   */
+  test("새로고침해도 로그인 상태가 유지되고, 저장소에는 토큰이 없다", async ({ page }) => {
+    await signUpAndLinkAccount(page, "110-3333-4444");
+
+    await page.reload();
+
+    // 로그인 화면으로 튕기지 않고, 잔액이 보입니다 — 잔액 조회는 인증이 필요하므로 이것이 보이면
+    // 액세스 토큰을 쿠키로 다시 받은 것입니다.
+    await expect(page.getByRole("heading", { name: "페이머니" })).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe("/pay");
+    expect(await page.evaluate(() => Object.keys(localStorage).filter((k) => k.includes("token")))).toEqual([]);
+  });
+
+  /**
+   * 토큰이 메모리에만 있으면 탭마다 뜰 때 재발급을 합니다. 탭 두 개가 **동시에** 뜨면 같은 쿠키로
+   * 두 번 교환하고, 회전 때문에 늦은 쪽이 거절되어 로그아웃됩니다 — 이것이 액세스 토큰을 메모리로
+   * 옮기는 데 반대한 이유였습니다. Web Locks가 같은 오리진의 탭을 줄 세워 막는지 실제 브라우저로 봅니다.
+   */
+  test("탭 두 개가 동시에 떠도 둘 다 로그인 상태다", async ({ page, context }) => {
+    await signUpAndLinkAccount(page, "110-2222-3333");
+
+    const [a, b] = await Promise.all([context.newPage(), context.newPage()]);
+    // 그냥 두 탭을 동시에 열면 경쟁이 일어나지 않습니다 — 재발급 왕복이 1 ms라 두 탭의 요청이
+    // 70 ms 간격으로 순차 처리됩니다. 잠금을 빼고 돌려도 통과했습니다. 그래서 경쟁을 **만듭니다**:
+    // 재발급 요청은 서버에 바로 닿게 두되(회전은 그 순간 일어남) 응답을 700 ms 붙잡아 새 쿠키가
+    // 브라우저에 늦게 도착하게 합니다. 먼저 간 탭이 응답을 받기 전에 다른 탭이 옛 쿠키로 재발급하면
+    // 거절되고 로그아웃됩니다. 잠금이 있으면 늦은 탭은 먼저 간 탭의 응답이 올 때까지 기다립니다.
+    const hold = async (route: import("@playwright/test").Route) => {
+      const response = await route.fetch();
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      await route.fulfill({ response });
+    };
+    await a.route("**/api/v1/auth/tokens/refresh", hold);
+    await b.route("**/api/v1/auth/tokens/refresh", hold);
+    await Promise.all([a.goto("/pay"), b.goto("/pay")]);
+
+    // 둘 중 하나라도 로그인으로 튕기면 회전 경쟁에서 진 것입니다.
+    await expect(a.getByRole("heading", { name: "페이머니" })).toBeVisible();
+    await expect(b.getByRole("heading", { name: "페이머니" })).toBeVisible();
+    expect(new URL(a.url()).pathname).toBe("/pay");
+    expect(new URL(b.url()).pathname).toBe("/pay");
   });
 
   /**
@@ -191,7 +250,7 @@ test.describe("돈은 장애를 견딘다", () => {
   });
 
   test("응답이 유실돼도 충전은 실패가 아니고 정확히 한 번 반영된다", async ({ page }) => {
-    await signUpAndLinkAccount(page, "110-1111-2222");
+    const email = await signUpAndLinkAccount(page, "110-1111-2222");
 
     // 은행이 출금해 놓고 응답을 끊습니다. 돈은 이미 움직였습니다.
     await setBankMode(await operatorToken(), "TIMEOUT_AFTER_WITHDRAWAL");
@@ -217,9 +276,7 @@ test.describe("돈은 장애를 견딘다", () => {
     expect(heldAfterSettle.length).toBe(0);
 
     // 응답이 유실됐지만 금액은 정확히 한 번만 들어왔습니다.
-    const token = await page.evaluate(
-      () => (JSON.parse(localStorage.getItem("paritypay.tokens") ?? "{}") as { accessToken: string }).accessToken,
-    );
+    const token = await customerToken(email);
     const client = await api();
     const wallet = (await (
       await client.get("/api/v1/wallets/me", { headers: { Authorization: `Bearer ${token}` } })
@@ -241,6 +298,8 @@ test.describe("돈은 장애를 견딘다", () => {
 
     // Shop에서 주문하고 결제 버튼을 연타합니다.
     await page.goto("/shop");
+    // 전체 이동이라 토큰이 메모리에서 사라지고 앱이 쿠키로 되살립니다. 그동안은 버튼이 없습니다.
+    await expect(page.getByRole("heading", { name: "상품" })).toBeVisible();
     await page.evaluate(() => (document.querySelectorAll("button")[0] as HTMLButtonElement).click());
     await expect(page.getByRole("heading", { name: "결제" })).toBeVisible();
     const orderId = (await page.evaluate(() => location.pathname)).split("/").pop()!;
@@ -273,9 +332,7 @@ test.describe("돈은 장애를 견딘다", () => {
     await expect(ops.getByTestId("balanced")).toHaveText("차변 = 대변");
 
     // 서버에 남은 결제는 한 건이어야 합니다. 연타는 UX가 막고, 정확성은 멱등 키가 지킵니다.
-    const token = await ops.evaluate(
-      () => (JSON.parse(localStorage.getItem("paritypay.tokens") ?? "{}") as { accessToken: string }).accessToken,
-    );
+    const token = await operatorToken();
     const client = await api();
     const resolved = (await (
       await client.get(`/api/v1/admin/transactions/resolve?query=${orderId}`, {
