@@ -27,19 +27,6 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 COMPOSE+=(--env-file "$ENV_FILE")
 
-# 자체 서명 인증서입니다. 쿠키에 Secure가 붙어 있어 TLS 없이는 브라우저가 저장하지 않습니다.
-# 두 앱은 **호스트이름이 다릅니다** — app.localhost·ops.localhost. 포트만 다르면 쿠키가 서로
-# 넘어갑니다. *.localhost는 브라우저가 /etc/hosts 없이 루프백으로 풉니다. 근거: ADR-011
-CERT_DIR=deploy/certs
-if [ ! -f "$CERT_DIR/paritypay.crt" ]; then
-  echo "== 자체 서명 인증서 생성 ($CERT_DIR)"
-  mkdir -p "$CERT_DIR"
-  openssl req -x509 -newkey rsa:2048 -nodes -days 365 -quiet \
-    -keyout "$CERT_DIR/paritypay.key" -out "$CERT_DIR/paritypay.crt" \
-    -subj "/CN=paritypay.local" \
-    -addext "subjectAltName=DNS:app.localhost,DNS:ops.localhost,DNS:localhost" 2>/dev/null
-fi
-
 case "${1:-up}" in
   down)
     # 볼륨까지 지웁니다. 확인용 스택이라 남겨 둘 이유가 없습니다.
@@ -52,6 +39,22 @@ case "${1:-up}" in
     exit 0
     ;;
 esac
+
+# 자체 서명 인증서입니다. 쿠키에 Secure가 붙어 있어 TLS 없이는 브라우저가 저장하지 않습니다.
+# 두 앱은 **호스트이름이 다릅니다** — app.localhost·ops.localhost. 포트만 다르면 쿠키가 서로
+# 넘어갑니다. *.localhost는 브라우저가 /etc/hosts 없이 루프백으로 풉니다. 근거: ADR-011
+#
+# OpenSSL 3.0(ubuntu 24.04)에는 `-quiet`이 없습니다. 처음에 그 옵션을 쓰고 stderr까지 버려서
+# CI가 이유 없이 죽었습니다. 키 생성 진행 표시가 나오더라도 오류를 숨기지 않습니다.
+CERT_DIR=deploy/certs
+if [ ! -f "$CERT_DIR/paritypay.crt" ]; then
+  echo "== 자체 서명 인증서 생성 ($CERT_DIR)"
+  mkdir -p "$CERT_DIR"
+  openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
+    -keyout "$CERT_DIR/paritypay.key" -out "$CERT_DIR/paritypay.crt" \
+    -subj "/CN=paritypay.local" \
+    -addext "subjectAltName=DNS:app.localhost,DNS:ops.localhost,DNS:localhost"
+fi
 
 echo "== 빌드와 기동"
 "${COMPOSE[@]}" up -d --build
