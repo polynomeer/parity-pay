@@ -1,8 +1,10 @@
 package io.parity.pay.payment.adapter.out.persistence;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +19,28 @@ interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UUID> {
                and p.status in ('APPROVED', 'PARTIALLY_CANCELED')
             """)
     Optional<PaymentJpaEntity> findActiveByOrderId(@Param("orderId") String orderId);
+
+    /**
+     * 이 회원이 이 주문으로 만든 결제 중 가장 "말이 되는" 한 건입니다.
+     *
+     * <p>한 주문에 시도가 여럿일 수 있습니다(실패 뒤 재시도). 살아 있는 결제가 있으면 그것이고,
+     * 없으면 아직 결과를 모르는 시도가 실패한 시도보다 앞섭니다 — 미확정이 나중에 승인으로 확정될
+     * 수 있으므로 "실패"라고 먼저 말하면 안 됩니다(ADR-007). 같은 급이면 최신 것입니다.
+     */
+    @Query(
+            """
+            select p from PaymentJpaEntity p
+             where p.memberId = :memberId
+               and p.orderId = :orderId
+             order by case
+                        when p.status in ('APPROVED', 'PARTIALLY_CANCELED') then 0
+                        when p.status in ('READY', 'PROCESSING', 'UNKNOWN') then 1
+                        else 2
+                      end,
+                      p.createdAt desc
+            """)
+    List<PaymentJpaEntity> findForOrder(
+            @Param("memberId") UUID memberId, @Param("orderId") String orderId, Limit limit);
 
     /**
      * 취소 가능액이 남아 있을 때만 예약합니다.

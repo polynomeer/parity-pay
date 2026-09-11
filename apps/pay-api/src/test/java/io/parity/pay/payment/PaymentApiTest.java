@@ -175,6 +175,68 @@ class PaymentApiTest extends AbstractIntegrationTest {
         assertThat(response.getBody().get("code")).isEqualTo("RESOURCE_NOT_FOUND");
     }
 
+    /**
+     * FR-006: `orderId`로도 조회할 수 있어야 합니다. 멱등 키를 잃은 사용자(앱 삭제, 다른 기기)의 유일한
+     * 복구 경로입니다. DOC-14 §13이 "필요한지 판단하지 않았다"고 적어 두었는데, PRD는 처음부터 Must로
+     * 요구하고 있었고 서비스에 구현까지 있었으며 HTTP로만 열려 있지 않았습니다.
+     */
+    @Test
+    @DisplayName("FR-006: 주문번호로 결제를 찾는다")
+    void findsPaymentByOrderId() {
+        ResponseEntity<Map> approved = pay("order-lookup-1", "api-lookup-0001", 30_000);
+        assertThat(approved.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        ResponseEntity<Map> found = byOrderId("order-lookup-1", accessToken);
+
+        assertThat(found.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(found.getBody().get("paymentId"))
+                .isEqualTo(approved.getBody().get("paymentId"));
+        assertThat(found.getBody().get("status")).isEqualTo("APPROVED");
+    }
+
+    @Test
+    @DisplayName("FR-006: 한 주문에 실패한 시도가 있어도 살아 있는 결제를 돌려준다")
+    void activePaymentWinsOverFailedAttempts() {
+        // 잔액 50,000에 60,000을 시도해 실패시킨 뒤, 같은 주문으로 성공시킵니다.
+        assertThat(pay("order-lookup-2", "api-lookup-0002", 60_000).getStatusCode())
+                .isEqualTo(HttpStatus.CONFLICT);
+        ResponseEntity<Map> approved = pay("order-lookup-2", "api-lookup-0003", 30_000);
+        assertThat(approved.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        ResponseEntity<Map> found = byOrderId("order-lookup-2", accessToken);
+
+        assertThat(found.getBody().get("paymentId"))
+                .isEqualTo(approved.getBody().get("paymentId"));
+        assertThat(found.getBody().get("status")).isEqualTo("APPROVED");
+    }
+
+    @Test
+    @DisplayName("FR-006: 남의 주문번호는 없는 것으로 보인다")
+    void otherMembersOrderIsInvisible() {
+        assertThat(pay("order-lookup-3", "api-lookup-0004", 30_000).getStatusCode())
+                .isEqualTo(HttpStatus.CREATED);
+        ApiAuth.Session other = ApiAuth.registerAndLogin(restTemplate, "api-other@example.com", "password1234");
+
+        ResponseEntity<Map> found = byOrderId("order-lookup-3", other.accessToken());
+
+        // 403이면 "그 주문번호가 존재한다"가 샙니다. 주문번호는 클라이언트가 만드는 값이라 추측이 쉽습니다.
+        assertThat(found.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("FR-006: 결제가 없는 주문번호는 404")
+    void unknownOrderIsNotFound() {
+        assertThat(byOrderId("order-never-paid", accessToken).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    private ResponseEntity<Map> byOrderId(String orderId, String token) {
+        return restTemplate.exchange(
+                "/api/v1/payments?orderId=" + orderId,
+                HttpMethod.GET,
+                new HttpEntity<>(ApiAuth.bearer(token)),
+                Map.class);
+    }
+
     private ResponseEntity<Map> pay(String orderId, String idempotencyKey, long amount) {
         return restTemplate.exchange(
                 "/api/v1/payments",

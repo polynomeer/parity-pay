@@ -19,6 +19,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.Clock;
 import java.util.Optional;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Repository;
 
 /** 결제·취소 out 포트의 JPA 구현. */
@@ -49,6 +50,13 @@ class PaymentPersistenceAdapter implements PaymentRepository, PaymentCancellatio
     @Override
     public Optional<Payment> findActiveByOrderId(String orderId) {
         return paymentJpaRepository.findActiveByOrderId(orderId).map(PaymentPersistenceAdapter::toDomain);
+    }
+
+    @Override
+    public Optional<Payment> findForOrder(MemberId memberId, String orderId) {
+        return paymentJpaRepository.findForOrder(memberId.value(), orderId, Limit.of(1)).stream()
+                .findFirst()
+                .map(PaymentPersistenceAdapter::toDomain);
     }
 
     @Override

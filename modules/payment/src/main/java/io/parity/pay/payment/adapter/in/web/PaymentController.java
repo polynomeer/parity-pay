@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 결제·취소 API. 근거: docs/08-db-api-event-spec.md §4 */
@@ -80,6 +81,18 @@ class PaymentController {
                     .body(PaymentResponse.from(view));
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(PaymentResponse.from(view));
+    }
+
+    /**
+     * 주문번호로 결제를 찾습니다. 근거: FR-006, DOC-14 §13 열린 질문 2
+     *
+     * <p>멱등 키를 잃은 사용자의 복구 경로입니다. 앱을 지웠거나 다른 기기라 키가 없어도, 판매자가
+     * 알려 준 주문번호로 "결제됐는가, 아직 확인 중인가, 안 됐는가"를 알 수 있어야 합니다.
+     */
+    @GetMapping(params = "orderId")
+    ResponseEntity<PaymentResponse> getPaymentByOrderId(@RequestParam String orderId) {
+        return ResponseEntity.ok(
+                PaymentResponse.from(paymentQuery.getPaymentByOrderId(currentPrincipal.memberId(), orderId)));
     }
 
     @GetMapping("/{paymentId}")

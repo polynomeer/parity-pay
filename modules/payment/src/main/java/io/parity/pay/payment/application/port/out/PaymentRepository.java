@@ -1,6 +1,7 @@
 package io.parity.pay.payment.application.port.out;
 
 import io.parity.pay.payment.domain.Payment;
+import io.parity.pay.shared.id.MemberId;
 import io.parity.pay.shared.id.PaymentId;
 import io.parity.pay.shared.money.Money;
 import java.util.Optional;
@@ -10,6 +11,9 @@ public interface PaymentRepository {
     Optional<Payment> findById(PaymentId paymentId);
 
     Optional<Payment> findActiveByOrderId(String orderId);
+
+    /** 이 회원이 이 주문으로 만든 결제 중 살아 있는 것, 없으면 미확정, 없으면 최신 시도입니다. */
+    Optional<Payment> findForOrder(MemberId memberId, String orderId);
 
     Payment save(Payment payment);
 

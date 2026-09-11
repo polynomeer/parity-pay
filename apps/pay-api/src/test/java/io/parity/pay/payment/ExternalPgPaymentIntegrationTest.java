@@ -8,6 +8,7 @@ import io.parity.pay.api.onboarding.OnboardingService;
 import io.parity.pay.payment.application.port.in.ApprovePaymentUseCase;
 import io.parity.pay.payment.application.port.in.ApprovePaymentUseCase.ApprovePaymentCommand;
 import io.parity.pay.payment.application.port.in.ApprovePaymentUseCase.PaymentView;
+import io.parity.pay.payment.application.port.in.PaymentQuery;
 import io.parity.pay.payment.domain.PaymentMethod;
 import io.parity.pay.payment.domain.PaymentStatus;
 import io.parity.pay.shared.id.MemberId;
@@ -54,6 +55,9 @@ class ExternalPgPaymentIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private MockPgBehavior mockPgBehavior;
+
+    @Autowired
+    private PaymentQuery paymentQuery;
 
     @Autowired
     private MockPgClient pgClient;
@@ -134,6 +138,28 @@ class ExternalPgPaymentIntegrationTest extends AbstractIntegrationTest {
         assertThat(ledgerTransactionCount()).isZero();
         assertThat(outboxEventCount("PaymentApproved")).isZero();
         assertThat(externalApprovalCount()).isEqualTo(1L);
+    }
+
+    /**
+     * FR-006·ADR-007: 주문번호 조회는 "실패"를 먼저 말하면 안 됩니다. 미확정 시도가 있으면 나중에 승인으로
+     * 확정될 수 있으므로, 같은 주문에 그 뒤 실패한 시도가 있어도 미확정 쪽이 답입니다.
+     */
+    @Test
+    @DisplayName("FR-006: 같은 주문에 미확정 시도와 실패한 시도가 있으면 미확정이 답이다")
+    void lookupPrefersUnknownOverLaterFailure() {
+        mockPgBehavior.setMode(MockPgBehavior.Mode.TIMEOUT_AFTER_APPROVAL);
+        PaymentView unknown = approve("pg-key-lookup-1", "order-pg-lookup");
+        assertThat(unknown.status()).isEqualTo(PaymentStatus.UNKNOWN);
+
+        // 사용자가 결과를 모른 채 새 키로 다시 시도했고 이번엔 거절됐습니다. 더 최신이지만 답이 아닙니다.
+        mockPgBehavior.setMode(MockPgBehavior.Mode.EXPLICIT_DECLINE);
+        PaymentView failed = approve("pg-key-lookup-2", "order-pg-lookup");
+        assertThat(failed.status()).isEqualTo(PaymentStatus.FAILED);
+
+        PaymentView found = paymentQuery.getPaymentByOrderId(memberId, "order-pg-lookup");
+
+        assertThat(found.paymentId()).isEqualTo(unknown.paymentId());
+        assertThat(found.status()).isEqualTo(PaymentStatus.UNKNOWN);
     }
 
     @Test

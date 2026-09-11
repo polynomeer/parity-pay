@@ -111,10 +111,11 @@ public class PaymentService implements ApprovePaymentUseCase, PaymentQuery {
     @Override
     @Transactional(readOnly = true)
     public PaymentView getPaymentByOrderId(MemberId memberId, String orderId) {
+        // 회원으로 먼저 거릅니다. 주문번호는 클라이언트가 만드는 문자열이라 남의 것과 겹칠 수 있고,
+        // 남의 결제는 "없는 것"이어야 합니다. 있는데 못 본다고 답하면 존재 여부가 샙니다.
         Payment payment = paymentRepository
-                .findActiveByOrderId(orderId)
+                .findForOrder(memberId, orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
-        payment.requireOwnedBy(memberId);
         return PaymentView.of(payment);
     }
 
