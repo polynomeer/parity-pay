@@ -132,13 +132,29 @@ export async function requestAdjustment(
   client: ApiClient,
   mismatchId: string,
   approverId: string,
+  reauthToken: string,
   request: AdjustmentRequest,
 ): Promise<MismatchResponse> {
   const response = await client.writeWithHeaders<MismatchResponse>(
     "POST",
     `/api/v1/admin/reconciliation/mismatches/${mismatchId}/adjustments`,
     request,
-    { "X-Approver-Id": approverId },
+    // 세션만으로는 부족합니다. 방금 비밀번호를 다시 확인했다는 증거를 함께 보냅니다(FE-014).
+    { "X-Approver-Id": approverId, "X-Reauth-Token": reauthToken },
   );
   return response.data;
+}
+
+/**
+ * 재인증 (FE-014). 비밀번호를 다시 확인하고 짧게 사는 증거를 받습니다.
+ *
+ * 원장을 움직이는 운영 작업 앞에서만 씁니다. 증거는 메모리에서 요청 한 번에 쓰고 버립니다 — 보관해
+ * 두면 "방금 확인했다"는 뜻이 사라집니다. 액세스 토큰과 다른 토큰이며, 그 자리에 쓸 수 없습니다.
+ */
+export async function reauthenticate(client: ApiClient, password: string): Promise<string> {
+  const response = await client.publicWrite<{ reauthToken: string; expiresIn: number }>(
+    "/api/v1/auth/reauth",
+    { password },
+  );
+  return response.data.reauthToken;
 }

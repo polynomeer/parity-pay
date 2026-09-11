@@ -72,6 +72,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/reauth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reauth"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/tokens": {
         parameters: {
             query?: never;
@@ -483,6 +499,14 @@ export interface components {
             /** @enum {string} */
             status?: "READY" | "PROCESSING" | "APPROVED" | "PARTIALLY_CANCELED" | "CANCELED" | "FAILED" | "UNKNOWN";
         };
+        ReauthRequest: {
+            password: string;
+        };
+        ReauthResponse: {
+            /** Format: int64 */
+            expiresIn?: number;
+            reauthToken?: string;
+        };
         RegisterMemberRequest: {
             /** Format: email */
             email: string;
@@ -684,6 +708,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    reauth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReauthRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReauthResponse"];
+                };
             };
         };
     };

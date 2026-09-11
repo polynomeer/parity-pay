@@ -5,13 +5,14 @@
  *
  * - **FE-010 이중 승인**: 자기 요청을 자기가 승인할 수 없습니다. 서버가 거부하지만 화면도 미리
  *   막습니다 — 서버가 막으니 괜찮다고 두면 운영자는 실패한 뒤에야 알게 됩니다.
- * - **FE-011 사유 필수**: 기본값이나 자동 채움을 넣지 않습니다. 감사 로그에 남는 값입니다.
+ * - **FE-014 사유 필수**: 기본값이나 자동 채움을 넣지 않습니다. 감사 로그에 남는 값입니다.
  *
  * **FE-012 금액을 직접 고치는 입력은 없습니다.** 보정은 차변·대변 계정을 지정한 새 분개입니다.
  */
 import {
   ADJUSTMENT_ACCOUNTS,
   listOpenMismatches,
+  reauthenticate,
   requestAdjustment,
   type AdjustmentAccount,
   type MismatchResponse,
@@ -88,6 +89,7 @@ function AdjustmentForm({ mismatchId }: { mismatchId: string }) {
   const queryClient = useQueryClient();
   const requesterId = tokenStore.read()?.memberId ?? "";
   const [approverId, setApproverId] = useState("");
+  const [password, setPassword] = useState("");
   const [reason, setReason] = useState("");
   const [amount, setAmount] = useState(0);
   const [debitAccount, setDebitAccount] = useState<AdjustmentAccount | "">("");
@@ -95,17 +97,25 @@ function AdjustmentForm({ mismatchId }: { mismatchId: string }) {
 
   // 자기가 자기를 승인할 수 없습니다. 서버도 막지만 버튼을 누르기 전에 알려 줍니다.
   const selfApproval = approverId !== "" && approverId === requesterId;
-  const complete = approverId !== "" && reason.trim() !== "" && amount > 0 && debitAccount !== "" && creditAccount !== "";
+  const complete =
+    approverId !== "" && password !== "" && reason.trim() !== "" && amount > 0 && debitAccount !== "" && creditAccount !== "";
 
   const submit = useMutation({
-    mutationFn: () =>
-      requestAdjustment(api, mismatchId, approverId, {
+    // 원장을 움직이는 유일한 운영 쓰기입니다. 세션이 살아 있어도 비밀번호를 다시 묻습니다 — 자리를
+    // 비운 단말이 그대로 승인하면 안 됩니다(FE-014). 증거는 이 요청 한 번에 쓰고 버립니다.
+    mutationFn: async () => {
+      const proof = await reauthenticate(api, password);
+      return requestAdjustment(api, mismatchId, approverId, proof, {
         amount,
         reason,
         debitAccount: debitAccount as AdjustmentAccount,
         creditAccount: creditAccount as AdjustmentAccount,
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["mismatches"] }),
+      });
+    },
+    onSuccess: () => {
+      setPassword("");
+      void queryClient.invalidateQueries({ queryKey: ["mismatches"] });
+    },
   });
 
   return (
@@ -169,6 +179,18 @@ function AdjustmentForm({ mismatchId }: { mismatchId: string }) {
       <label>
         승인자
         <input data-testid="approver" value={approverId} onChange={(e) => setApproverId(e.target.value)} required />
+      </label>
+      <label>
+        비밀번호 확인
+        {/* 로그인 상태여도 다시 묻습니다. 이 화면이 원장을 움직이기 때문입니다. */}
+        <input
+          data-testid="reauth-password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
       </label>
 
       {selfApproval && (

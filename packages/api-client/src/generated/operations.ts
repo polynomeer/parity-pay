@@ -982,6 +982,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-Approver-Id": string;
+                "X-Reauth-Token": string;
             };
             path: {
                 mismatchId: string;

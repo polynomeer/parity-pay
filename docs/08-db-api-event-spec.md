@@ -184,6 +184,20 @@ Header: `Idempotency-Key: <unique-key>`
 
 결제 소유자 또는 허용된 운영자만 조회합니다. `ETag` 또는 버전을 선택적으로 제공합니다.
 
+### POST /api/v1/auth/reauth
+
+```json
+{ "password": "..." }
+```
+
+성공 `200`: `{ "reauthToken": "...", "expiresIn": 300 }`. 인증된 사용자가 비밀번호를 다시 확인하고
+**5분짜리 증거**를 받습니다(2026-09-11). 액세스 토큰과 다른 토큰이며(`purpose=reauth`), 그 자리에
+액세스 토큰을 넣으면 거절됩니다. 실패는 로그인 실패와 같이 세어 잠금을 우회하지 못합니다.
+
+원장을 움직이는 운영 작업이 이 증거를 `X-Reauth-Token` 헤더로 요구합니다. 지금은
+`POST /api/v1/admin/reconciliation/mismatches/{id}/adjustments` 하나입니다. 헤더가 없거나, 만료·위조·
+타인 것이면 `400 INVALID_REQUEST`입니다.
+
 ### GET /api/v1/payments?orderId=...
 
 주문번호로 **호출자 자신의** 결제를 찾습니다(FR-006). 응답은 `GET /api/v1/payments/{paymentId}`와
