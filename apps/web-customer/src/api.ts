@@ -6,11 +6,11 @@
  */
 import { ApiClient, browserTokenStore, createAuth, browserIntentStore } from "@paritypay/api-client";
 
-// 개발에서는 Vite 프록시를 타므로 같은 오리진입니다. 배포에서는 API가 다른 오리진이라
-// VITE_API_BASE_URL을 줍니다. 상대 경로를 그대로 두면 fetch가 URL을 파싱하지 못하므로
-// 오리진까지 붙여 둡니다.
-const BASE_URL: string =
-  (import.meta.env["VITE_API_BASE_URL"] as string | undefined) ?? globalThis.location?.origin ?? "";
+// API는 **언제나 자기 오리진**입니다. 개발에서는 Vite가, 배포에서는 nginx가 /api를 프록시합니다.
+// 다른 오리진을 가리키는 설정을 두지 않습니다 — 그 순간 교차 오리진 호출이 되어 리프레시 쿠키가
+// 조용히 빠집니다. 예전에 있던 VITE_API_BASE_URL을 그래서 없앴습니다. 근거: ADR-011
+// 상대 경로를 그대로 두면 fetch가 URL을 파싱하지 못하므로 오리진까지 붙여 둡니다.
+const BASE_URL: string = globalThis.location?.origin ?? "";
 
 export const tokenStore = browserTokenStore();
 export const intentStore = browserIntentStore();

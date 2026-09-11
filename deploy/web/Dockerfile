@@ -18,8 +18,8 @@ RUN pnpm install --frozen-lockfile
 
 ARG APP
 RUN test -n "$APP" || (echo "APP 빌드 인자가 필요합니다 (web-customer | web-ops)" && exit 1)
-# VITE_API_BASE_URL을 주지 않습니다. 주지 않으면 클라이언트가 자기 오리진을 씁니다 — 그것이
-# 이 배포 형태입니다. 값을 넣는 순간 교차 오리진 호출이 되고 쿠키가 빠집니다(ADR-011).
+# API 주소를 주입할 자리가 없습니다. 클라이언트는 언제나 자기 오리진을 쓰고, 그것이 이 배포
+# 형태입니다. 다른 오리진을 가리키는 설정이 생기면 교차 오리진 호출이 되고 쿠키가 빠집니다(ADR-011).
 RUN pnpm --filter "@paritypay/$APP" build
 
 FROM nginx:1.27-alpine AS runtime
