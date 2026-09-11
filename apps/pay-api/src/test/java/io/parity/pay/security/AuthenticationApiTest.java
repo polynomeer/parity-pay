@@ -191,6 +191,41 @@ class AuthenticationApiTest extends AbstractIntegrationTest {
         assertThat(reuse.getBody().get("message").toString()).contains("revoked");
     }
 
+    /**
+     * 회전의 "두 번 쓰면 거절"은 순차 요청에서만 참이었습니다. 동시에 오면 둘 다 SELECT에서 "철회 안
+     * 됨"을 보고 둘 다 새 토큰을 받았습니다. 액세스 토큰을 메모리로 옮기자 탭마다 뜰 때 재발급을 하게
+     * 되어 이 경로가 실제로 밟힙니다. 철회를 원자적으로 판정해야 합니다.
+     */
+    @Test
+    @DisplayName("같은 리프레시 쿠키로 동시에 재발급하면 정확히 하나만 성공한다")
+    void concurrentRefreshWithTheSameCookieSucceedsOnce() throws Exception {
+        restTemplate.postForEntity(
+                "/api/v1/members", Map.of("email", "auth-race@example.com", "password", "password1234"), Map.class);
+        ResponseEntity<Map> first = restTemplate.postForEntity(
+                "/api/v1/auth/tokens", Map.of("email", "auth-race@example.com", "password", "password1234"), Map.class);
+        String cookie = RefreshCookies.value(first);
+
+        int attempts = 8;
+        java.util.concurrent.CyclicBarrier barrier = new java.util.concurrent.CyclicBarrier(attempts);
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(attempts);
+        List<java.util.concurrent.Future<Integer>> results = new java.util.ArrayList<>();
+        for (int i = 0; i < attempts; i++) {
+            results.add(pool.submit(() -> {
+                barrier.await();
+                return refresh(RefreshCookies.carrying(cookie)).getStatusCode().value();
+            }));
+        }
+        long succeeded = 0;
+        for (java.util.concurrent.Future<Integer> result : results) {
+            if (result.get() == 200) {
+                succeeded++;
+            }
+        }
+        pool.shutdown();
+
+        assertThat(succeeded).isEqualTo(1);
+    }
+
     @Test
     @DisplayName("로그아웃하면 리프레시 토큰이 모두 철회된다")
     void logoutRevokesRefreshTokens() {

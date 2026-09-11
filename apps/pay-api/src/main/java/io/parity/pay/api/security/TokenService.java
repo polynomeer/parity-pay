@@ -107,7 +107,12 @@ public class TokenService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "refresh token has expired");
         }
 
-        revoke((UUID) row.get("token_id"), "ROTATED");
+        // 위의 SELECT는 두 요청이 동시에 오면 둘 다 "철회 안 됨"을 봅니다. 회전은 여기서 원자적으로
+        // 결정됩니다 — 아직 철회되지 않은 행을 철회한 쪽만 새 토큰을 받습니다. 그래야 "같은 토큰이
+        // 두 번 쓰이면 거절된다"가 동시 요청에서도 참입니다.
+        if (!revokeIfActive((UUID) row.get("token_id"), "ROTATED")) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "refresh token was revoked");
+        }
         MemberAccount account = lookup.byId(MemberId.of((UUID) row.get("member_id")));
         return issue(account);
     }
@@ -126,12 +131,15 @@ public class TokenService {
                 memberId.value());
     }
 
-    private void revoke(UUID tokenId, String reason) {
-        jdbcTemplate.update(
-                "UPDATE refresh_token SET revoked_at = ?, revoke_reason = ? WHERE token_id = ?",
-                Timestamp.from(clock.instant()),
-                reason,
-                tokenId);
+    /** 아직 살아 있는 토큰만 철회합니다. 이미 철회됐으면 {@code false}입니다. */
+    private boolean revokeIfActive(UUID tokenId, String reason) {
+        return jdbcTemplate.update(
+                        "UPDATE refresh_token SET revoked_at = ?, revoke_reason = ?"
+                                + " WHERE token_id = ? AND revoked_at IS NULL",
+                        Timestamp.from(clock.instant()),
+                        reason,
+                        tokenId)
+                == 1;
     }
 
     private String encodeAccessToken(MemberAccount account, Instant now) {
