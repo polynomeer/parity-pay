@@ -68,6 +68,15 @@ services:
       timeout: 3s
       retries: 10
 
+  # 재설정 메일이 가는 곳입니다. 보낸 메일은 http://localhost:8025 에서 봅니다. 실제 SMTP 대신
+  # 이것을 쓰는 이유는 기관 대역과 같습니다 — 진짜 네트워크 왕복이되 밖으로는 나가지 않습니다.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: paritypay-mailpit
+    ports:
+      - "${PARITYPAY_MAIL_PORT:-1025}:1025"
+      - "${PARITYPAY_MAIL_UI_PORT:-8025}:8025"
+
   # 외부 금융기관 대역입니다. 별도 프로세스여야 죽이고·늦추고·끊는 실험을 할 수 있습니다.
   # 근거: docs/05-technical-design.md §10
   mock-bank:

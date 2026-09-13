@@ -59,6 +59,11 @@ services:
       PARITYPAY_KAFKA_SERVERS: redpanda:29092
       PARITYPAY_MOCK_BANK_URL: http://mock-bank:8090
       PARITYPAY_MOCK_PG_URL: http://mock-pg:8091
+      # 재설정 메일입니다. 운영에서는 실제 SMTP 주소·자격이 이 자리에 옵니다. 확인용 스택은 Mailpit.
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: "1025"
+      # 메일에 담을 링크. 서버가 앱의 오리진을 아는 유일한 자리입니다(ADR-011).
+      PARITYPAY_PASSWORDRESET_LINKTEMPLATE: https://app.localhost:${PARITYPAY_CUSTOMER_PORT:-8181}/reset?token={token}
       # 이미지 안에 없습니다. 없으면 애플리케이션이 뜨지 않습니다. 근거: ADR-011
       PARITYPAY_JWT_SECRET: ${PARITYPAY_JWT_SECRET:?32자 이상이 필요합니다}
       PARITYPAY_WEBHOOK_SECRET: ${PARITYPAY_WEBHOOK_SECRET:?웹훅 비밀값이 필요합니다}
@@ -114,6 +119,13 @@ services:
       - ./deploy/certs:/etc/nginx/certs:ro
     depends_on:
       - pay-api
+
+  # 재설정 메일 수신함입니다. 운영에서는 진짜 SMTP가 이 자리에 옵니다. UI·API는 E2E가 씁니다.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      # 개발용 compose의 Mailpit(8025)과 나란히 뜰 수 있게 다른 포트입니다.
+      - "${PARITYPAY_MAIL_UI_PORT:-8125}:8025"
 
   # 외부 기관 대역입니다. 운영에서는 진짜 기관이 이 자리에 옵니다.
   mock-bank:

@@ -20,6 +20,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 비밀번호 변경과 재설정.
@@ -143,7 +145,16 @@ public class PasswordService {
                 Timestamp.from(now),
                 Timestamp.from(expiresAt));
 
-        delivery.deliver(member, rawToken, expiresAt);
+        // 전달은 커밋 뒤에 합니다. SMTP는 외부 호출이고, 트랜잭션 안에서 외부 호출을 하지 않습니다
+        // (CLAUDE.md §3). 메일이 실패하면 토큰은 있지만 아무도 갖지 못한 상태가 되는데, 사용자가 다시
+        // 요청하면 살아 있는 토큰을 무효화하고 새로 만드므로 남는 위험이 없습니다. 반대로 커밋 전에
+        // 보내면 롤백된 토큰이 담긴 메일이 나갑니다.
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                delivery.deliver(member, rawToken, expiresAt);
+            }
+        });
     }
 
     /**

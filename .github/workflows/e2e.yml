@@ -94,6 +94,7 @@ jobs:
           E2E_CUSTOMER_URL: https://app.localhost:8181
           E2E_OPS_URL: https://ops.localhost:8182
           E2E_API_URL: https://localhost:8182
+          E2E_MAILPIT_URL: http://localhost:8125
         run: |
           E2E_OPS_PASSWORD=$(grep PARITYPAY_OPS_PASSWORD deploy/.env | cut -d= -f2) \
             pnpm --filter @paritypay/e2e exec playwright test

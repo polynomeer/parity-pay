@@ -76,6 +76,7 @@ OPS_PORT=${PARITYPAY_OPS_PORT:-8182}
 echo "== 준비됨"
 echo "   고객 앱   https://app.localhost:${CUSTOMER_PORT}"
 echo "   운영 콘솔 https://ops.localhost:${OPS_PORT}"
+echo "   재설정 메일 http://localhost:${PARITYPAY_MAIL_UI_PORT:-8125}"
 echo "   pay-api는 바깥에 열려 있지 않습니다 (ADR-011)"
 echo "   인증서는 자체 서명이라 브라우저가 한 번 경고합니다."
 echo

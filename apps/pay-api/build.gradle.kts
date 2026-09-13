@@ -18,6 +18,8 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("io.micrometer:micrometer-tracing-bridge-otel")
     implementation("io.opentelemetry:opentelemetry-exporter-otlp")
+    // 비밀번호 재설정 메일입니다. 전달 채널이 SMTP인 것은 배포 설정이고, 어댑터는 JavaMailSender만 봅니다.
+    implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("org.springframework.security:spring-security-oauth2-jose")

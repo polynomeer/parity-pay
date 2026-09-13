@@ -30,7 +30,7 @@ echo "== 기관 jar"
 ./gradlew :apps:mock-bank:bootJar :apps:mock-pg:bootJar -q
 
 echo "== 의존성"
-docker compose up -d postgres redpanda
+docker compose up -d postgres redpanda mailpit
 # 기관 데이터베이스는 볼륨이 비어 있을 때만 만들어집니다. 이미 있는 볼륨이면 직접 만듭니다.
 docker exec paritypay-postgres psql -U paritypay -d postgres -c \
   "CREATE DATABASE paritypay_bank OWNER paritypay" >/dev/null 2>&1 || true

@@ -225,6 +225,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  # 로컬 메일은 Mailpit(docker compose)입니다. 보낸 메일은 http://localhost:8025 에서 봅니다.
+  # host가 설정되면 SMTP 전달이 켜지고, 없으면 재설정 토큰은 어디로도 가지 않습니다.
+  mail:
+    host: ${PARITYPAY_MAIL_HOST:localhost}
+    port: ${PARITYPAY_MAIL_PORT:1025}
 
 paritypay:
   # 외부 기관(Mock Bank)은 별도 프로세스입니다. 근거: docs/05-technical-design.md §10
@@ -238,6 +243,9 @@ paritypay:
     validate-schema: true
   webhook:
     secret: local-development-only-webhook-secret
+  # 재설정 메일이 가리킬 화면입니다. 서버가 앱의 오리진을 아는 유일한 자리입니다(ADR-011).
+  password-reset:
+    link-template: ${PARITYPAY_PASSWORD_RESET_LINK:http://app.localhost:5173/reset?token={token}}
   security:
     # 로컬 전용 값입니다. 운영에서는 반드시 PARITYPAY_JWT_SECRET으로 주입합니다.
     jwt-secret: local-development-only-secret-key-do-not-use-in-production
