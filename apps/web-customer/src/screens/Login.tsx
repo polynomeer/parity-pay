@@ -2,7 +2,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { ApiError, login, userMessage } from "@paritypay/api-client";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, auth } from "../api";
 
 export function Login() {
@@ -47,6 +47,9 @@ export function Login() {
             : "로그인하지 못했습니다. 잠시 후 다시 시도해 주세요."}
         </p>
       )}
+      <p>
+        <Link to="/forgot">비밀번호를 잊으셨나요?</Link>
+      </p>
     </form>
   );
 }

@@ -52,6 +52,19 @@ export async function login(
   return next;
 }
 
+/**
+ * 비밀번호 재설정 요청. 가입 여부와 무관하게 202입니다 — 다르게 답하면 이 API로 가입 여부를 조회할
+ * 수 있습니다. 토큰은 응답에 실리지 않고 메일로만 갑니다.
+ */
+export async function requestPasswordReset(client: ApiClient, email: string): Promise<void> {
+  await client.publicWrite<void>("/api/v1/auth/password-reset", { email });
+}
+
+/** 메일의 링크에 담긴 토큰으로 새 비밀번호를 정합니다. 토큰은 한 번만 쓸 수 있습니다. */
+export async function confirmPasswordReset(client: ApiClient, token: string, newPassword: string): Promise<void> {
+  await client.publicWrite<void>("/api/v1/auth/password-reset/confirm", { token, newPassword });
+}
+
 export async function register(
   client: ApiClient,
   request: RegisterMemberRequest,

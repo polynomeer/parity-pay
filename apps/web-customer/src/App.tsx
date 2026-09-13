@@ -7,6 +7,8 @@ import { OrderDetailRoute } from "./screens/OrderDetailRoute";
 import { TransactionsRoute } from "./screens/TransactionsRoute";
 import { Login } from "./screens/Login";
 import { SignUp } from "./screens/SignUp";
+import { ForgotPassword } from "./screens/ForgotPassword";
+import { ResetPassword } from "./screens/ResetPassword";
 import { tokenStore } from "./api";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -18,6 +20,8 @@ export function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/forgot" element={<ForgotPassword />} />
+      <Route path="/reset" element={<ResetPassword />} />
       <Route
         path="/shop"
         element={
