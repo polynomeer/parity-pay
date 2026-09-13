@@ -31,6 +31,15 @@ public class MockBankClient {
 
     private final RestClient restClient;
 
+    /**
+     * 관리 경로(초기화·장애 모드·장부 손보기)용입니다.
+     *
+     * <p>업무 호출의 읽기 타임아웃은 짧습니다 — 그것이 "결과를 모르는 상태"로 가는 시간이고, 시험은
+     * 그 값을 400 ms로 둡니다. 관리 호출까지 그 값을 쓰면 기관의 TRUNCATE가 조금만 느려도 시험이
+     * 준비 단계에서 죽습니다. 실제로 그렇게 흔들렸습니다. 관리 경로는 시험 대상이 아니므로 넉넉히 둡니다.
+     */
+    private final RestClient adminClient;
+
     MockBankClient(MockBankProperties properties) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout((int) properties.connectTimeout().toMillis());
@@ -38,6 +47,14 @@ public class MockBankClient {
         this.restClient = RestClient.builder()
                 .baseUrl(properties.baseUrl())
                 .requestFactory(factory)
+                .build();
+
+        SimpleClientHttpRequestFactory adminFactory = new SimpleClientHttpRequestFactory();
+        adminFactory.setConnectTimeout((int) properties.connectTimeout().toMillis());
+        adminFactory.setReadTimeout(10_000);
+        this.adminClient = RestClient.builder()
+                .baseUrl(properties.baseUrl())
+                .requestFactory(adminFactory)
                 .build();
     }
 
@@ -149,12 +166,12 @@ public class MockBankClient {
      * 됐습니다. 그것이 요점이고, 대신 기관에 부탁합니다.
      */
     public void resetInstitution() {
-        restClient.post().uri("/mock-bank/admin/reset").retrieve().toBodilessEntity();
+        adminClient.post().uri("/mock-bank/admin/reset").retrieve().toBodilessEntity();
     }
 
     /** 시험이 기관 쪽 기록을 손보는 통로입니다. */
     public void amendWithdrawal(String externalKey, Long amount, boolean delete) {
-        restClient
+        adminClient
                 .post()
                 .uri("/mock-bank/admin/withdrawals/amend")
                 .body(new AmendRequest(externalKey, amount, delete))
@@ -164,7 +181,7 @@ public class MockBankClient {
 
     /** 우리에게 기록이 없는 외부 출금을 기관에 만듭니다(EXTERNAL_ONLY 시나리오). */
     public void insertOrphanWithdrawal(String externalKey, long amount, String accountNumberToken) {
-        restClient
+        adminClient
                 .post()
                 .uri("/mock-bank/admin/withdrawals/orphan")
                 .body(new OrphanRequest(externalKey, amount, accountNumberToken))
@@ -174,7 +191,7 @@ public class MockBankClient {
 
     /** 기관에 남아 있는 계좌 잔액 합계입니다. 시험은 계좌 토큰을 알지 못합니다(해시로 만들어집니다). */
     public long totalAccountBalance() {
-        Long balance = restClient
+        Long balance = adminClient
                 .get()
                 .uri("/mock-bank/admin/accounts/balance-total")
                 .retrieve()
@@ -183,7 +200,7 @@ public class MockBankClient {
     }
 
     public long accountBalance(String accountNumberToken) {
-        Long balance = restClient
+        Long balance = adminClient
                 .get()
                 .uri("/mock-bank/admin/accounts/{token}/balance", accountNumberToken)
                 .retrieve()
@@ -193,7 +210,7 @@ public class MockBankClient {
 
     /** 기관에 남은 건수입니다. {@code table}은 withdrawals 또는 payouts입니다. */
     public long count(String table, String status) {
-        Long value = restClient
+        Long value = adminClient
                 .get()
                 .uri(builder -> {
                     var uri = builder.path("/mock-bank/admin/{table}/count");
@@ -209,7 +226,7 @@ public class MockBankClient {
 
     /** 장애 주입을 기관에 전달합니다. 운영 환경에는 이 기관 자체가 없습니다. */
     public void setBehavior(Object behaviorRequest) {
-        restClient
+        adminClient
                 .post()
                 .uri("/mock-bank/admin/behavior")
                 .body(behaviorRequest)

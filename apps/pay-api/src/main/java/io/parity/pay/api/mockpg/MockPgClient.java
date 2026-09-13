@@ -26,6 +26,15 @@ public class MockPgClient {
 
     private final RestClient restClient;
 
+    /**
+     * 관리 경로(초기화·장애 모드·장부 손보기)용입니다.
+     *
+     * <p>업무 호출의 읽기 타임아웃은 짧습니다 — 그것이 "결과를 모르는 상태"로 가는 시간이고, 시험은
+     * 그 값을 400 ms로 둡니다. 관리 호출까지 그 값을 쓰면 기관의 TRUNCATE가 조금만 느려도 시험이
+     * 준비 단계에서 죽습니다. 실제로 그렇게 흔들렸습니다. 관리 경로는 시험 대상이 아니므로 넉넉히 둡니다.
+     */
+    private final RestClient adminClient;
+
     MockPgClient(MockPgProperties properties) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout((int) properties.connectTimeout().toMillis());
@@ -33,6 +42,14 @@ public class MockPgClient {
         this.restClient = RestClient.builder()
                 .baseUrl(properties.baseUrl())
                 .requestFactory(factory)
+                .build();
+
+        SimpleClientHttpRequestFactory adminFactory = new SimpleClientHttpRequestFactory();
+        adminFactory.setConnectTimeout((int) properties.connectTimeout().toMillis());
+        adminFactory.setReadTimeout(10_000);
+        this.adminClient = RestClient.builder()
+                .baseUrl(properties.baseUrl())
+                .requestFactory(adminFactory)
                 .build();
     }
 
@@ -68,12 +85,12 @@ public class MockPgClient {
 
     /** 기관의 장부와 장애 모드를 함께 초기화합니다. */
     public void resetInstitution() {
-        restClient.post().uri("/mock-pg/admin/reset").retrieve().toBodilessEntity();
+        adminClient.post().uri("/mock-pg/admin/reset").retrieve().toBodilessEntity();
     }
 
     /** 기관에 남은 건수입니다. {@code table}은 approvals 또는 refunds입니다. */
     public long count(String table, String status) {
-        Long value = restClient
+        Long value = adminClient
                 .get()
                 .uri(builder -> {
                     var uri = builder.path("/mock-pg/admin/{table}/count");
@@ -88,7 +105,7 @@ public class MockPgClient {
     }
 
     public void setBehavior(BehaviorRequest request) {
-        restClient
+        adminClient
                 .post()
                 .uri("/mock-pg/admin/behavior")
                 .body(request)
