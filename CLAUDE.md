@@ -178,6 +178,7 @@ apps/web-customer       고객 앱 (Shop · My Pay · 판매자 정산)
 apps/web-ops            운영 콘솔 (거래 검색 · 원장 · 대사 · 장애 시뮬레이터)
 apps/e2e                Playwright — 목 없이 실제 스택을 도는 유일한 시험
 packages/api-client     생성된 API 타입 + 멱등 키·토큰·폴링 계약
+packages/ui             두 앱이 공유하는 CSS 토큰·프리미티브 (ADR-012). 상태 색은 여기서만 정합니다
 ```
 
 프론트엔드는 pnpm 워크스페이스이며 Gradle과 분리되어 있습니다. 클라이언트가 지켜야 하는 계약은
