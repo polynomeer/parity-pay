@@ -220,6 +220,17 @@ Header: `Idempotency-Key: <unique-key>`
 
 응답은 `cancellationId`, `paymentId`, `status`, 요청·완료 금액과 결제의 누적 취소액을 포함합니다.
 
+확정되면 `201 Created`입니다. **외부 환불 결과가 불명확하면 `202 Accepted`와 `Location`**을 돌려주며
+상태는 `UNKNOWN`입니다 — 충전·결제와 같은 규칙입니다(2026-09-14, 결함 L). 그전에는 미확정 취소도
+`201`로 나가서 클라이언트가 "취소됨"으로 보여 줬습니다. 취소를 조회할 API가 없어 기다릴 방법도
+없었습니다.
+
+### GET /api/v1/payments/{paymentId}/cancellations/{cancellationId}
+
+취소 한 건의 상태입니다. `202`를 받은 클라이언트가 여기로 확정을 기다립니다. 결제 조회로는 알 수
+없습니다 — 결제의 누적 취소액은 취소가 확정된 뒤에야 움직입니다. 결제 소유자만 볼 수 있고, 남의
+결제의 취소는 `404`입니다.
+
 ### POST /api/v1/transfers
 
 ```json
