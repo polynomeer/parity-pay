@@ -25,7 +25,7 @@
 #   --no-build                       jar를 다시 빌드하지 않습니다 (코드가 안 바뀌었을 때)
 #   PARITYPAY_*_PORT=<n>             특정 서비스의 시작 포트를 바꿉니다 (그것도 잡혀 있으면 우회합니다)
 #
-# 근거: README §로컬 실행, docs/14-frontend-design.md §2 (두 앱은 다른 오리진), ADR-011
+# 근거: ADR-013, README §로컬 실행, docs/14-frontend-design.md §2 (두 앱은 다른 오리진), ADR-011
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

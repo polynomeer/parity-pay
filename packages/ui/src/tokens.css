@@ -5,7 +5,7 @@
  * 빨강, 상태 미확정은 보라. 특히 **미확정(UNKNOWN)을 빨강으로 칠하지 않습니다.** 실패가 아니기
  * 때문입니다(FE-002). 색이 문구보다 먼저 읽히므로 색이 문구와 같은 말을 해야 합니다.
  *
- * 근거: docs/14-frontend-design.md §6, docs/15-ui-screen-plan.md §4.1
+ * 근거: ADR-012, docs/14-frontend-design.md §6, docs/15-ui-screen-plan.md §4.1
  */
 :root {
   color-scheme: light;

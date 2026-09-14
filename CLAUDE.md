@@ -64,6 +64,8 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 | 화면에 무엇을 보여줄지 | [docs/15-ui-screen-plan.md](docs/15-ui-screen-plan.md) |
 | UI 구현 순서·백엔드 격차 | [docs/16-ui-implementation-plan.md](docs/16-ui-implementation-plan.md) |
 | 배포 형태·오리진·비밀값 | [docs/adr/011-deployment-shape.md](docs/adr/011-deployment-shape.md) |
+| 화면 스타일·상태 색·메뉴 규칙 | [docs/adr/012-frontend-design-system.md](docs/adr/012-frontend-design-system.md) |
+| 로컬 스택 기동·포트 우회 | [docs/adr/013-local-dev-stack-script.md](docs/adr/013-local-dev-stack-script.md) |
 | 왜 이렇게 결정했는지 | [docs/adr/README.md](docs/adr/README.md) |
 
 전체 문서 관계는 [docs/00-document-map.md](docs/00-document-map.md)에 있습니다.
