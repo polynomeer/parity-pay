@@ -265,6 +265,7 @@ def run_mode(mode, variant, jar, args, out_dir, tag):
                 "--summary-export", str(out_dir / f"k6-{tag}.json"),
                 "-e", f"BASE_URL=http://localhost:{args.port}",
                 "-e", f"SAME_WALLET={'true' if same_wallet else 'false'}",
+                "-e", f"VUS={getattr(args, 'vus', 20)}",
                 args.script,
             ],
             stdout=k6_out,
@@ -313,6 +314,8 @@ def run_mode(mode, variant, jar, args, out_dir, tag):
             "wait_profile": wait_profile,
             "wait_by_statement": wait_by_statement,
             "pool": pool_summary,
+            # 표본 원본입니다. M-013이 VU별 곡선을 그릴 때 문자열이 아니라 숫자가 필요합니다.
+            "pool_raw": list(pool.samples),
         }
     finally:
         stop_app(app)

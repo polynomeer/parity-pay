@@ -9,6 +9,8 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 // true이면 모든 VU가 하나의 지갑을 공유해 잔액 행 경합을 만듭니다(P-002).
 const SAME_WALLET = (__ENV.SAME_WALLET || 'false') === 'true';
 const PAYMENT_AMOUNT = Number(__ENV.PAYMENT_AMOUNT || 1000);
+// 측정 구간의 VU 수입니다. 기본 20은 P-001·P-002·M-007의 조건이고, M-013이 포화 곡선을 그리려고 바꿉니다.
+const VUS = Number(__ENV.VUS || 20);
 const PASSWORD = 'load-test-password';
 
 const approved = new Counter('paritypay_payments_approved');
@@ -29,8 +31,8 @@ export const options = {
       startTime: '25s',
       startVUs: 5,
       stages: [
-        { duration: '20s', target: 20 },
-        { duration: '40s', target: 20 },
+        { duration: '20s', target: VUS },
+        { duration: '40s', target: VUS },
         { duration: '10s', target: 0 },
       ],
       tags: { phase: 'measured' },
