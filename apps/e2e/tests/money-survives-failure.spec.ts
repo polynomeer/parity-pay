@@ -310,7 +310,9 @@ test.describe("돈은 장애를 견딘다", () => {
       pay?.click();
       pay?.click();
     });
-    await expect(page.getByText("구매확정")).toBeVisible({ timeout: 60_000 });
+    // 결제가 확정되면 구매확정 버튼이 나옵니다. 문구로 찾지 않습니다 — 디자인이 같은 문구의 제목을
+    // 붙이자 두 요소가 잡혀 시험이 깨진 적이 있습니다. 시험이 보려는 것은 버튼입니다.
+    await expect(page.getByTestId("confirm")).toBeVisible({ timeout: 60_000 });
 
     // 운영 콘솔에서 **주문번호로** 찾습니다. 고객이 들고 오는 것이 이것입니다.
     const ops = await context.newPage();
