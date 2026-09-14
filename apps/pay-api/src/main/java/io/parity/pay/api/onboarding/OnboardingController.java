@@ -72,7 +72,13 @@ class OnboardingController {
      */
     @PostMapping("/admin/mock-bank/mode")
     ResponseEntity<Void> setMockBankMode(@RequestBody MockBankModeRequest request) {
-        mockBankBehavior.setMode(request.mode());
+        if (request.mode() != null) {
+            mockBankBehavior.setMode(request.mode());
+        }
+        // 지급(판매자 정산)은 출금과 다른 스위치입니다. 지급 복구를 실험하려면 이것이 열려 있어야 합니다.
+        if (request.payoutMode() != null) {
+            mockBankBehavior.setPayoutMode(request.payoutMode());
+        }
         return ResponseEntity.noContent().build();
     }
 
@@ -81,6 +87,11 @@ class OnboardingController {
     ResponseEntity<Void> setMockPgMode(@RequestBody MockPgModeRequest request) {
         if (request.mode() != null) {
             mockPgBehavior.setMode(request.mode());
+        }
+        // 환불은 승인과 다른 스위치입니다. 취소 복구(M-012 취소 경로)를 실험하려면 이것이 열려 있어야
+        // 합니다. `MockPgBehavior`에는 있었는데 이 API가 전달하지 않았습니다 — webhookMode와 같은 자리.
+        if (request.refundMode() != null) {
+            mockPgBehavior.setRefundMode(request.refundMode());
         }
         if (request.statusQueryAvailable() != null) {
             mockPgBehavior.setStatusQueryAvailable(request.statusQueryAvailable());
@@ -105,12 +116,17 @@ class OnboardingController {
 
     record LinkBankAccountResponse(UUID bankAccountId) {}
 
-    record MockBankModeRequest(MockBankBehavior.Mode mode) {}
+    /** 은행 장애 주입입니다. {@code mode}는 출금, {@code payoutMode}는 지급입니다. */
+    record MockBankModeRequest(MockBankBehavior.Mode mode, MockBankBehavior.Mode payoutMode) {}
 
     /**
      * PG 장애 주입입니다.
      *
      * @param webhookMode NORMAL · DUPLICATE · OUT_OF_ORDER · NONE
      */
-    record MockPgModeRequest(MockPgBehavior.Mode mode, Boolean statusQueryAvailable, String webhookMode) {}
+    record MockPgModeRequest(
+            MockPgBehavior.Mode mode,
+            MockPgBehavior.Mode refundMode,
+            Boolean statusQueryAvailable,
+            String webhookMode) {}
 }

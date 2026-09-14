@@ -1021,6 +1021,41 @@
           "tags" : [ "payment-controller" ]
         }
       },
+      "/api/v1/payments/{paymentId}/cancellations/{cancellationId}" : {
+        "get" : {
+          "operationId" : "getCancellation",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "paymentId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          }, {
+            "in" : "path",
+            "name" : "cancellationId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/CancellationResponse"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "payment-controller" ]
+        }
+      },
       "/api/v1/payments/{paymentId}/confirmation" : {
         "post" : {
           "operationId" : "confirm",
@@ -1585,6 +1620,10 @@
             "mode" : {
               "enum" : [ "NORMAL", "EXPLICIT_FAILURE", "TIMEOUT_BEFORE_WITHDRAWAL", "TIMEOUT_AFTER_WITHDRAWAL" ],
               "type" : "string"
+            },
+            "payoutMode" : {
+              "enum" : [ "NORMAL", "EXPLICIT_FAILURE", "TIMEOUT_BEFORE_WITHDRAWAL", "TIMEOUT_AFTER_WITHDRAWAL" ],
+              "type" : "string"
             }
           },
           "type" : "object"
@@ -1592,6 +1631,10 @@
         "MockPgModeRequest" : {
           "properties" : {
             "mode" : {
+              "enum" : [ "NORMAL", "EXPLICIT_DECLINE", "TIMEOUT_BEFORE_APPROVAL", "TIMEOUT_AFTER_APPROVAL" ],
+              "type" : "string"
+            },
+            "refundMode" : {
               "enum" : [ "NORMAL", "EXPLICIT_DECLINE", "TIMEOUT_BEFORE_APPROVAL", "TIMEOUT_AFTER_APPROVAL" ],
               "type" : "string"
             },

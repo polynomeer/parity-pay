@@ -12,6 +12,7 @@ import io.parity.pay.payment.application.port.in.PaymentQuery;
 import io.parity.pay.payment.domain.CancellationStatus;
 import io.parity.pay.payment.domain.PaymentMethod;
 import io.parity.pay.payment.domain.PaymentStatus;
+import io.parity.pay.shared.id.CancellationId;
 import io.parity.pay.shared.id.MerchantId;
 import io.parity.pay.shared.id.PaymentId;
 import io.parity.pay.shared.id.WalletId;
@@ -112,7 +113,23 @@ class PaymentController {
                 Money.of(request.amount(), CurrencyCode.valueOf(request.currency())),
                 request.reason(),
                 IdempotencyKey.of(idempotencyKey)));
-        return ResponseEntity.status(HttpStatus.CREATED).body(CancellationResponse.from(view));
+        return switch (view.status()) {
+            case COMPLETED, FAILED -> ResponseEntity.status(HttpStatus.CREATED).body(CancellationResponse.from(view));
+                // 환불 응답이 유실되면 취소는 아직 결과를 모르는 상태입니다. 201로 답하면 클라이언트가
+                // "취소됨"으로 보여 주고, 실제로는 복구가 확정하기 전입니다. 충전·결제와 같은 202입니다.
+                // 근거: ADR-007, 결함 L
+            case REQUESTED, PROCESSING, UNKNOWN -> ResponseEntity.accepted()
+                    .location(URI.create("/api/v1/payments/" + paymentId + "/cancellations/" + view.cancellationId()))
+                    .body(CancellationResponse.from(view));
+        };
+    }
+
+    /** 취소 한 건의 상태입니다. 202를 받은 클라이언트가 여기로 확정을 기다립니다. */
+    @GetMapping("/{paymentId}/cancellations/{cancellationId}")
+    ResponseEntity<CancellationResponse> getCancellation(
+            @PathVariable UUID paymentId, @PathVariable UUID cancellationId) {
+        return ResponseEntity.ok(CancellationResponse.from(paymentQuery.getCancellation(
+                currentPrincipal.memberId(), PaymentId.of(paymentId), CancellationId.of(cancellationId))));
     }
 
     /**

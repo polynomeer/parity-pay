@@ -1,13 +1,17 @@
 package io.parity.pay.payment.application.service;
 
 import io.parity.pay.payment.application.port.in.ApprovePaymentUseCase;
+import io.parity.pay.payment.application.port.in.CancelPaymentUseCase.CancellationView;
 import io.parity.pay.payment.application.port.in.PaymentQuery;
+import io.parity.pay.payment.application.port.out.PaymentCancellationRepository;
 import io.parity.pay.payment.application.port.out.PaymentRepository;
 import io.parity.pay.payment.application.port.out.PgApprovalPort;
 import io.parity.pay.payment.application.port.out.PgApprovalPort.PgApprovalResult;
 import io.parity.pay.payment.domain.Payment;
+import io.parity.pay.payment.domain.PaymentCancellation;
 import io.parity.pay.shared.error.BusinessException;
 import io.parity.pay.shared.error.ErrorCode;
+import io.parity.pay.shared.id.CancellationId;
 import io.parity.pay.shared.id.MemberId;
 import io.parity.pay.shared.id.PaymentId;
 import io.parity.pay.shared.idempotency.RequestHasher;
@@ -43,12 +47,17 @@ public class PaymentService implements ApprovePaymentUseCase, PaymentQuery {
     private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
 
     private final PaymentRepository paymentRepository;
+    private final PaymentCancellationRepository cancellationRepository;
     private final PaymentTransactions transactions;
     private final PgApprovalPort pgApprovalPort;
 
     public PaymentService(
-            PaymentRepository paymentRepository, PaymentTransactions transactions, PgApprovalPort pgApprovalPort) {
+            PaymentRepository paymentRepository,
+            PaymentCancellationRepository cancellationRepository,
+            PaymentTransactions transactions,
+            PgApprovalPort pgApprovalPort) {
         this.paymentRepository = paymentRepository;
+        this.cancellationRepository = cancellationRepository;
         this.transactions = transactions;
         this.pgApprovalPort = pgApprovalPort;
     }
@@ -117,6 +126,20 @@ public class PaymentService implements ApprovePaymentUseCase, PaymentQuery {
                 .findForOrder(memberId, orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
         return PaymentView.of(payment);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CancellationView getCancellation(MemberId memberId, PaymentId paymentId, CancellationId cancellationId) {
+        Payment payment = paymentRepository
+                .findById(paymentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "payment not found"));
+        payment.requireOwnedBy(memberId);
+        PaymentCancellation cancellation = cancellationRepository
+                .findById(cancellationId)
+                .filter(c -> c.paymentId().equals(paymentId))
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "cancellation not found"));
+        return CancellationView.of(cancellation, payment.completedCancellationAmount());
     }
 
     private static String canonicalHash(ApprovePaymentCommand command) {
