@@ -47,7 +47,9 @@ services:
       - --node-id=0
       - --check=false
       - --kafka-addr=PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
-      - --advertise-kafka-addr=PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+      # 바깥 광고 주소는 호스트 포트를 따라가야 합니다. 클라이언트는 부트스트랩 뒤 이 주소로
+      # 다시 붙으므로, 호스트 포트만 바꾸고 광고 주소를 9092로 두면 첫 연결만 되고 끊깁니다.
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:29092,OUTSIDE://localhost:${PARITYPAY_KAFKA_PORT:-9092}
     ports:
       - "${PARITYPAY_KAFKA_PORT:-9092}:9092"
     healthcheck:
@@ -128,7 +130,7 @@ services:
       - ./deploy/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./deploy/observability/rules:/etc/prometheus/rules:ro
     ports:
-      - "9090:9090"
+      - "${PARITYPAY_PROMETHEUS_PORT:-9090}:9090"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -144,7 +146,7 @@ services:
       - ./deploy/observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./deploy/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
-      - "3000:3000"
+      - "${PARITYPAY_GRAFANA_PORT:-3000}:3000"
     depends_on:
       - prometheus
 
@@ -155,9 +157,9 @@ services:
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
     ports:
-      - "16686:16686"
-      - "4317:4317"
-      - "4318:4318"
+      - "${PARITYPAY_JAEGER_UI_PORT:-16686}:16686"
+      - "${PARITYPAY_OTLP_GRPC_PORT:-4317}:4317"
+      - "${PARITYPAY_OTLP_HTTP_PORT:-4318}:4318"
 
 volumes:
   postgres-data:

@@ -141,6 +141,7 @@ pnpm -r test                         # 프론트엔드 전체 테스트
 pnpm typecheck
 pnpm --filter @paritypay/web-customer dev    # 고객 앱 (5173)
 pnpm --filter @paritypay/web-ops dev         # 운영 콘솔 (5174)
+scripts/dev.sh [up|down|status|logs] # 로컬 스택 전부 (컨테이너·기관·pay-api·앱 둘). 잡힌 포트는 우회합니다
 load-tests/run-e2e.sh                # 실제 스택 E2E. 스택을 띄우고 돌리고 정리합니다 (약 1분)
 deploy/run.sh                        # 배포 형태로 띄웁니다 (이미지 빌드 포함). down으로 정리
 ```

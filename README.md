@@ -156,6 +156,16 @@ pnpm --filter @paritypay/web-ops dev         # 운영 콘솔    http://localhost
 장애 시뮬레이터에서 시나리오를 적용하고 고객 앱에서 충전·결제를 실행하면, 미확정 거래가 복구되는
 동안 불변조건 카드가 계속 정상으로 유지되는 것을 볼 수 있습니다.
 
+위 순서를 손으로 밟는 대신 한 번에 띄우려면 아래 하나면 됩니다. 컨테이너·기관 대역·pay-api·두 앱을
+순서대로 올리고 주소를 출력합니다. 기본 포트가 다른 프로젝트에 잡혀 있으면 빈 포트로 우회하고,
+그 포트를 아는 쪽(Redpanda 광고 주소, Vite 프록시, 재설정 메일 링크) 전부에 같은 값을 넣습니다.
+
+```bash
+scripts/dev.sh                 # up. --observability로 grafana·jaeger까지, --no-build로 jar 재빌드 생략
+scripts/dev.sh status
+scripts/dev.sh down            # -v를 붙이면 볼륨까지 지웁니다
+```
+
 한 바퀴를 자동으로 돌려 보려면 아래 하나면 됩니다. 스택을 띄우고 브라우저로 검증한 뒤 정리합니다.
 
 ```bash
