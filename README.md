@@ -57,6 +57,8 @@ AI 에이전트(Claude Code)로 이 저장소에서 작업한다면 [CLAUDE.md](
 - [프론트엔드 설계서](docs/14-frontend-design.md)
 - [UI 화면 계획](docs/15-ui-screen-plan.md)
 - [UI 구현 계획서](docs/16-ui-implementation-plan.md)
+- [도메인 용어와 지식](docs/17-domain-glossary.md) — 처음이면 여기부터
+- [기술 안내서](docs/18-technical-handbook.md) — 전체 구조를 한 문서로
 - [ADR](docs/adr/README.md)
 - [성능·장애 테스트 보고서 템플릿](reports/11-performance-failure-report-template.md)
 - [포트폴리오 기술 보고서 초안](reports/12-portfolio-technical-report-draft.md)

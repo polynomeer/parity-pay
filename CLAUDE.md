@@ -51,6 +51,8 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 
 | 작업 | 먼저 읽을 문서 |
 |---|---|
+| 용어·계정·상태 이름이 낯설 때 | [docs/17-domain-glossary.md](docs/17-domain-glossary.md) |
+| 전체 구조를 처음 볼 때 | [docs/18-technical-handbook.md](docs/18-technical-handbook.md) |
 | 무엇을 만들지 판단 | [docs/03-mvp-scope.md](docs/03-mvp-scope.md), [docs/02-prd.md](docs/02-prd.md) |
 | 금액·한도·취소·오류 규칙 | [docs/04-payment-policy.md](docs/04-payment-policy.md) |
 | 모듈 배치·계층·트랜잭션 경계 | [docs/05-technical-design.md](docs/05-technical-design.md) |
