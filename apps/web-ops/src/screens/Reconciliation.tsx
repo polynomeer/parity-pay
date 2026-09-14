@@ -21,6 +21,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, tokenStore } from "../api";
 import { formatWon } from "../format";
+import { StatusBadge } from "../StatusBadge";
 
 const TYPE_LABEL: Record<string, string> = {
   STATUS_MISMATCH: "상태 불일치",
@@ -39,46 +40,55 @@ export function Reconciliation() {
   const [openId, setOpenId] = useState<string | null>(null);
 
   if (mismatches.isPending) {
-    return <p>불일치를 불러오는 중입니다.</p>;
+    return <p className="loading">불일치를 불러오는 중입니다.</p>;
   }
   if (mismatches.isError) {
     return <p role="alert">불일치를 불러오지 못했습니다.</p>;
   }
 
   return (
-    <section>
-      <h1>대사 워크벤치</h1>
+    <section className="page">
+      <div className="page-head">
+        <h1>대사 워크벤치</h1>
+        <p>금액을 고치는 입력은 없습니다. 보정은 차변·대변 계정을 지정한 새 분개이고, 다른 사람이 승인합니다.</p>
+      </div>
       {mismatches.data.length === 0 ? (
-        <p data-testid="no-mismatch">미해결 불일치가 없습니다.</p>
+        <p className="empty card" data-testid="no-mismatch">
+          미해결 불일치가 없습니다.
+        </p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>유형</th>
-              <th>내부</th>
-              <th>외부</th>
-              <th>차이</th>
-              <th>상태</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {mismatches.data.map((mismatch) => (
-              <tr key={mismatch.mismatchId} data-testid="mismatch-row">
-                <td>{TYPE_LABEL[mismatch.type ?? ""] ?? mismatch.type}</td>
-                <td>{mismatch.internalAmount === null ? "없음" : formatWon(mismatch.internalAmount ?? 0)}</td>
-                <td>{mismatch.externalAmount === null ? "없음" : formatWon(mismatch.externalAmount ?? 0)}</td>
-                <td>{formatWon(mismatch.amountDifference ?? 0)}</td>
-                <td>{mismatch.resolutionStatus}</td>
-                <td>
-                  <button type="button" data-testid="open-adjust" onClick={() => setOpenId(mismatch.mismatchId ?? null)}>
-                    보정 분개
-                  </button>
-                </td>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>유형</th>
+                <th className="num">내부</th>
+                <th className="num">외부</th>
+                <th className="num">차이</th>
+                <th>상태</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {mismatches.data.map((mismatch) => (
+                <tr key={mismatch.mismatchId} data-testid="mismatch-row">
+                  <td className="kind">{TYPE_LABEL[mismatch.type ?? ""] ?? mismatch.type}</td>
+                  <td className="num">{mismatch.internalAmount === null ? "없음" : formatWon(mismatch.internalAmount ?? 0)}</td>
+                  <td className="num">{mismatch.externalAmount === null ? "없음" : formatWon(mismatch.externalAmount ?? 0)}</td>
+                  <td className="num money">{formatWon(mismatch.amountDifference ?? 0)}</td>
+                  <td>
+                    <StatusBadge status={mismatch.resolutionStatus} />
+                  </td>
+                  <td>
+                    <button type="button" className="btn--sm" data-testid="open-adjust" onClick={() => setOpenId(mismatch.mismatchId ?? null)}>
+                      보정 분개
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       {openId !== null && <AdjustmentForm mismatchId={openId} />}
     </section>
@@ -120,6 +130,7 @@ function AdjustmentForm({ mismatchId }: { mismatchId: string }) {
 
   return (
     <form
+      className="card"
       onSubmit={(event) => {
         event.preventDefault();
         submit.mutate();
@@ -127,81 +138,91 @@ function AdjustmentForm({ mismatchId }: { mismatchId: string }) {
     >
       <h2>보정 분개 요청</h2>
       {/* 금액을 '고치는' 입력이 아니라 새 분개의 금액입니다. */}
-      <label>
-        차변 계정
-        {/* 자유 입력이 아닙니다. 계약에 있는 계정만 고를 수 있습니다. */}
-        <select
-          data-testid="debit"
-          value={debitAccount}
-          onChange={(e) => setDebitAccount(e.target.value as AdjustmentAccount)}
-          required
-        >
-          <option value="">선택</option>
-          {ADJUSTMENT_ACCOUNTS.map((code) => (
-            <option key={code} value={code}>
-              {code}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        대변 계정
-        <select
-          data-testid="credit"
-          value={creditAccount}
-          onChange={(e) => setCreditAccount(e.target.value as AdjustmentAccount)}
-          required
-        >
-          <option value="">선택</option>
-          {ADJUSTMENT_ACCOUNTS.map((code) => (
-            <option key={code} value={code}>
-              {code}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        금액
-        <input
-          type="number"
-          data-testid="amount"
-          min={1}
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
-          required
-        />
-      </label>
+      <div className="form-grid">
+        <label>
+          차변 계정
+          {/* 자유 입력이 아닙니다. 계약에 있는 계정만 고를 수 있습니다. */}
+          <select
+            data-testid="debit"
+            value={debitAccount}
+            onChange={(e) => setDebitAccount(e.target.value as AdjustmentAccount)}
+            required
+          >
+            <option value="">선택</option>
+            {ADJUSTMENT_ACCOUNTS.map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          대변 계정
+          <select
+            data-testid="credit"
+            value={creditAccount}
+            onChange={(e) => setCreditAccount(e.target.value as AdjustmentAccount)}
+            required
+          >
+            <option value="">선택</option>
+            {ADJUSTMENT_ACCOUNTS.map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          금액
+          <input
+            type="number"
+            data-testid="amount"
+            min={1}
+            value={amount}
+            onChange={(e) => setAmount(Number(e.target.value))}
+            required
+          />
+        </label>
+      </div>
       <label>
         사유
         {/* 기본값을 넣지 않습니다. 감사 로그에 남는 값입니다. */}
         <input data-testid="reason" value={reason} onChange={(e) => setReason(e.target.value)} required />
       </label>
-      <label>
-        승인자
-        <input data-testid="approver" value={approverId} onChange={(e) => setApproverId(e.target.value)} required />
-      </label>
-      <label>
-        비밀번호 확인
-        {/* 로그인 상태여도 다시 묻습니다. 이 화면이 원장을 움직이기 때문입니다. */}
-        <input
-          data-testid="reauth-password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </label>
+      <div className="form-grid">
+        <label>
+          승인자
+          <input data-testid="approver" value={approverId} onChange={(e) => setApproverId(e.target.value)} required />
+        </label>
+        <label>
+          비밀번호 확인
+          {/* 로그인 상태여도 다시 묻습니다. 이 화면이 원장을 움직이기 때문입니다. */}
+          <input
+            data-testid="reauth-password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </label>
+      </div>
 
       {selfApproval && (
         <p role="alert" data-testid="self-approval">
           자기 요청은 자기가 승인할 수 없습니다. 다른 승인자를 지정하십시오.
         </p>
       )}
-      <button type="submit" data-testid="submit-adjust" disabled={!complete || selfApproval || submit.isPending}>
-        보정 요청
-      </button>
-      {submit.isSuccess && <p data-testid="adjusted">보정 분개를 만들었습니다.</p>}
+      <div>
+        <button type="submit" data-testid="submit-adjust" disabled={!complete || selfApproval || submit.isPending}>
+          보정 요청
+        </button>
+      </div>
+      {submit.isSuccess && (
+        <p className="notice notice--ok" data-testid="adjusted">
+          보정 분개를 만들었습니다.
+        </p>
+      )}
     </form>
   );
 }

@@ -25,7 +25,11 @@ export function Session({ children }: { children: ReactNode }) {
   }, []);
 
   if (!restored) {
-    return <p role="status">세션을 확인하고 있습니다…</p>;
+    return (
+      <p className="loading" role="status">
+        세션을 확인하고 있습니다…
+      </p>
+    );
   }
   return <>{children}</>;
 }

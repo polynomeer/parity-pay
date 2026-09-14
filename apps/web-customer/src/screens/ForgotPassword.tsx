@@ -16,12 +16,14 @@ export function ForgotPassword() {
 
   if (submit.isSuccess) {
     return (
-      <section>
+      <section className="stack">
         <h1>메일을 확인하세요</h1>
-        <p data-testid="reset-requested">
+        <p className="notice notice--muted" data-testid="reset-requested">
           {email}로 가입된 계정이 있다면 재설정 링크를 보냈습니다. 링크는 30분 동안 유효합니다.
         </p>
-        <Link to="/login">로그인으로</Link>
+        <p className="auth__foot">
+          <Link to="/login">로그인으로</Link>
+        </p>
       </section>
     );
   }
@@ -33,7 +35,10 @@ export function ForgotPassword() {
         submit.mutate();
       }}
     >
-      <h1>비밀번호 찾기</h1>
+      <div className="stack--tight stack">
+        <h1>비밀번호 찾기</h1>
+        <p className="muted">가입한 이메일로 재설정 링크를 보내 드립니다.</p>
+      </div>
       <label>
         이메일
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -42,6 +47,9 @@ export function ForgotPassword() {
         재설정 링크 보내기
       </button>
       {submit.isError && <p role="alert">요청을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.</p>}
+      <p className="auth__foot">
+        <Link to="/login">로그인으로</Link>
+      </p>
     </form>
   );
 }

@@ -2,7 +2,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { ApiError, login, register, userMessage } from "@paritypay/api-client";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, auth } from "../api";
 
 export function SignUp() {
@@ -27,7 +27,10 @@ export function SignUp() {
         submit.mutate();
       }}
     >
-      <h1>가입</h1>
+      <div className="stack--tight stack">
+        <h1>가입</h1>
+        <p className="muted">가입하면 페이머니 지갑이 함께 만들어집니다.</p>
+      </div>
       <label>
         이메일
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -53,6 +56,9 @@ export function SignUp() {
             : "가입하지 못했습니다. 잠시 후 다시 시도해 주세요."}
         </p>
       )}
+      <p className="auth__foot">
+        이미 계정이 있으신가요? <Link to="/login">로그인</Link>
+      </p>
     </form>
   );
 }

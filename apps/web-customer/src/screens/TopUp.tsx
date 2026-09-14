@@ -35,9 +35,12 @@ export function TopUp({ walletId, bankAccountId }: { walletId: string; bankAccou
   if (state.kind === "settled") {
     const succeeded = state.value.status === "SUCCEEDED";
     return (
-      <section>
+      <section className="result">
+        <span className={`result__icon ${succeeded ? "result__icon--ok" : "result__icon--fail"}`} aria-hidden="true">
+          {succeeded ? "✓" : "!"}
+        </span>
         <h1>{succeeded ? "충전 완료" : "충전 실패"}</h1>
-        <p>{formatWon(state.value.requestedAmount ?? 0)}</p>
+        <p className="money money--lg">{formatWon(state.value.requestedAmount ?? 0)}</p>
         <button
           type="button"
           onClick={() => queryClient.invalidateQueries({ queryKey: ["wallet", "me"] })}
@@ -50,7 +53,10 @@ export function TopUp({ walletId, bankAccountId }: { walletId: string; bankAccou
 
   if (state.kind === "confirming" || state.kind === "pending") {
     return (
-      <section>
+      <section className="result">
+        <span className="result__icon result__icon--unknown" aria-hidden="true">
+          …
+        </span>
         <h1>처리 결과를 확인하고 있습니다</h1>
         {/* 실패라고 말하지 않습니다. 다시 충전하면 이중 출금이 됩니다. */}
         <p role="status">
@@ -70,24 +76,32 @@ export function TopUp({ walletId, bankAccountId }: { walletId: string; bankAccou
       }}
     >
       <h1>충전</h1>
-      <div>
+      <label>
+        충전 금액
+        <span className="amount-input">
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={amount}
+            onChange={(e) => setAmount(Number(e.target.value))}
+          />
+        </span>
+      </label>
+      <div className="row">
         {QUICK_AMOUNTS.map((value) => (
-          <button key={value} type="button" onClick={() => setAmount(value)}>
+          <button
+            key={value}
+            type="button"
+            className="chip"
+            aria-pressed={amount === value}
+            onClick={() => setAmount(value)}
+          >
             +{formatWon(value)}
           </button>
         ))}
       </div>
-      <label>
-        충전 금액
-        <input
-          type="number"
-          min={1}
-          step={1}
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
-        />
-      </label>
-      <button type="submit" disabled={state.kind === "submitting"}>
+      <button type="submit" className="btn--lg btn--block" disabled={state.kind === "submitting"}>
         {state.kind === "submitting" ? "요청 중" : `${formatWon(amount)} 충전`}
       </button>
       {state.kind === "rejected" && (

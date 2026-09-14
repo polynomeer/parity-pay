@@ -15,6 +15,7 @@ import { useState } from "react";
 import { LedgerTransaction } from "./LedgerTransaction";
 import { api } from "../api";
 import { formatInstant, formatWon } from "../format";
+import { StatusBadge } from "../StatusBadge";
 
 const KIND_LABEL: Record<string, string> = {
   PAYMENT: "결제",
@@ -48,9 +49,13 @@ export function Explorer() {
   });
 
   return (
-    <section>
-      <h1>거래 검색</h1>
+    <section className="page">
+      <div className="page-head">
+        <h1>거래 검색</h1>
+        <p>고객이 어떤 식별자를 들고 오든 하나의 입력으로 시작합니다.</p>
+      </div>
       <form
+        className="search"
         onSubmit={(event) => {
           event.preventDefault();
           setSelected(null);
@@ -71,19 +76,22 @@ export function Explorer() {
       </form>
 
       {search.data !== undefined && (
-        <div data-testid="result">
+        <div className="card stack" data-testid="result">
           <p>
             입력값은 <strong data-testid="kind">{KIND_LABEL[search.data.kind ?? ""] ?? search.data.kind}</strong>
             입니다.
           </p>
           {(search.data.references ?? []).length === 0 ? (
-            <p data-testid="not-found">이 값으로 찾을 수 있는 거래가 없습니다.</p>
+            <p className="notice notice--muted" data-testid="not-found">
+              이 값으로 찾을 수 있는 거래가 없습니다.
+            </p>
           ) : (
-            <ul>
+            <ul className="refs">
               {(search.data.references ?? []).map((reference) => (
                 <li key={`${reference.kind}-${reference.referenceId}`}>
                   <button
                     type="button"
+                    className={`btn--sm ${selected === reference.referenceId ? "btn--primary" : ""}`}
                     data-testid="reference"
                     onClick={() => setSelected(reference.referenceId ?? null)}
                   >
@@ -100,37 +108,41 @@ export function Explorer() {
       )}
 
       {timeline.data !== undefined && (
-        <table data-testid="timeline">
-          <thead>
-            <tr>
-              <th>시각</th>
-              <th>종류</th>
-              <th>상태</th>
-              <th>금액</th>
-              <th>내용</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(timeline.data.entries ?? []).map((entry, index) => (
-              <tr key={`${entry.kind}-${entry.id}-${index}`} data-testid="timeline-row">
-                <td>{entry.occurredAt === undefined ? "" : formatInstant(entry.occurredAt)}</td>
-                <td>
-                  {entry.kind === "LEDGER" ? (
-                    // 원장 줄에서 원장 상세로 바로 넘어갑니다. DOC-15 §4.3이 요구한 연결입니다.
-                    <button type="button" data-testid="open-ledger" onClick={() => setLedgerId(entry.id ?? null)}>
-                      원장
-                    </button>
-                  ) : (
-                    entry.kind
-                  )}
-                </td>
-                <td>{entry.status}</td>
-                <td>{entry.amount === undefined || entry.amount === null ? "" : formatWon(entry.amount)}</td>
-                <td>{entry.detail}</td>
+        <div className="table-wrap">
+          <table className="timeline" data-testid="timeline">
+            <thead>
+              <tr>
+                <th>시각</th>
+                <th>종류</th>
+                <th>상태</th>
+                <th className="num">금액</th>
+                <th>내용</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(timeline.data.entries ?? []).map((entry, index) => (
+                <tr key={`${entry.kind}-${entry.id}-${index}`} data-testid="timeline-row">
+                  <td>{entry.occurredAt === undefined ? "" : formatInstant(entry.occurredAt)}</td>
+                  <td>
+                    {entry.kind === "LEDGER" ? (
+                      // 원장 줄에서 원장 상세로 바로 넘어갑니다. DOC-15 §4.3이 요구한 연결입니다.
+                      <button type="button" className="btn--sm" data-testid="open-ledger" onClick={() => setLedgerId(entry.id ?? null)}>
+                        원장
+                      </button>
+                    ) : (
+                      <span className="kind">{KIND_LABEL[entry.kind ?? ""] ?? entry.kind}</span>
+                    )}
+                  </td>
+                  <td>
+                    <StatusBadge status={entry.status} />
+                  </td>
+                  <td className="num money">{entry.amount === undefined || entry.amount === null ? "" : formatWon(entry.amount)}</td>
+                  <td className="muted">{entry.detail}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       {ledgerId !== null && <LedgerTransaction transactionId={ledgerId} />}
     </section>

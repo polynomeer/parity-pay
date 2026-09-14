@@ -60,17 +60,23 @@ export function Checkout({
     void queryClient.invalidateQueries({ queryKey: ["wallet", "me"] });
     onSettled?.(state.value);
     return (
-      <section>
+      <section className="result">
+        <span className="result__icon result__icon--ok" aria-hidden="true">
+          ✓
+        </span>
         <h1 data-testid="result">결제 완료</h1>
-        <p>{formatWon(state.value.approvedAmount ?? 0)}</p>
-        <p>주문번호 {state.value.orderId}</p>
+        <p className="money money--lg">{formatWon(state.value.approvedAmount ?? 0)}</p>
+        <p className="id">주문번호 {state.value.orderId}</p>
       </section>
     );
   }
 
   if (state.kind === "confirming" || state.kind === "pending") {
     return (
-      <section>
+      <section className="result">
+        <span className="result__icon result__icon--unknown" aria-hidden="true">
+          …
+        </span>
         <h1 data-testid="result">결제 결과를 확인하고 있습니다</h1>
         <p role="status">
           결제 결과를 확인하고 있습니다. 다시 결제하지 말고 잠시 후 주문 내역에서 상태를 확인해
@@ -81,9 +87,9 @@ export function Checkout({
   }
 
   return (
-    <section>
+    <section className="card stack checkout">
       <h1>결제</h1>
-      <dl>
+      <dl className="dl--total">
         <dt>상품</dt>
         <dd>{order.itemName}</dd>
         <dt>결제 금액</dt>
@@ -91,6 +97,7 @@ export function Checkout({
       </dl>
       <button
         type="button"
+        className="btn--primary btn--lg btn--block"
         data-testid="pay"
         // 연속 클릭을 막지만, 정확성이 여기 걸려 있지는 않습니다.
         disabled={state.kind === "submitting"}

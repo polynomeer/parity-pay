@@ -295,7 +295,7 @@ KRW는 원 단위 정수입니다(`long`/`BIGINT`).
 | 서버 상태 | TanStack Query | **재시도 정책을 명시적으로 통제할 수 있는 것이 선택 이유입니다**(§7) |
 | 폼 | React Hook Form + Zod | 금액 입력 검증을 서버 규칙과 같은 자리에 둡니다 |
 | API 타입 | `openapi-typescript`로 `docs/api/openapi.json`에서 생성 | §8 |
-| 스타일 | Tailwind CSS | 두 앱이 공유하는 토큰만 정의합니다 |
+| 스타일 | 순수 CSS + `packages/ui` 토큰 | 두 앱이 공유하는 토큰·프리미티브만 `@paritypay/ui`에 두고, 레이아웃은 앱별 `app.css`입니다. 화면 20여 개에 빌드 단계를 더할 이유가 없어 Tailwind를 쓰지 않습니다(2026-09-14) |
 | 테스트 | Vitest + Testing Library + MSW + Playwright | §9 |
 
 **Next.js를 쓰지 않는 이유**: 서버 렌더링이 필요 없고, 서버 컴포넌트를 도입하면 토큰을 어디에

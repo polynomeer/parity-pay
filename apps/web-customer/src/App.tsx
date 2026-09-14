@@ -5,10 +5,12 @@ import { Products } from "./screens/Products";
 import { Orders } from "./screens/Orders";
 import { OrderDetailRoute } from "./screens/OrderDetailRoute";
 import { TransactionsRoute } from "./screens/TransactionsRoute";
+import { Settlements } from "./screens/Settlements";
 import { Login } from "./screens/Login";
 import { SignUp } from "./screens/SignUp";
 import { ForgotPassword } from "./screens/ForgotPassword";
 import { ResetPassword } from "./screens/ResetPassword";
+import { AuthShell, Shell } from "./Shell";
 import { tokenStore } from "./api";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -18,58 +20,27 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 export function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<SignUp />} />
-      <Route path="/forgot" element={<ForgotPassword />} />
-      <Route path="/reset" element={<ResetPassword />} />
+      <Route element={<AuthShell />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot" element={<ForgotPassword />} />
+        <Route path="/reset" element={<ResetPassword />} />
+      </Route>
       <Route
-        path="/shop"
         element={
           <RequireAuth>
-            <Products />
+            <Shell />
           </RequireAuth>
         }
-      />
-      <Route
-        path="/orders"
-        element={
-          <RequireAuth>
-            <Orders />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/orders/:orderId"
-        element={
-          <RequireAuth>
-            <OrderDetailRoute />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/transactions"
-        element={
-          <RequireAuth>
-            <TransactionsRoute />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/pay"
-        element={
-          <RequireAuth>
-            <Pay />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/"
-        element={
-          <RequireAuth>
-            <Home />
-          </RequireAuth>
-        }
-      />
+      >
+        <Route path="/" element={<Home />} />
+        <Route path="/shop" element={<Products />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/orders/:orderId" element={<OrderDetailRoute />} />
+        <Route path="/transactions" element={<TransactionsRoute />} />
+        <Route path="/pay" element={<Pay />} />
+        <Route path="/settlements" element={<Settlements />} />
+      </Route>
     </Routes>
   );
 }

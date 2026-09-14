@@ -25,10 +25,11 @@ export function OrderLookup() {
   const notFound = lookup.error instanceof ApiError && lookup.error.status === 404;
 
   return (
-    <section aria-labelledby="order-lookup-heading">
+    <section className="stack" aria-labelledby="order-lookup-heading">
       <h2 id="order-lookup-heading">주문번호로 결제 찾기</h2>
-      <p>이 기기에 주문이 없어도, 판매자가 알려 준 주문번호로 결제 결과를 확인할 수 있습니다.</p>
+      <p className="muted">이 기기에 주문이 없어도, 판매자가 알려 준 주문번호로 결제 결과를 확인할 수 있습니다.</p>
       <form
+        className="form--inline"
         onSubmit={(event) => {
           event.preventDefault();
           if (orderId.trim() !== "") {
@@ -44,13 +45,17 @@ export function OrderLookup() {
         </button>
       </form>
       {lookup.data && (
-        <p data-testid="lookup-result">
+        <p className="notice notice--muted" data-testid="lookup-result">
           <strong>{paymentStatusLabel(lookup.data.status)}</strong> · {formatWon(lookup.data.approvedAmount ?? 0)}
           {" · "}
           <Link to={`/orders/${lookup.data.orderId}`}>자세히</Link>
         </p>
       )}
-      {notFound && <p data-testid="lookup-result">이 주문번호로 만든 결제가 없습니다.</p>}
+      {notFound && (
+        <p className="notice notice--muted" data-testid="lookup-result">
+          이 주문번호로 만든 결제가 없습니다.
+        </p>
+      )}
       {lookup.error && !notFound && <p role="alert">조회하지 못했습니다. 잠시 후 다시 시도해 주세요.</p>}
     </section>
   );

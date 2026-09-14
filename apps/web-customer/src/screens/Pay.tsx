@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMyWallet, type WalletBalanceResponse } from "@paritypay/api-client";
 import { useState } from "react";
 import { api } from "../api";
-import { formatInstant, formatWon } from "../format";
+import { Balance } from "./Balance";
 import { TopUp } from "./TopUp";
 import { LinkBankAccount } from "./LinkBankAccount";
 
@@ -19,28 +19,23 @@ export function Pay() {
   });
 
   if (wallet.isPending) {
-    return <p>지갑을 불러오는 중입니다.</p>;
+    return <p className="loading">지갑을 불러오는 중입니다.</p>;
   }
   if (wallet.isError) {
     return <p role="alert">지갑을 불러오지 못했습니다.</p>;
   }
 
   return (
-    <section>
+    <section className="page">
       <h1>페이머니</h1>
-      <p data-testid="available">{formatWon(wallet.data.available ?? 0)}</p>
-      {(wallet.data.pending ?? 0) > 0 && (
-        <p data-testid="pending">처리 중 {formatWon(wallet.data.pending ?? 0)}</p>
-      )}
-      <p data-testid="as-of">
-        {wallet.data.asOf === undefined ? "" : `${formatInstant(wallet.data.asOf)} 기준`}
-      </p>
-
-      {bankAccountId === null ? (
-        <LinkBankAccount onLinked={setBankAccountId} />
-      ) : (
-        <TopUp walletId={wallet.data.walletId!} bankAccountId={bankAccountId} />
-      )}
+      <Balance wallet={wallet.data} />
+      <div className="card">
+        {bankAccountId === null ? (
+          <LinkBankAccount onLinked={setBankAccountId} />
+        ) : (
+          <TopUp walletId={wallet.data.walletId!} bankAccountId={bankAccountId} />
+        )}
+      </div>
     </section>
   );
 }

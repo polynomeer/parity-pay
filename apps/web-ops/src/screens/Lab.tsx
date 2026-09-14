@@ -45,39 +45,58 @@ export function Lab() {
   });
 
   return (
-    <section>
-      <h1>장애 시뮬레이터</h1>
+    <section className="page">
+      <div className="page-head">
+        <h1>장애 시뮬레이터</h1>
+        <p>장애를 주입하고, 복구가 도는 동안 불변조건 카드가 계속 정상인지 봅니다.</p>
+      </div>
 
-      <label>
-        시나리오
-        <select data-testid="scenario" value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
-          {SCENARIOS.map((scenario) => (
-            <option key={scenario.id} value={scenario.id}>
-              {scenario.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      {/* 무엇이 일어날지 미리 말해 줍니다. 버튼만 있으면 결과를 해석할 수 없습니다. */}
-      <p data-testid="explains">{selected.explains}</p>
-      <button type="button" data-testid="apply" onClick={() => apply.mutate()} disabled={apply.isPending}>
-        시나리오 적용
-      </button>
-      {apply.isSuccess && (
-        <p role="status" data-testid="applied">
-          적용했습니다. 이제 고객 앱에서 충전이나 결제를 실행하고 아래 카드를 보십시오.
+      <div className="card scenario">
+        <label>
+          시나리오
+          <select data-testid="scenario" value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
+            {SCENARIOS.map((scenario) => (
+              <option key={scenario.id} value={scenario.id}>
+                {scenario.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {/* 무엇이 일어날지 미리 말해 줍니다. 버튼만 있으면 결과를 해석할 수 없습니다. */}
+        <p className="scenario__explain" data-testid="explains">
+          {selected.explains}
         </p>
-      )}
+        <div>
+          <button
+            type="button"
+            className="btn--primary"
+            data-testid="apply"
+            onClick={() => apply.mutate()}
+            disabled={apply.isPending}
+          >
+            시나리오 적용
+          </button>
+        </div>
+        {apply.isSuccess && (
+          <p role="status" data-testid="applied">
+            적용했습니다. 이제 고객 앱에서 충전이나 결제를 실행하고 아래 카드를 보십시오.
+          </p>
+        )}
+      </div>
 
-      <h2>불변조건</h2>
-      <InvariantCards snapshot={invariants.data} />
+      <div className="stack">
+        <div className="page-head">
+          <h2>불변조건</h2>
+        </div>
+        <InvariantCards snapshot={invariants.data} />
+      </div>
     </section>
   );
 }
 
 function InvariantCards({ snapshot }: { snapshot: InvariantSnapshot | undefined }) {
   if (snapshot === undefined) {
-    return <p>불변조건을 불러오는 중입니다.</p>;
+    return <p className="loading">불변조건을 불러오는 중입니다.</p>;
   }
 
   const age = snapshot.ageSeconds ?? null;
@@ -86,23 +105,30 @@ function InvariantCards({ snapshot }: { snapshot: InvariantSnapshot | undefined 
   return (
     <>
       {/* 캐시가 멈추면 마지막 값이 계속 '정상'으로 보입니다. 그 위험을 화면에 드러냅니다. */}
-      <p data-testid="freshness">
+      <p className={`freshness ${stale ? "freshness--stale" : ""}`} data-testid="freshness">
         {age === null
           ? "아직 한 번도 계산하지 않았습니다"
           : stale
             ? `${age}초 전 값입니다 — 갱신이 멈췄을 수 있습니다`
             : `${age}초 전 기준`}
       </p>
-      <ul>
+      <ul className="invariants">
         {(snapshot.values ?? [])
           .filter((item) => (item.name ?? "").startsWith("paritypay.invariant."))
           .map((item) => {
             const unknown = item.value === null || item.value === undefined;
             const violated = !unknown && (item.value ?? 0) > 0;
             return (
-              <li key={item.name} data-testid="invariant-card">
+              <li
+                key={item.name}
+                className={`invariant ${unknown ? "invariant--unknown" : violated ? "invariant--violated" : "invariant--ok"}`}
+                data-testid="invariant-card"
+              >
                 <strong>{item.description}</strong>
-                <span data-testid="invariant-state">
+                <span
+                  className={`badge ${unknown ? "badge--unknown" : violated ? "badge--danger" : "badge--ok"}`}
+                  data-testid="invariant-state"
+                >
                   {unknown ? "확인하지 못함" : violated ? `위반 ${item.value}건 — 즉시 대응` : "정상"}
                 </span>
               </li>

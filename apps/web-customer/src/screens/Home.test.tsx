@@ -6,6 +6,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
+import { MemoryRouter } from "react-router-dom";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { Home } from "./Home";
@@ -37,7 +38,9 @@ function renderHome() {
   });
   return render(
     <QueryClientProvider client={createQueryClient()}>
-      <Home />
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }

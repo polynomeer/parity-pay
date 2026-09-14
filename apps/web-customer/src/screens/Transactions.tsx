@@ -63,34 +63,40 @@ export function Transactions({
   const stillPending = optimistic.filter((o) => !settledReferences.has(o.referenceId));
 
   return (
-    <section>
+    <section className="page">
       <h1>거래내역</h1>
-      <ul>
-        {stillPending.map((entry) => (
-          <li key={entry.referenceId} data-testid="pending-entry">
-            <span>{TYPE_LABEL[entry.type] ?? entry.type}</span>
-            <span>
-              {entry.direction === "CREDIT" ? "+" : "-"}
-              {formatWon(entry.amount)}
-            </span>
-            {/* 목록에 아직 없다는 사실을 숨기지 않습니다. */}
-            <small data-testid="pending-badge">반영 중</small>
-          </li>
-        ))}
-        {settled.map((entry) => (
-          <li key={entry.transactionId} data-testid="entry">
-            <span>{TYPE_LABEL[entry.type ?? ""] ?? entry.type}</span>
-            <span>
-              {entry.direction === "CREDIT" ? "+" : "-"}
-              {formatWon(entry.amount ?? 0)}
-            </span>
-            <small>{entry.occurredAt === undefined ? "" : formatInstant(entry.occurredAt)}</small>
-          </li>
-        ))}
-      </ul>
-      {settled.length === 0 && stillPending.length === 0 && <p>거래내역이 없습니다.</p>}
+      <div className="card">
+        <ul className="list">
+          {stillPending.map((entry) => (
+            <li key={entry.referenceId} data-testid="pending-entry">
+              <span className="list__grow tx__type">{TYPE_LABEL[entry.type] ?? entry.type}</span>
+              {/* 목록에 아직 없다는 사실을 숨기지 않습니다. */}
+              <small className="badge badge--unknown" data-testid="pending-badge">
+                반영 중
+              </small>
+              <span className={`tx__amount ${entry.direction === "CREDIT" ? "money--in" : "money--out"}`}>
+                {entry.direction === "CREDIT" ? "+" : "-"}
+                {formatWon(entry.amount)}
+              </span>
+            </li>
+          ))}
+          {settled.map((entry) => (
+            <li key={entry.transactionId} data-testid="entry">
+              <span className="list__grow list__col">
+                <span className="tx__type">{TYPE_LABEL[entry.type ?? ""] ?? entry.type}</span>
+                <small>{entry.occurredAt === undefined ? "" : formatInstant(entry.occurredAt)}</small>
+              </span>
+              <span className={`tx__amount ${entry.direction === "CREDIT" ? "money--in" : "money--out"}`}>
+                {entry.direction === "CREDIT" ? "+" : "-"}
+                {formatWon(entry.amount ?? 0)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {settled.length === 0 && stillPending.length === 0 && <p className="empty">거래내역이 없습니다.</p>}
+      </div>
       {page.hasNextPage && (
-        <button type="button" data-testid="more" onClick={() => void page.fetchNextPage()}>
+        <button type="button" className="btn--block" data-testid="more" onClick={() => void page.fetchNextPage()}>
           더 보기
         </button>
       )}

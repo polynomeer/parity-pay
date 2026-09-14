@@ -18,18 +18,25 @@ export function ResetPassword() {
 
   if (token === "") {
     return (
-      <section>
+      <section className="stack">
         <h1>링크가 올바르지 않습니다</h1>
-        <Link to="/forgot">다시 요청하기</Link>
+        <p className="muted">메일의 링크를 그대로 열어야 합니다.</p>
+        <p className="auth__foot">
+          <Link to="/forgot">다시 요청하기</Link>
+        </p>
       </section>
     );
   }
   if (submit.isSuccess) {
     return (
-      <section>
+      <section className="stack">
         <h1>비밀번호를 바꿨습니다</h1>
-        <p data-testid="reset-done">다른 기기의 로그인은 모두 끊겼습니다. 새 비밀번호로 로그인하세요.</p>
-        <Link to="/login">로그인으로</Link>
+        <p className="notice notice--ok" data-testid="reset-done">
+          다른 기기의 로그인은 모두 끊겼습니다. 새 비밀번호로 로그인하세요.
+        </p>
+        <p className="auth__foot">
+          <Link to="/login">로그인으로</Link>
+        </p>
       </section>
     );
   }

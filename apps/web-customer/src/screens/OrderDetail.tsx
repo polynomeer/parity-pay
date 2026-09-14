@@ -25,6 +25,7 @@ import { api } from "../api";
 import { formatWon } from "../format";
 import { findOrder, saveOrder } from "../shop/orders";
 import { Checkout } from "./Checkout";
+import { PaymentBadge } from "./Orders";
 import { useSettlingWrite } from "../useSettlingWrite";
 
 export function OrderDetail({ walletId }: { walletId: string }) {
@@ -63,12 +64,26 @@ export function OrderDetail({ walletId }: { walletId: string }) {
   }
 
   return (
-    <section>
-      <h1>{order.productName}</h1>
-      <p>주문번호 {order.orderId}</p>
-      <p>{order.merchantName}</p>
+    <section className="page">
+      <div className="order-head">
+        <small>{order.merchantName}</small>
+        <h1>{order.productName}</h1>
+        <p className="id">주문번호 {order.orderId}</p>
+      </div>
       {payment.data !== undefined && (
         <>
+          <div className="card">
+            <dl>
+              <dt>결제 금액</dt>
+              <dd>{formatWon(payment.data.approvedAmount ?? 0)}</dd>
+              <dt>취소 가능액</dt>
+              <dd>{formatWon(payment.data.cancellableAmount ?? 0)}</dd>
+              <dt>결제 상태</dt>
+              <dd>
+                <PaymentBadge status={payment.data.status} />
+              </dd>
+            </dl>
+          </div>
           <CancelPanel
             payment={payment.data}
             onCanceled={(view) => {
@@ -113,7 +128,11 @@ function CancelPanel({
   });
 
   if (cancellable === 0) {
-    return <p data-testid="not-cancellable">취소할 수 있는 금액이 없습니다.</p>;
+    return (
+      <p className="notice notice--muted" data-testid="not-cancellable">
+        취소할 수 있는 금액이 없습니다.
+      </p>
+    );
   }
 
   if (state.kind === "settled") {
@@ -122,6 +141,7 @@ function CancelPanel({
 
   return (
     <form
+      className="card"
       onSubmit={(event) => {
         event.preventDefault();
         void run();
@@ -129,7 +149,7 @@ function CancelPanel({
     >
       <h2>취소</h2>
       {/* DOC-15 §1.6이 요구한 계산 과정입니다. */}
-      <dl>
+      <dl className="dl--total">
         <dt>최초 결제액</dt>
         <dd>{formatWon(payment.approvedAmount ?? 0)}</dd>
         <dt>기존 취소액</dt>
@@ -141,17 +161,19 @@ function CancelPanel({
           {formatWon((payment.approvedAmount ?? 0) - (payment.canceledAmount ?? 0) - amount)}
         </dd>
       </dl>
-      <input
-        type="number"
-        min={1}
-        max={cancellable}
-        value={amount}
-        onChange={(e) => setAmount(Number(e.target.value))}
-        aria-label="취소 금액"
-      />
-      <button type="submit" data-testid="cancel" disabled={state.kind === "submitting"}>
-        취소하기
-      </button>
+      <div className="field-row">
+        <input
+          type="number"
+          min={1}
+          max={cancellable}
+          value={amount}
+          onChange={(e) => setAmount(Number(e.target.value))}
+          aria-label="취소 금액"
+        />
+        <button type="submit" data-testid="cancel" disabled={state.kind === "submitting"}>
+          취소하기
+        </button>
+      </div>
       {state.kind === "rejected" && (
         <p role="alert" data-testid="cancel-rejected">
           {userMessage(state.code)}
@@ -171,11 +193,19 @@ function ConfirmPanel({ paymentId, onConfirmed }: { paymentId: string; onConfirm
   });
 
   return (
-    <div>
-      <button type="button" data-testid="confirm" onClick={() => confirm.mutate()}>
-        구매확정
-      </button>
-      {confirm.isSuccess && <p data-testid="confirmed">구매확정되었습니다.</p>}
+    <div className="card stack">
+      <h2>구매확정</h2>
+      <p className="muted">확정하면 이 주문은 정산 대상이 됩니다.</p>
+      <div>
+        <button type="button" className="btn--primary" data-testid="confirm" onClick={() => confirm.mutate()}>
+          구매확정
+        </button>
+      </div>
+      {confirm.isSuccess && (
+        <p className="notice notice--ok" data-testid="confirmed">
+          구매확정되었습니다.
+        </p>
+      )}
       {confirm.isError && (
         <p role="alert">
           {confirm.error instanceof ApiError

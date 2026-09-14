@@ -16,6 +16,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import { formatWon } from "../format";
+import { StatusBadge } from "../StatusBadge";
 
 export function Unresolved() {
   const queryClient = useQueryClient();
@@ -48,46 +49,56 @@ export function Unresolved() {
   ];
 
   return (
-    <section>
-      <h1>미확정 거래</h1>
+    <section className="page">
+      <div className="page-head">
+        <h1>미확정 거래</h1>
+        <p>운영자는 결과를 고르지 않습니다. 버튼은 외부 상태 조회를 앞당길 뿐이고, 확정은 복구 작업이 합니다.</p>
+      </div>
       {rows.length === 0 ? (
-        <p data-testid="empty">미확정 거래가 없습니다.</p>
+        <p className="empty card" data-testid="empty">
+          미확정 거래가 없습니다.
+        </p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>종류</th>
-              <th>ID</th>
-              <th>상태</th>
-              <th>금액</th>
-              <th>조회 시도</th>
-              <th>수동 검토</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={`${row.kind}-${row.id}`} data-testid="unresolved-row">
-                <td>{row.kind === "top-up" ? "충전" : "결제"}</td>
-                <td>{row.id}</td>
-                <td>{row.status}</td>
-                <td>{formatWon(row.amount)}</td>
-                <td>{row.attempts}</td>
-                <td>{row.manualReview ? "필요" : ""}</td>
-                <td>
-                  <button
-                    type="button"
-                    data-testid="resolve"
-                    onClick={() => resolve.mutate({ kind: row.kind, id: row.id })}
-                  >
-                    {/* "성공 처리"가 아니라 "다시 조회"입니다. 운영자는 결과를 고르지 않습니다. */}
-                    외부 상태 다시 조회
-                  </button>
-                </td>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>종류</th>
+                <th>ID</th>
+                <th>상태</th>
+                <th className="num">금액</th>
+                <th className="num">조회 시도</th>
+                <th>수동 검토</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={`${row.kind}-${row.id}`} data-testid="unresolved-row">
+                  <td>{row.kind === "top-up" ? "충전" : "결제"}</td>
+                  <td className="id">{row.id}</td>
+                  <td>
+                    <StatusBadge status={row.status} />
+                  </td>
+                  <td className="num money">{formatWon(row.amount)}</td>
+                  <td className="num">{row.attempts}</td>
+                  <td>{row.manualReview ? <span className="badge badge--warn">필요</span> : ""}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="btn--sm"
+                      data-testid="resolve"
+                      onClick={() => resolve.mutate({ kind: row.kind, id: row.id })}
+                    >
+                      {/* "성공 처리"가 아니라 "다시 조회"입니다. 운영자는 결과를 고르지 않습니다. */}
+                      외부 상태 다시 조회
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

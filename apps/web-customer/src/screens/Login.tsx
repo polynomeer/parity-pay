@@ -23,7 +23,10 @@ export function Login() {
         submit.mutate();
       }}
     >
-      <h1>로그인</h1>
+      <div className="stack--tight stack">
+        <h1>로그인</h1>
+        <p className="muted">페이머니 잔액과 주문을 보려면 로그인하세요.</p>
+      </div>
       <label>
         이메일
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -47,8 +50,8 @@ export function Login() {
             : "로그인하지 못했습니다. 잠시 후 다시 시도해 주세요."}
         </p>
       )}
-      <p>
-        <Link to="/forgot">비밀번호를 잊으셨나요?</Link>
+      <p className="auth__foot">
+        <Link to="/forgot">비밀번호를 잊으셨나요?</Link> · 처음이신가요? <Link to="/signup">가입</Link>
       </p>
     </form>
   );

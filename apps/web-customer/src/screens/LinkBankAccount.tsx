@@ -28,6 +28,7 @@ export function LinkBankAccount({ onLinked }: { onLinked: (bankAccountId: string
       }}
     >
       <h2>계좌 연결</h2>
+      <p className="muted">충전에 쓸 계좌를 먼저 연결합니다. 계좌번호는 화면에도 전체를 남기지 않습니다.</p>
       <label>
         계좌번호
         <input
@@ -37,7 +38,7 @@ export function LinkBankAccount({ onLinked }: { onLinked: (bankAccountId: string
           required
         />
       </label>
-      <button type="submit" disabled={link.isPending}>
+      <button type="submit" className="btn--block" disabled={link.isPending}>
         연결
       </button>
       {link.isError && (

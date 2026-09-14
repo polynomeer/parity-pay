@@ -20,7 +20,7 @@ export function LedgerTransaction({ transactionId }: { transactionId: string }) 
   });
 
   if (ledger.isPending) {
-    return <p>원장을 불러오는 중입니다.</p>;
+    return <p className="loading">원장을 불러오는 중입니다.</p>;
   }
   if (ledger.isError) {
     return <p role="alert">원장 거래를 찾을 수 없습니다.</p>;
@@ -28,13 +28,13 @@ export function LedgerTransaction({ transactionId }: { transactionId: string }) 
 
   const view = ledger.data;
   return (
-    <section data-testid="ledger">
+    <section className="card stack" data-testid="ledger">
       <h2>원장 거래</h2>
       <dl>
         <dt>유형</dt>
         <dd>{view.transactionType}</dd>
         <dt>참조</dt>
-        <dd>
+        <dd className="id">
           {view.referenceType} {view.referenceId}
         </dd>
         <dt>전기 시각</dt>
@@ -47,38 +47,45 @@ export function LedgerTransaction({ transactionId }: { transactionId: string }) 
         )}
       </dl>
 
-      <table>
-        <thead>
-          <tr>
-            <th>계정</th>
-            <th>차변</th>
-            <th>대변</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(view.entries ?? []).map((entry) => (
-            <tr key={entry.entryId} data-testid="entry">
-              <td>{entry.accountCode}</td>
-              <td data-testid="debit">
-                {entry.direction === "DEBIT" ? formatWon(entry.amount ?? 0) : ""}
-              </td>
-              <td data-testid="credit">
-                {entry.direction === "CREDIT" ? formatWon(entry.amount ?? 0) : ""}
-              </td>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>계정</th>
+              <th className="num">차변</th>
+              <th className="num">대변</th>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th>합계</th>
-            <td data-testid="debit-total">{formatWon(view.debitTotal ?? 0)}</td>
-            <td data-testid="credit-total">{formatWon(view.creditTotal ?? 0)}</td>
-          </tr>
-        </tfoot>
-      </table>
+          </thead>
+          <tbody>
+            {(view.entries ?? []).map((entry) => (
+              <tr key={entry.entryId} data-testid="entry">
+                <td className="mono">{entry.accountCode}</td>
+                <td className="num" data-testid="debit">
+                  {entry.direction === "DEBIT" ? formatWon(entry.amount ?? 0) : ""}
+                </td>
+                <td className="num" data-testid="credit">
+                  {entry.direction === "CREDIT" ? formatWon(entry.amount ?? 0) : ""}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>합계</th>
+              <td className="num" data-testid="debit-total">{formatWon(view.debitTotal ?? 0)}</td>
+              <td className="num" data-testid="credit-total">{formatWon(view.creditTotal ?? 0)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
       {/* INV-001은 DB가 지키지만, 지켜지고 있다는 사실이 화면에 보여야 의미가 있습니다. */}
-      <p data-testid="balanced">{view.balanced === true ? "차변 = 대변" : "차변 ≠ 대변 — 즉시 확인 필요"}</p>
+      <p
+        className={`ledger__balanced ${view.balanced === true ? "ledger__balanced--ok" : "ledger__balanced--broken"}`}
+        data-testid="balanced"
+      >
+        {view.balanced === true ? "차변 = 대변" : "차변 ≠ 대변 — 즉시 확인 필요"}
+      </p>
     </section>
   );
 }

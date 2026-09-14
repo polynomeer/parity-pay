@@ -17,36 +17,48 @@ export function Login() {
   });
 
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        submit.mutate();
-      }}
-    >
-      <h1>로그인</h1>
-      <label>
-        이메일
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      </label>
-      <label>
-        비밀번호
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </label>
-      <button type="submit" disabled={submit.isPending}>
-        {submit.isPending ? "확인 중" : "로그인"}
-      </button>
-      {submit.isError && (
-        <p role="alert">
-          {submit.error instanceof ApiError
-            ? userMessage(submit.error.code)
-            : "로그인하지 못했습니다. 잠시 후 다시 시도해 주세요."}
-        </p>
-      )}
-    </form>
+    <div className="auth">
+      <form
+        className="auth__card"
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit.mutate();
+        }}
+      >
+        <div className="stack stack--tight">
+          <span className="brand">
+            <span className="brand__mark" aria-hidden="true">
+              P
+            </span>
+            ParityPay
+            <span className="sidebar__tag">OPS</span>
+          </span>
+          <h1>운영 콘솔 로그인</h1>
+        </div>
+        <label>
+          이메일
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </label>
+        <label>
+          비밀번호
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </label>
+        <button type="submit" disabled={submit.isPending}>
+          {submit.isPending ? "확인 중" : "로그인"}
+        </button>
+        {submit.isError && (
+          <p role="alert">
+            {submit.error instanceof ApiError
+              ? userMessage(submit.error.code)
+              : "로그인하지 못했습니다. 잠시 후 다시 시도해 주세요."}
+          </p>
+        )}
+      </form>
+    </div>
   );
 }
