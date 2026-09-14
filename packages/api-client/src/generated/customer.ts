@@ -264,6 +264,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payments/{paymentId}/cancellations/{cancellationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCancellation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payments/{paymentId}/confirmation": {
         parameters: {
             query?: never;
@@ -1002,6 +1018,29 @@ export interface operations {
                 "application/json": components["schemas"]["CancelPaymentRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CancellationResponse"];
+                };
+            };
+        };
+    };
+    getCancellation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cancellationId: string;
+                paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

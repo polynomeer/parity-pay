@@ -12,6 +12,7 @@ import {
   ApiError,
   cancelPayment,
   confirmOrder,
+  getCancellation,
   getPayment,
   userMessage,
   type CancellationResponse,
@@ -104,8 +105,11 @@ function CancelPanel({
     intentName: `cancel:${payment.paymentId}:${amount}`,
     submit: (key) =>
       cancelPayment(api, payment.paymentId!, { amount, currency: "KRW", reason: "고객 요청" }, key),
-    fetchStatus: async () => (await getPayment(api, payment.paymentId!)) as never,
-    isTerminal: () => true,
+    // 환불 응답이 유실되면 202로 접수되고 취소는 UNKNOWN입니다. 예전에는 결제를 한 번 읽고 바로
+    // 끝난 것으로 쳤는데(결함 L), 그러면 확정되지 않은 취소가 "취소됨"으로 보였습니다. 취소 자체를
+    // 조회해 종결 상태(COMPLETED·FAILED)까지 기다립니다 — 충전·결제와 같은 규칙입니다(FE-002).
+    fetchStatus: (accepted) => getCancellation(api, payment.paymentId!, accepted.cancellationId!),
+    isTerminal: (view) => view.status === "COMPLETED" || view.status === "FAILED",
   });
 
   if (cancellable === 0) {

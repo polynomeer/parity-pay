@@ -552,10 +552,14 @@ export interface components {
         MockBankModeRequest: {
             /** @enum {string} */
             mode?: "NORMAL" | "EXPLICIT_FAILURE" | "TIMEOUT_BEFORE_WITHDRAWAL" | "TIMEOUT_AFTER_WITHDRAWAL";
+            /** @enum {string} */
+            payoutMode?: "NORMAL" | "EXPLICIT_FAILURE" | "TIMEOUT_BEFORE_WITHDRAWAL" | "TIMEOUT_AFTER_WITHDRAWAL";
         };
         MockPgModeRequest: {
             /** @enum {string} */
             mode?: "NORMAL" | "EXPLICIT_DECLINE" | "TIMEOUT_BEFORE_APPROVAL" | "TIMEOUT_AFTER_APPROVAL";
+            /** @enum {string} */
+            refundMode?: "NORMAL" | "EXPLICIT_DECLINE" | "TIMEOUT_BEFORE_APPROVAL" | "TIMEOUT_AFTER_APPROVAL";
             statusQueryAvailable?: boolean;
             webhookMode?: string;
         };

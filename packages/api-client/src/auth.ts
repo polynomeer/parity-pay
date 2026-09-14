@@ -156,6 +156,20 @@ export function cancelPayment(
   );
 }
 
+/**
+ * 취소 한 건의 상태입니다. 취소가 202로 접수되면(환불 응답 유실) 여기로 확정을 기다립니다.
+ * 결제 조회로는 알 수 없습니다 — 결제의 취소액은 확정된 뒤에야 움직입니다.
+ */
+export async function getCancellation(
+  client: ApiClient,
+  paymentId: string,
+  cancellationId: string,
+): Promise<CancellationResponse> {
+  return (
+    await client.get<CancellationResponse>(`/api/v1/payments/${paymentId}/cancellations/${cancellationId}`)
+  ).data;
+}
+
 /** 구매확정입니다. 정산 대상이 됩니다. 멱등 키가 없는 경로입니다. */
 export async function confirmOrder(
   client: ApiClient,
