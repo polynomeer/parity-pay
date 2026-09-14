@@ -289,10 +289,14 @@ cmd_up() {
   echo "   로그: $OUT/{api,customer,ops}.log   내리기: scripts/dev.sh down"
 }
 
-case "${1:-up}" in
-  up) shift; cmd_up "$@" ;;
-  down) shift; cmd_down "$@" ;;
+# 인자 없이 부르면 up입니다. 인자가 없을 때 `shift`는 실패하고 set -e가 아무 말 없이 스크립트를
+# 끝내므로, 인자가 있을 때만 떼어 냅니다.
+COMMAND=${1:-up}
+[ $# -gt 0 ] && shift
+case "$COMMAND" in
+  up) cmd_up "$@" ;;
+  down) cmd_down "$@" ;;
   status) cmd_status ;;
-  logs) shift; cmd_logs "$@" ;;
-  *) sed -n '2,25p' "$0"; exit 2 ;;
+  logs) cmd_logs "$@" ;;
+  *) sed -n '2,28p' "$0"; exit 2 ;;
 esac
