@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web-customer",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@paritypay/web-customer", "dev", "--strictPort"],
+      "port": 5173,
+      "url": "http://app.localhost:5173"
+    },
+    {
+      "name": "web-ops",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@paritypay/web-ops", "dev", "--strictPort"],
+      "port": 5174,
+      "url": "http://ops.localhost:5174"
+    }
+  ]
+}
