@@ -80,7 +80,42 @@ TARGETS = {
         "status_path": "/api/v1/payments/{}",
         "final": ("APPROVED", "FAILED", "CANCELED"),
     },
+    # 취소 경로입니다. 미리 승인된 외부 PG 결제를 환불하고, 환불 응답을 유실시킵니다. 결함 L을 고치기
+    # 전에는 이 경로를 잴 수 없었습니다 — 미확정 취소가 201로 나가고 조회할 API가 없었습니다.
+    "cancellation": {
+        "set_mode": lambda base, token, mode: set_pg_mode_field(base, token, "refundMode", mode),
+        "inject_mode": "TIMEOUT_AFTER_APPROVAL",
+        "path": None,  # 세션마다 다릅니다(결제 ID). prepare가 채웁니다.
+        "body": lambda _wallet, _bank: {"amount": 10_000, "currency": "KRW", "reason": "backlog"},
+        "id_field": "cancellationId",
+        "status_path": None,  # 마찬가지로 결제 ID가 필요합니다.
+        "final": ("COMPLETED", "FAILED"),
+    },
 }
+
+
+def set_pg_mode_field(base, operator_token, field, mode):
+    status, _ = call(base, "POST", "/api/v1/admin/mock-pg/mode", {field: mode}, token=operator_token)
+    if status >= 400:
+        raise RuntimeError(f"PG {field}를 {mode}로 바꾸지 못했습니다 (HTTP {status})")
+
+
+def approve_for_cancellation(base, session, offset):
+    """취소할 결제를 정상 승인해 둡니다. 측정 대상이 아니라 준비입니다."""
+    wallet_id, _bank, access = session
+    status, body = call(
+        base,
+        "POST",
+        "/api/v1/payments",
+        {"orderId": f"order-cancel-backlog-{wallet_id}", "walletId": wallet_id,
+         "merchantId": "11111111-2222-3333-4444-555555555555",
+         "amount": 10_000, "currency": "KRW", "method": "EXTERNAL_PG"},
+        token=access,
+        idempotency_key=f"cancel-backlog-approve-{offset}-{wallet_id}",
+    )
+    if status != 201:
+        raise RuntimeError(f"승인 준비 실패 HTTP {status}: {body}")
+    return body["paymentId"]
 
 # 클라이언트가 실제로 쓰는 값입니다(DOC-14 FE-003). 이 값을 넘긴 건이 곧 화면이 포기한 건입니다.
 CLIENT_POLL_INTERVAL = 2.0
@@ -89,12 +124,14 @@ CLIENT_POLL_LIMIT = 90.0
 
 def inject_one(base, target, session, offset):
     """미확정 한 건을 만듭니다. 기관 모드는 호출자가 미리 맞춰 둡니다."""
-    wallet_id, bank_account_id, access = session
+    wallet_id, bank_account_id, access = session[:3]
+    payment_id = session[3] if len(session) > 3 else None
+    path = target["path"] or f"/api/v1/payments/{payment_id}/cancellations"
     started = time.monotonic()
     status, body = call(
         base,
         "POST",
-        target["path"],
+        path,
         target["body"](wallet_id, bank_account_id),
         token=access,
         idempotency_key=f"backlog-{offset}-{int(started * 1000)}",
@@ -105,6 +142,7 @@ def inject_one(base, target, session, offset):
         "accepted_at": time.monotonic(),
         "http": status,
         "id": body.get(target["id_field"]),
+        "status_path": (target["status_path"] or f"/api/v1/payments/{payment_id}/cancellations/{{}}"),
         "access": access,
         "outcome": None,
         "seconds": None,
@@ -120,7 +158,7 @@ def poll_until_settled(base, target, items, deadline_seconds, workers):
         while mine:
             for item in list(mine):
                 elapsed = time.monotonic() - item["started"]
-                _, view = call(base, "GET", target["status_path"].format(item["id"]), token=item["access"])
+                _, view = call(base, "GET", item["status_path"].format(item["id"]), token=item["access"])
                 if view.get("status") in target["final"]:
                     with lock:
                         item["outcome"] = view["status"]
@@ -141,6 +179,12 @@ def run_size(base, operator_token, target_name, size, inject_workers, poll_worke
     target = TARGETS[target_name]
     print(f"== {target_name} N={size}: 회원 {size}명 준비", flush=True)
     sessions = [provision(base, size * 10_000 + i) for i in range(size)]
+    if target_name == "cancellation":
+        # 취소할 결제를 먼저 만듭니다. 승인 자체는 정상이어야 하므로 모드를 바꾸기 전입니다.
+        print(f"== {target_name} N={size}: 결제 {size}건 승인 준비", flush=True)
+        with ThreadPoolExecutor(max_workers=inject_workers) as pool:
+            payment_ids = list(pool.map(lambda pair: approve_for_cancellation(base, pair[1], pair[0]), enumerate(sessions)))
+        sessions = [(*session, payment_id) for session, payment_id in zip(sessions, payment_ids)]
 
     target["set_mode"](base, operator_token, target["inject_mode"])
     print(f"== N={size}: 주입 (워커 {inject_workers})", flush=True)
@@ -206,7 +250,7 @@ def main():
     parser.add_argument("--java", default=os.environ.get("JAVA_BIN", "java"))
     parser.add_argument("--port", type=int, default=8093)
     parser.add_argument("--sizes", default="50,200,500")
-    parser.add_argument("--target", choices=("top-up", "payment", "both"), default="top-up")
+    parser.add_argument("--target", choices=("top-up", "payment", "cancellation", "both", "all"), default="top-up")
     # 은행은 타임아웃된 요청을 read-timeout의 두 배 동안 스레드에 붙잡습니다(MockBankBehavior).
     # Tomcat 기본 200 스레드를 넘기면 뒤 요청은 처리되지 않고, 그러면 "응답만 유실"이 아니라
     # "기록 없음"이 되어 다른 경로를 재게 됩니다. 워커 50 × (읽기 타임아웃 0.5s, 붙잡기 1s)
@@ -233,7 +277,8 @@ def main():
         operator_token = operator["accessToken"]
 
         report, raw = [], []
-        targets = ["top-up", "payment"] if args.target == "both" else [args.target]
+        targets = {"both": ["top-up", "payment"], "all": ["top-up", "payment", "cancellation"]}.get(
+            args.target, [args.target])
         for target_name, size in [(t, n) for t in targets for n in sizes]:
             run = run_size(base, operator_token, target_name, size, args.inject_workers, args.poll_workers,
                            args.deadline)
