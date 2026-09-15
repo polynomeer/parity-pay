@@ -112,6 +112,13 @@ services:
       MOCK_PG_DB_USERNAME: paritypay
       MOCK_PG_DB_PASSWORD: paritypay
       MOCK_PG_PORT: 8091
+      # 결과 알림을 받을 우리 주소입니다. 비워 두면 기관이 알림을 보내지 않아 장애 시뮬레이터의
+      # 웹훅 시나리오 세 개가 아무 일도 하지 않습니다(M-014에서 드러남). 비밀값은 local 프로필과
+      # 같은 개발용 값입니다.
+      MOCK_PG_WEBHOOK_URL: http://host.docker.internal:${PARITYPAY_PORT:-8080}/api/v1/webhooks/mock-pg
+      MOCK_PG_WEBHOOK_SECRET: local-development-only-webhook-secret
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${PARITYPAY_MOCK_PG_PORT:-8091}:8091"
     volumes:

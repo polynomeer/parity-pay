@@ -181,6 +181,8 @@ cmd_up() {
   export PARITYPAY_DB_PORT=$DB_PORT PARITYPAY_KAFKA_PORT=$KAFKA_PORT
   export PARITYPAY_MAIL_PORT=$MAIL_PORT PARITYPAY_MAIL_UI_PORT=$MAIL_UI_PORT
   export PARITYPAY_MOCK_BANK_PORT=$BANK_PORT PARITYPAY_MOCK_PG_PORT=$PG_PORT
+  # 기관이 웹훅을 보낼 우리 주소에 들어갑니다. pay-api 포트가 우회되면 여기도 따라가야 합니다.
+  export PARITYPAY_PORT=$API_PORT
 
   local compose_extra=()
   if [ "$observability" = 1 ]; then
