@@ -3,7 +3,7 @@ import net.ltgt.gradle.errorprone.errorprone
 plugins {
     java
     id("org.springframework.boot") version "4.1.1" apply false
-    id("com.diffplug.spotless") version "7.0.2"
+    id("com.diffplug.spotless") version "8.10.2"
     id("net.ltgt.errorprone") version "5.1.1" apply false
 }
 
