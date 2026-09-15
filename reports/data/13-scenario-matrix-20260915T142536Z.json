@@ -1,0 +1,666 @@
+{
+  "commit": "33038dc",
+  "startedAt": "20260915T142536Z",
+  "runs": 3,
+  "gaugesBefore": {
+    "paritypay_invariant_balance_snapshot_drift": 0.0,
+    "paritypay_invariant_negative_wallet_balances": 0.0,
+    "paritypay_invariant_over_cancelled_payments": 0.0,
+    "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+  },
+  "scenarios": [
+    {
+      "id": "normal",
+      "label": "정상 처리",
+      "expect": "SUCCEEDED",
+      "note": "기준선",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      }
+    },
+    {
+      "id": "bank-explicit-failure",
+      "label": "은행이 명시적으로 실패를 응답",
+      "expect": "FAILED",
+      "note": "결과를 아는 실패. 잔액 불변",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      }
+    },
+    {
+      "id": "bank-timeout-before",
+      "label": "은행이 출금 전에 응답을 끊음",
+      "expect": "FAILED",
+      "note": "외부 기록 없음 → 연속 확인 뒤 FAILED",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      }
+    },
+    {
+      "id": "bank-timeout-after",
+      "label": "은행이 출금 뒤에 응답을 끊음",
+      "expect": "SUCCEEDED",
+      "note": "돈은 움직였고 응답만 유실 → 조회로 SUCCEEDED",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      }
+    },
+    {
+      "id": "pg-timeout-after",
+      "label": "카드 PG가 승인 뒤에 응답을 끊음",
+      "expect": "APPROVED",
+      "note": "UNKNOWN으로 보존 → 조회로 APPROVED",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      }
+    },
+    {
+      "id": "pg-query-down",
+      "label": "카드 PG 상태 조회 장애",
+      "expect": "APPROVED",
+      "note": "조회 장애 동안 아무것도 단정하지 않음. 조회 복구 뒤 확정",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      }
+    },
+    {
+      "id": "webhook-duplicate",
+      "label": "웹훅 중복 전달",
+      "expect": "APPROVED",
+      "note": "같은 알림 두 번 → 영수증이 두 번째를 막음, 원장 1회",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      }
+    },
+    {
+      "id": "webhook-out-of-order",
+      "label": "웹훅 역순 도착",
+      "expect": "APPROVED",
+      "note": "오래된 알림이 나중에 → STALE로 버리고 상태 회귀 없음",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      }
+    },
+    {
+      "id": "webhook-none",
+      "label": "웹훅을 아예 보내지 않음",
+      "expect": "APPROVED",
+      "note": "알림 없이 조회만으로 확정",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      }
+    }
+  ],
+  "results": [
+    {
+      "scenario": "normal",
+      "index": 0,
+      "kind": "top-up",
+      "httpStatus": 201,
+      "firstStatus": "SUCCEEDED",
+      "terminal": "SUCCEEDED",
+      "seconds": 0.046926542003348004,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0a575-80b0-7000-abc5-566b0da50561"
+    },
+    {
+      "scenario": "normal",
+      "index": 1,
+      "kind": "top-up",
+      "httpStatus": 201,
+      "firstStatus": "SUCCEEDED",
+      "terminal": "SUCCEEDED",
+      "seconds": 0.24475904100108892,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0a575-877a-7000-9cb1-7fc18b1534de"
+    },
+    {
+      "scenario": "normal",
+      "index": 2,
+      "kind": "top-up",
+      "httpStatus": 201,
+      "firstStatus": "SUCCEEDED",
+      "terminal": "SUCCEEDED",
+      "seconds": 0.03727375000016764,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0a575-8d9f-7000-aff2-f768c7b6961b"
+    },
+    {
+      "scenario": "bank-explicit-failure",
+      "index": 0,
+      "kind": "top-up",
+      "httpStatus": 200,
+      "firstStatus": "FAILED",
+      "terminal": "FAILED",
+      "seconds": 0.047180374996969476,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 0,
+      "balanceDelta": 0,
+      "referenceId": "01a0a575-9421-7000-9162-e4cc6b543cc3"
+    },
+    {
+      "scenario": "bank-explicit-failure",
+      "index": 1,
+      "kind": "top-up",
+      "httpStatus": 200,
+      "firstStatus": "FAILED",
+      "terminal": "FAILED",
+      "seconds": 0.035218209006416146,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 0,
+      "balanceDelta": 0,
+      "referenceId": "01a0a575-99c0-7000-afee-f6ce55c6b4d4"
+    },
+    {
+      "scenario": "bank-explicit-failure",
+      "index": 2,
+      "kind": "top-up",
+      "httpStatus": 200,
+      "firstStatus": "FAILED",
+      "terminal": "FAILED",
+      "seconds": 0.09349783400102751,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 0,
+      "balanceDelta": 0,
+      "referenceId": "01a0a575-9f88-7000-b1b2-f495a9576f06"
+    },
+    {
+      "scenario": "bank-timeout-before",
+      "index": 0,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "FAILED",
+      "seconds": 42.88951908300078,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 0,
+      "balanceDelta": 0,
+      "referenceId": "01a0a575-a533-7000-a73b-71828294574f"
+    },
+    {
+      "scenario": "bank-timeout-before",
+      "index": 1,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "FAILED",
+      "seconds": 42.78385787500156,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 0,
+      "balanceDelta": 0,
+      "referenceId": "01a0a576-54de-7000-ba5d-04358f8b9130"
+    },
+    {
+      "scenario": "bank-timeout-before",
+      "index": 2,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "FAILED",
+      "seconds": 43.89167979200283,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 0,
+      "balanceDelta": 0,
+      "referenceId": "01a0a577-029e-7000-afd5-4ae726698908"
+    },
+    {
+      "scenario": "bank-timeout-after",
+      "index": 0,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "SUCCEEDED",
+      "seconds": 34.068804499998805,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0a577-b398-7000-b10a-fc0f1d8dbd69"
+    },
+    {
+      "scenario": "bank-timeout-after",
+      "index": 1,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "SUCCEEDED",
+      "seconds": 32.8180668329951,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0a578-3f51-7000-96e1-2791b4521c16"
+    },
+    {
+      "scenario": "bank-timeout-after",
+      "index": 2,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "SUCCEEDED",
+      "seconds": 34.650002624999615,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0a578-c51e-7000-b12f-5516c2c513a7"
+    },
+    {
+      "scenario": "pg-timeout-after",
+      "index": 0,
+      "kind": "payment",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "APPROVED",
+      "seconds": 33.462232666999626,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0a579-52fc-7000-b786-d5ef7af3ece0"
+    },
+    {
+      "scenario": "pg-timeout-after",
+      "index": 1,
+      "kind": "payment",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "APPROVED",
+      "seconds": 30.631642541993642,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0a579-e558-7000-a19f-1eaa138bb8ca"
+    },
+    {
+      "scenario": "pg-timeout-after",
+      "index": 2,
+      "kind": "payment",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "APPROVED",
+      "seconds": 30.623242207999283,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0a57a-6d05-7000-afb5-b12287914473"
+    },
+    {
+      "scenario": "pg-query-down",
+      "index": 0,
+      "kind": "payment",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "APPROVED",
+      "seconds": 67.4099951659955,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0a57a-f314-7000-8977-11e80ffbc751",
+      "held": {
+        "statusAfterHold": "UNKNOWN",
+        "attemptsDuringHold": null,
+        "ledgerPostedDuringHold": 0
+      }
+    },
+    {
+      "scenario": "pg-query-down",
+      "index": 1,
+      "kind": "payment",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "APPROVED",
+      "seconds": 85.81264091599587,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0a57c-0bfb-7000-8ec3-be99720884f1",
+      "held": {
+        "statusAfterHold": "UNKNOWN",
+        "attemptsDuringHold": null,
+        "ledgerPostedDuringHold": 0
+      }
+    },
+    {
+      "scenario": "pg-query-down",
+      "index": 2,
+      "kind": "payment",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "APPROVED",
+      "seconds": 66.36983841699839,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0a57d-6c99-7000-8f0d-155dce9d5ce0",
+      "held": {
+        "statusAfterHold": "UNKNOWN",
+        "attemptsDuringHold": null,
+        "ledgerPostedDuringHold": 0
+      }
+    },
+    {
+      "scenario": "webhook-duplicate",
+      "index": 0,
+      "kind": "payment",
+      "httpStatus": 201,
+      "firstStatus": "APPROVED",
+      "terminal": "APPROVED",
+      "seconds": 0.21599541600153316,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 1,
+        "cursor": 1
+      },
+      "webhookLog": {
+        "duplicate": 1,
+        "stale": 0
+      },
+      "referenceId": "01a0a57e-8066-7000-9086-0ef36afb4bce"
+    },
+    {
+      "scenario": "webhook-duplicate",
+      "index": 1,
+      "kind": "payment",
+      "httpStatus": 201,
+      "firstStatus": "APPROVED",
+      "terminal": "APPROVED",
+      "seconds": 0.0780717080051545,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 1,
+        "cursor": 1
+      },
+      "webhookLog": {
+        "duplicate": 1,
+        "stale": 0
+      },
+      "referenceId": "01a0a57e-8f78-7000-80f9-88d137ca63d1"
+    },
+    {
+      "scenario": "webhook-duplicate",
+      "index": 2,
+      "kind": "payment",
+      "httpStatus": 201,
+      "firstStatus": "APPROVED",
+      "terminal": "APPROVED",
+      "seconds": 0.1415528750003432,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 1,
+        "cursor": 1
+      },
+      "webhookLog": {
+        "duplicate": 1,
+        "stale": 0
+      },
+      "referenceId": "01a0a57e-a0d4-7000-b479-92bb5b92e385"
+    },
+    {
+      "scenario": "webhook-out-of-order",
+      "index": 0,
+      "kind": "payment",
+      "httpStatus": 201,
+      "firstStatus": "APPROVED",
+      "terminal": "APPROVED",
+      "seconds": 0.06656791700515896,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 3,
+        "cursor": 2
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 1
+      },
+      "referenceId": "01a0a57e-afba-7000-a3ba-35a7a02e649f",
+      "renotifyHttp": 200
+    },
+    {
+      "scenario": "webhook-out-of-order",
+      "index": 1,
+      "kind": "payment",
+      "httpStatus": 201,
+      "firstStatus": "APPROVED",
+      "terminal": "APPROVED",
+      "seconds": 0.05504066700086696,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 3,
+        "cursor": 2
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 1
+      },
+      "referenceId": "01a0a57e-d1d4-7000-982e-7d51cddcf410",
+      "renotifyHttp": 200
+    },
+    {
+      "scenario": "webhook-out-of-order",
+      "index": 2,
+      "kind": "payment",
+      "httpStatus": 201,
+      "firstStatus": "APPROVED",
+      "terminal": "APPROVED",
+      "seconds": 0.06025045800197404,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 3,
+        "cursor": 2
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 1
+      },
+      "referenceId": "01a0a57e-f489-7000-90f7-0d369037dfd6",
+      "renotifyHttp": 200
+    },
+    {
+      "scenario": "webhook-none",
+      "index": 0,
+      "kind": "payment",
+      "httpStatus": 201,
+      "firstStatus": "APPROVED",
+      "terminal": "APPROVED",
+      "seconds": 0.06394858400017256,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0a57f-1932-7000-a730-eeec1f7e088b"
+    },
+    {
+      "scenario": "webhook-none",
+      "index": 1,
+      "kind": "payment",
+      "httpStatus": 201,
+      "firstStatus": "APPROVED",
+      "terminal": "APPROVED",
+      "seconds": 0.0963067919947207,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0a57f-2958-7000-badf-d89940b96d02"
+    },
+    {
+      "scenario": "webhook-none",
+      "index": 2,
+      "kind": "payment",
+      "httpStatus": 201,
+      "firstStatus": "APPROVED",
+      "terminal": "APPROVED",
+      "seconds": 0.045985958000528626,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0a57f-397b-7000-96c7-2d657b489e55"
+    }
+  ]
+}

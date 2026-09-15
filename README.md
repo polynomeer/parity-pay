@@ -62,6 +62,7 @@ AI 에이전트(Claude Code)로 이 저장소에서 작업한다면 [CLAUDE.md](
 - [ADR](docs/adr/README.md)
 - [성능·장애 테스트 보고서 템플릿](reports/11-performance-failure-report-template.md)
 - [포트폴리오 기술 보고서 초안](reports/12-portfolio-technical-report-draft.md)
+- [장애 시나리오 매트릭스 보고서](reports/13-failure-scenario-matrix-report.md) — 시뮬레이터 9개 시나리오 실측
 
 ## 현재 상태
 

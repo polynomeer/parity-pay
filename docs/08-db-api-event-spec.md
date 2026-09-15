@@ -142,7 +142,8 @@ Header: `Idempotency-Key: <unique-key>`
 }
 ```
 
-외부 결과 불명확 시 `202 Accepted`와 `Location`을 반환합니다.
+외부 결과 불명확 시 `202 Accepted`와 `Location`을 반환합니다. 기관이 명시적으로 거절해 `FAILED`로 확정된
+요청은 `200 OK`와 같은 본문입니다 — 요청 처리는 성공했고 결과가 실패입니다(4xx가 아닙니다).
 
 ### POST /api/v1/payments
 
