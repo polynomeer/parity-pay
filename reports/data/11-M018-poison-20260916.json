@@ -1,0 +1,104 @@
+[
+  {
+    "experiment": "poison",
+    "run": 0,
+    "validEvents": 10100,
+    "rows": 10100,
+    "lost": 0,
+    "partition1StallSeconds": 4.44,
+    "errorHandlerLogLines": 2,
+    "retryAttemptsLogged": 2,
+    "deadLetterTopic": "없음",
+    "retryTopic": "없음",
+    "latencyAfterPoisonMs": {
+      "p0": {
+        "first": 155,
+        "median": 235,
+        "max": 1468,
+        "n": 3326
+      },
+      "p1": {
+        "first": 1570,
+        "median": 333,
+        "max": 1670,
+        "n": 3345
+      },
+      "p2": {
+        "first": 63,
+        "median": 182,
+        "max": 1233,
+        "n": 3329
+      }
+    },
+    "proved": true,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "poison",
+    "run": 1,
+    "validEvents": 10100,
+    "rows": 10100,
+    "lost": 0,
+    "partition1StallSeconds": 14.1,
+    "errorHandlerLogLines": 2,
+    "retryAttemptsLogged": 2,
+    "deadLetterTopic": "없음",
+    "retryTopic": "없음",
+    "latencyAfterPoisonMs": {
+      "p0": {
+        "first": 70,
+        "median": 630,
+        "max": 1579,
+        "n": 3363
+      },
+      "p1": {
+        "first": 1339,
+        "median": 934,
+        "max": 2511,
+        "n": 3326
+      },
+      "p2": {
+        "first": 13,
+        "median": 486,
+        "max": 1914,
+        "n": 3311
+      }
+    },
+    "proved": true,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "poison",
+    "run": 2,
+    "validEvents": 10100,
+    "rows": 10100,
+    "lost": 0,
+    "partition1StallSeconds": 4.01,
+    "errorHandlerLogLines": 2,
+    "retryAttemptsLogged": 2,
+    "deadLetterTopic": "없음",
+    "retryTopic": "없음",
+    "latencyAfterPoisonMs": {
+      "p0": {
+        "first": 102,
+        "median": 280,
+        "max": 1475,
+        "n": 3305
+      },
+      "p1": {
+        "first": 1289,
+        "median": 459,
+        "max": 1952,
+        "n": 3313
+      },
+      "p2": {
+        "first": 11,
+        "median": 210,
+        "max": 1507,
+        "n": 3382
+      }
+    },
+    "proved": true,
+    "commitSha": "36002b5"
+  }
+]

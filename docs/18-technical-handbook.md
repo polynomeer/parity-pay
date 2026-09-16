@@ -18,7 +18,7 @@
 외부 결과를 모를 때는 `UNKNOWN`으로 보존하고 조회로만 확정합니다(ADR-007).
 
 **상태 (2026-09-14)**: Phase 0~9 구현 완료. 백엔드 테스트 317 · 프론트엔드 56 · E2E 7, 실패 0. 부하·장애
-실험 27종이 결함 12건(A~L)을 찾았고 전부 고쳤습니다. 근거: [reports/12](../reports/12-portfolio-technical-report-draft.md)
+실험 31종이 결함 13건(A~M)을 찾았고 A~L은 고쳤으며 M(소비자 poison 레코드 무감시 폐기)은 열려 있습니다. 근거: [reports/12](../reports/12-portfolio-technical-report-draft.md)
 
 ## 2. 저장소 지도
 
@@ -390,6 +390,7 @@ CI 게이트: 빌드·테스트·Spotless·Error Prone·OpenAPI 스냅샷·생�
 | J | 주문번호로 검색하면 타임라인에서 원장이 빠짐 | E2E 첫 실행 |
 | K | 복구 작업이 틱당 한 배치라 초당 10건 상한 — 적체 600건부터 90초 안에 못 답함 | M-012 |
 | L | 미확정 취소가 201로 나가고 취소를 조회할 API가 없음 | M-012 준비 중 |
+| M | 소비자가 처리할 수 없는 레코드를 10회 즉시 재시도 뒤 DLT·지표 없이 버림 (**미수정**) | M-018 poison message |
 
 B·C·F·J·K·L 여섯은 "대비되어 있다"고 문서에 적혀 있던 것이었습니다. → [reports/11](../reports/11-performance-failure-report-template.md), [reports/12 §9·§12](../reports/12-portfolio-technical-report-draft.md)
 
