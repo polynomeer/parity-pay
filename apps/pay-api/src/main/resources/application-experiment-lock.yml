@@ -1,0 +1,32 @@
+# ==========================================================================================
+# 분산락 실험 전용 프로필입니다. **설계가 아니며 실험 뒤 채택하지 않습니다.**
+#
+# ParityPay는 잔액 차감에 분산락을 쓰지 않습니다(ADR-004: 조건부 원자 UPDATE). 이 프로필은 "락이 정합성을
+# 지킨다고 믿는 구현"을 일부러 만들어, 락 lease가 트랜잭션보다 먼저 만료될 때 정말 정합성이 깨지는지를
+# 재현하고(M-024), Watchdog(M-025)·fencing token(M-026)이 무엇을 막고 무엇을 못 막는지, 같은 조건에서 기본
+# 경로가 왜 깨지지 않는지(M-027), 락 서버가 죽으면 어떻게 되는지(M-028)를 잽니다.
+#
+# `load-tests/lock-lease-experiment.py`가 이 프로필을 켜고 아래 환경변수로 조건을 바꿉니다. Redis는 compose의
+# `redis` 서비스이며 dev.sh는 띄우지 않습니다.
+#
+# 근거: ADR-004 Outcome(2026-09-16), reports/11 M-024~M-028
+# ==========================================================================================
+paritypay:
+  experiment:
+    lock:
+      # OFF | LOCK_PLAIN | LOCK_FENCE_WRITE | LOCK_FENCE_CLAIM | CONTROL
+      mode: ${EXPERIMENT_LOCK_MODE:OFF}
+      redis-uri: ${EXPERIMENT_REDIS_URI:redis://localhost:6379}
+      # lease. 아래 hold보다 짧으면 락 안에서 만료됩니다.
+      ttl: ${EXPERIMENT_LOCK_TTL:200ms}
+      # 락 안에서(읽기와 쓰기 사이) 멈추는 시간. GC 정지·네트워크 지연 흉내. 구간 안 균등 난수.
+      hold-min-ms: ${EXPERIMENT_LOCK_HOLD_MIN_MS:300}
+      hold-max-ms: ${EXPERIMENT_LOCK_HOLD_MAX_MS:500}
+      acquire-wait: ${EXPERIMENT_LOCK_WAIT:5s}
+      # Redisson Watchdog 흉내 — 보유 중 주기적으로 TTL 연장.
+      watchdog: ${EXPERIMENT_LOCK_WATCHDOG:false}
+      watchdog-interval: ${EXPERIMENT_LOCK_WATCHDOG_INTERVAL:66ms}
+      # FAIL_CLOSED | FAIL_OPEN
+      on-redis-down: ${EXPERIMENT_LOCK_ON_REDIS_DOWN:FAIL_CLOSED}
+      redis-timeout: ${EXPERIMENT_REDIS_TIMEOUT:500ms}
+      run-id: ${EXPERIMENT_RUN_ID:}

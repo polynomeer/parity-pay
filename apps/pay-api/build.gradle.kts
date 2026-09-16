@@ -47,6 +47,9 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-bulkhead:2.2.0")
     implementation("io.github.resilience4j:resilience4j-ratelimiter:2.2.0")
     implementation("io.github.resilience4j:resilience4j-retry:2.2.0")
+    // 분산락 실험(M-024~M-028) 전용. `experiment-lock` 프로필 없이는 연결조차 만들지 않습니다.
+    // 본 설계는 분산락을 쓰지 않습니다(ADR-004). 근거: reports/11 M-024
+    implementation("io.lettuce:lettuce-core")
     implementation("org.springframework.boot:spring-boot-restclient")
     implementation("org.springframework.boot:spring-boot-kafka")
     testImplementation("org.springframework.boot:spring-boot-resttestclient")

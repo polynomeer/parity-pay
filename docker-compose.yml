@@ -58,10 +58,14 @@ services:
       timeout: 5s
       retries: 10
 
+  # 본 설계는 Redis에 잔액·원장·락의 진실을 두지 않습니다(ADR-004, docs/05 §2). 지금 이 컨테이너를 쓰는 것은
+  # 분산락 실험(reports/11 M-024~M-028, `experiment-lock` 프로필)뿐이고, dev.sh는 띄우지 않습니다.
+  # 스냅샷·AOF 둘 다 끕니다 — 재시작하면 비워지며, 그것이 "락 서버가 죽었다 살아나면 토큰이 되감긴다"는
+  # 실험 조건입니다.
   redis:
     image: redis:7-alpine
     container_name: paritypay-redis
-    command: ["redis-server", "--appendonly", "no"]
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
     ports:
       - "${PARITYPAY_REDIS_PORT:-6379}:6379"
     healthcheck:
