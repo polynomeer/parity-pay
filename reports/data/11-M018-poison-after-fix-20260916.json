@@ -1,0 +1,110 @@
+[
+  {
+    "experiment": "poison",
+    "run": 0,
+    "validEvents": 10100,
+    "rows": 10100,
+    "deadLetterRows": 2,
+    "dltRecords": 2,
+    "lost": 0,
+    "partition1StallSeconds": 20.1,
+    "errorHandlerLogLines": 0,
+    "retryAttemptsLogged": 2,
+    "deadLetterTopic": "paritypay.events.dlt",
+    "retryTopic": "없음",
+    "latencyAfterPoisonMs": {
+      "p0": {
+        "first": 324,
+        "median": 3481,
+        "max": 5888,
+        "n": 3362
+      },
+      "p1": {
+        "first": 486,
+        "median": 7144,
+        "max": 9018,
+        "n": 3280
+      },
+      "p2": {
+        "first": 88,
+        "median": 5455,
+        "max": 7632,
+        "n": 3358
+      }
+    },
+    "proved": true,
+    "commitSha": "b4ee004"
+  },
+  {
+    "experiment": "poison",
+    "run": 1,
+    "validEvents": 10100,
+    "rows": 10100,
+    "deadLetterRows": 2,
+    "dltRecords": 2,
+    "lost": 0,
+    "partition1StallSeconds": 14.82,
+    "errorHandlerLogLines": 0,
+    "retryAttemptsLogged": 2,
+    "deadLetterTopic": "paritypay.events.dlt",
+    "retryTopic": "없음",
+    "latencyAfterPoisonMs": {
+      "p0": {
+        "first": 116,
+        "median": 6026,
+        "max": 9865,
+        "n": 3321
+      },
+      "p1": {
+        "first": 126,
+        "median": 8716,
+        "max": 10554,
+        "n": 3336
+      },
+      "p2": {
+        "first": 23,
+        "median": 2888,
+        "max": 9085,
+        "n": 3343
+      }
+    },
+    "proved": true,
+    "commitSha": "b4ee004"
+  },
+  {
+    "experiment": "poison",
+    "run": 2,
+    "validEvents": 10100,
+    "rows": 10100,
+    "deadLetterRows": 2,
+    "dltRecords": 2,
+    "lost": 0,
+    "partition1StallSeconds": 13.56,
+    "errorHandlerLogLines": 0,
+    "retryAttemptsLogged": 2,
+    "deadLetterTopic": "paritypay.events.dlt",
+    "retryTopic": "없음",
+    "latencyAfterPoisonMs": {
+      "p0": {
+        "first": 124,
+        "median": 4336,
+        "max": 8332,
+        "n": 3405
+      },
+      "p1": {
+        "first": 171,
+        "median": 6269,
+        "max": 9956,
+        "n": 3298
+      },
+      "p2": {
+        "first": 40,
+        "median": 2050,
+        "max": 6723,
+        "n": 3297
+      }
+    },
+    "proved": true,
+    "commitSha": "b4ee004"
+  }
+]

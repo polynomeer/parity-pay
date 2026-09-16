@@ -286,6 +286,8 @@ GET  /api/v1/admin/payments?status=UNKNOWN&before=...
 GET  /api/v1/admin/ledger-transactions/{transactionId}
 GET  /api/v1/admin/outbox-events?status=FAILED
 POST /api/v1/admin/outbox-events/{eventId}/retry
+GET  /api/v1/admin/dead-letters?status=OPEN
+POST /api/v1/admin/dead-letters/{deadLetterId}/retry
 GET  /api/v1/admin/reconciliation/mismatches
 POST /api/v1/admin/reconciliation/mismatches/{id}/resolve
 POST /api/v1/admin/adjustments
@@ -359,6 +361,10 @@ POST /api/v1/admin/merchants
 이벤트는 토픽 하나(`paritypay.events`)로 발행하고 파티션 키로 Aggregate 순서를 보장합니다. 순서가
 필요한 단위는 Aggregate이지 토픽 전체가 아닙니다. 소비자는 자신이 관심 없는 이벤트 타입을 무시하되
 소비 이력에는 남겨, 재처리 대상에서 빠지게 합니다.
+
+소비자가 끝내 처리하지 못한 레코드는 `paritypay.events.dlt`로 갑니다(원 토픽·파티션·오프셋·소비자
+그룹·예외를 헤더로). 같은 레코드가 `dead_letter_event` 표에도 남으며, 운영자는 표를 보고 원 토픽으로
+되돌립니다. 근거: [DOC-09 §6](09-consistency-recovery.md), reports/11 결함 M
 
 ## 8. 이벤트 호환성
 
