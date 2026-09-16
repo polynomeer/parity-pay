@@ -1,0 +1,22 @@
+[
+  {
+    "experiment": "loss",
+    "acks": "0",
+    "run": 0,
+    "events": 8000,
+    "publishedAtKill": 2000,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 8000
+    },
+    "brokerRecords": 7901,
+    "brokerDistinct": 7901,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 99,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 3,
+    "proved": true,
+    "commitSha": "36002b5"
+  }
+]

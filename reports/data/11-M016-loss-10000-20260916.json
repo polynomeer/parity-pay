@@ -1,0 +1,122 @@
+[
+  {
+    "experiment": "loss",
+    "acks": "1",
+    "run": 0,
+    "events": 10000,
+    "publishedAtKill": 3100,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 10000
+    },
+    "brokerRecords": 9900,
+    "brokerDistinct": 9900,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 100,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 3,
+    "proved": true,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "1",
+    "run": 1,
+    "events": 10000,
+    "publishedAtKill": 3700,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 10000
+    },
+    "brokerRecords": 9900,
+    "brokerDistinct": 9900,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 100,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 3,
+    "proved": true,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "1",
+    "run": 2,
+    "events": 10000,
+    "publishedAtKill": 3700,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 10000
+    },
+    "brokerRecords": 9800,
+    "brokerDistinct": 9800,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 200,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 0,
+    "proved": true,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "0",
+    "run": 0,
+    "events": 10000,
+    "publishedAtKill": 3100,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 10000
+    },
+    "brokerRecords": 9900,
+    "brokerDistinct": 9900,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 100,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 0,
+    "proved": true,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "0",
+    "run": 1,
+    "events": 10000,
+    "publishedAtKill": 3100,
+    "brokerDownSeconds": 7.1,
+    "outboxStatus": {
+      "PUBLISHED": 10000
+    },
+    "brokerRecords": 9800,
+    "brokerDistinct": 9800,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 200,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 0,
+    "proved": true,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "0",
+    "run": 2,
+    "events": 10000,
+    "publishedAtKill": 4000,
+    "brokerDownSeconds": 7.1,
+    "outboxStatus": {
+      "PUBLISHED": 10000
+    },
+    "brokerRecords": 10000,
+    "brokerDistinct": 10000,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 0,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 0,
+    "proved": false,
+    "commitSha": "36002b5"
+  }
+]

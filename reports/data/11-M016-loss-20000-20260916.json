@@ -1,0 +1,182 @@
+[
+  {
+    "experiment": "loss",
+    "acks": "all",
+    "run": 0,
+    "events": 20000,
+    "publishedAtKill": 5000,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 20000
+    },
+    "brokerRecords": 20000,
+    "brokerDistinct": 20000,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 0,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 0,
+    "proved": false,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "all",
+    "run": 1,
+    "events": 20000,
+    "publishedAtKill": 5000,
+    "brokerDownSeconds": 6.9,
+    "outboxStatus": {
+      "PUBLISHED": 20000
+    },
+    "brokerRecords": 20000,
+    "brokerDistinct": 20000,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 0,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 3,
+    "proved": false,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "all",
+    "run": 2,
+    "events": 20000,
+    "publishedAtKill": 5000,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 20000
+    },
+    "brokerRecords": 20000,
+    "brokerDistinct": 20000,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 0,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 3,
+    "proved": false,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "1",
+    "run": 0,
+    "events": 20000,
+    "publishedAtKill": 5000,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 20000
+    },
+    "brokerRecords": 19900,
+    "brokerDistinct": 19900,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 100,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 3,
+    "proved": true,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "1",
+    "run": 1,
+    "events": 20000,
+    "publishedAtKill": 5000,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 20000
+    },
+    "brokerRecords": 20000,
+    "brokerDistinct": 20000,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 0,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 3,
+    "proved": false,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "1",
+    "run": 2,
+    "events": 20000,
+    "publishedAtKill": 5000,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 20000
+    },
+    "brokerRecords": 20000,
+    "brokerDistinct": 20000,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 0,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 3,
+    "proved": false,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "0",
+    "run": 0,
+    "events": 20000,
+    "publishedAtKill": 5000,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 20000
+    },
+    "brokerRecords": 20000,
+    "brokerDistinct": 20000,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 0,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 0,
+    "proved": false,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "0",
+    "run": 1,
+    "events": 20000,
+    "publishedAtKill": 6000,
+    "brokerDownSeconds": 7.0,
+    "outboxStatus": {
+      "PUBLISHED": 20000
+    },
+    "brokerRecords": 20000,
+    "brokerDistinct": 20000,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 0,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 3,
+    "proved": false,
+    "commitSha": "36002b5"
+  },
+  {
+    "experiment": "loss",
+    "acks": "0",
+    "run": 2,
+    "events": 20000,
+    "publishedAtKill": 6000,
+    "brokerDownSeconds": 7.1,
+    "outboxStatus": {
+      "PUBLISHED": 20000
+    },
+    "brokerRecords": 20000,
+    "brokerDistinct": 20000,
+    "brokerDuplicates": 0,
+    "publishedButMissing": 0,
+    "inBrokerNotPublished": 0,
+    "unparsable": 0,
+    "logFailures": 3,
+    "proved": false,
+    "commitSha": "36002b5"
+  }
+]
