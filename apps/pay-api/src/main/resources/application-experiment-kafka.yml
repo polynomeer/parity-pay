@@ -1,0 +1,26 @@
+# ==========================================================================================
+# 실험 전용 프로필입니다. **설계가 아닙니다.** 운영·로컬·테스트 어디에서도 켜지 않습니다.
+#
+# reports/11 M-015~M-018(Kafka 중복·유실·순서 역전·poison message 재현)이
+# `load-tests/kafka-failure-experiment.py`로 이 프로필을 켜고, 아래 환경변수로 설정 하나씩을
+# 기본값에서 벗어나게 합니다. 환경변수를 주지 않으면 이 프로필을 켜도 값은 기본과 같습니다.
+#
+# 기본값(application.yml)이 왜 그 값인지가 이 실험의 결론입니다:
+#   - producer acks=all + 멱등 프로듀서 → 브로커가 기록한 뒤에만 PUBLISHED (M-016)
+#   - consumer enable.auto.commit=false + 컨테이너 BATCH 커밋 → 처리 뒤 커밋, 유실 대신 중복 (M-015)
+#   - partition key = Aggregate ID → 같은 결제의 승인·취소가 같은 파티션 (M-017)
+#
+# 근거: ADR-005, ADR-006, docs/05-technical-design.md §9
+# ==========================================================================================
+spring:
+  kafka:
+    producer:
+      # M-016: 0 / 1 / all. all이 아니면 멱등 프로듀서를 켤 수 없어 함께 끕니다.
+      acks: ${EXPERIMENT_PRODUCER_ACKS:all}
+      properties:
+        enable.idempotence: ${EXPERIMENT_PRODUCER_IDEMPOTENCE:true}
+    consumer:
+      # M-015: true이면 Kafka 클라이언트가 처리와 무관하게 주기적으로 오프셋을 커밋합니다.
+      # spring-kafka는 이 값이 true이면 컨테이너 커밋을 하지 않습니다.
+      enable-auto-commit: ${EXPERIMENT_CONSUMER_AUTO_COMMIT:false}
+      auto-commit-interval: ${EXPERIMENT_CONSUMER_AUTO_COMMIT_INTERVAL:100ms}
