@@ -1422,6 +1422,56 @@
           "required" : [ "merchantId", "periodEnd", "periodStart" ],
           "type" : "object"
         },
+        "DeadLetterSummary" : {
+          "properties" : {
+            "consumerGroup" : {
+              "type" : "string"
+            },
+            "deadLetterId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "error" : {
+              "type" : "string"
+            },
+            "eventId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "eventType" : {
+              "type" : "string"
+            },
+            "failedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "offset" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "partition" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "recordKey" : {
+              "type" : "string"
+            },
+            "retriedAt" : {
+              "format" : "date-time",
+              "type" : "string"
+            },
+            "retriedBy" : {
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            },
+            "topic" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "EntryResponse" : {
           "properties" : {
             "accountCode" : {
@@ -1824,6 +1874,24 @@
           "required" : [ "reason" ],
           "type" : "object"
         },
+        "RetryOutcome" : {
+          "properties" : {
+            "changed" : {
+              "type" : "boolean"
+            },
+            "deadLetterId" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "detail" : {
+              "type" : "string"
+            },
+            "status" : {
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
         "RunResponse" : {
           "properties" : {
             "externalCount" : {
@@ -2058,6 +2126,82 @@
     },
     "openapi" : "3.1.0",
     "paths" : {
+      "/api/v1/admin/dead-letters" : {
+        "get" : {
+          "operationId" : "listDeadLetters",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "status",
+            "required" : false,
+            "schema" : {
+              "default" : "OPEN",
+              "type" : "string"
+            }
+          }, {
+            "in" : "query",
+            "name" : "limit",
+            "required" : false,
+            "schema" : {
+              "default" : 50,
+              "format" : "int32",
+              "type" : "integer"
+            }
+          } ],
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "items" : {
+                      "$ref" : "#/components/schemas/DeadLetterSummary"
+                    },
+                    "type" : "array"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
+      "/api/v1/admin/dead-letters/{deadLetterId}/retry" : {
+        "post" : {
+          "operationId" : "retryDeadLetter",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "deadLetterId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          } ],
+          "requestBody" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResolveRequest"
+                }
+              }
+            },
+            "required" : true
+          },
+          "responses" : {
+            "200" : {
+              "content" : {
+                "*/*" : {
+                  "schema" : {
+                    "$ref" : "#/components/schemas/RetryOutcome"
+                  }
+                }
+              },
+              "description" : "OK"
+            }
+          },
+          "tags" : [ "operations-controller" ]
+        }
+      },
       "/api/v1/admin/invariants" : {
         "get" : {
           "operationId" : "invariants",

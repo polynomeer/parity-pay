@@ -140,10 +140,15 @@ class App:
 
 def reset_tables(container):
     psql(container, "TRUNCATE outbox_event, consumed_event, wallet_transaction, settlement_item CASCADE")
+    try:
+        psql(container, "TRUNCATE dead_letter_event")
+    except RuntimeError:
+        pass  # 결함 M 수정 전 스키마
 
 
 def reset_topic(broker, topic):
     rpk(broker, "topic", "delete", topic)
+    rpk(broker, "topic", "delete", topic + ".dlt")
     time.sleep(1)
     rpk(broker, "topic", "create", topic, "-p", "3", "-r", "1", check=True)
 
@@ -477,12 +482,18 @@ def run_poison(args, run_index):
         latency = partition_latencies(container, broker, args.topic, poison_at_iso)
         error_lines = app.log_count("Error handler threw an exception") + app.log_count("Backoff")
         skipped = app.log_count("Skipping seek of") + app.log_count("skipping")
+        try:
+            dead_letter_rows = count(container, "SELECT count(*) FROM dead_letter_event")
+        except RuntimeError:
+            dead_letter_rows = None  # 결함 M 수정 전 스키마
+        dlt_marks = topic_high_watermarks(broker, args.topic + ".dlt")
         result = {
             "experiment": "poison", "run": run_index, "validEvents": total_expected, "rows": rows,
+            "deadLetterRows": dead_letter_rows, "dltRecords": sum(dlt_marks.values()) if dlt_marks else 0,
             "lost": total_expected - rows, "partition1StallSeconds": None if stall_seconds is None else round(stall_seconds, 2),
             "errorHandlerLogLines": error_lines, "retryAttemptsLogged": app.log_count("JsonParseException") +
             app.log_count("StreamReadException") + app.log_count("JacksonException"),
-            "deadLetterTopic": "없음", "retryTopic": "없음",
+            "deadLetterTopic": args.topic + ".dlt", "retryTopic": "없음",
             "latencyAfterPoisonMs": latency,
         }
         result["proved"] = stall_seconds is not None
@@ -554,6 +565,7 @@ def main():
     args = parser.parse_args()
 
     Path(args.log_dir).mkdir(parents=True, exist_ok=True)
+    Path(args.out).mkdir(parents=True, exist_ok=True)
     out = Path(args.out) / f"{args.experiment}-{now_utc()}.json"
     commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip()
     results = []

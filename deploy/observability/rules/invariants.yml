@@ -110,3 +110,15 @@ groups:
           severity: warning
         annotations:
           summary: "자동 복구를 포기하고 사람 확인이 필요한 거래가 있습니다"
+
+  # 소비자가 재시도를 다 쓰고 DLT로 보낸 레코드입니다. 원장은 맞고 대사도 잡지 못하는 종류의
+  # 누락이라(거래내역·정산 항목이 빠짐) 불변조건과 같은 등급으로 봅니다. 근거: reports/11 M-018 결함 M
+  - name: paritypay-consumers
+    rules:
+      - alert: ConsumerDeadLetters
+        expr: paritypay_consumer_dead_letters_open > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "소비자가 처리하지 못한 이벤트가 DLT에서 운영자를 기다립니다 (GET /api/v1/admin/dead-letters)"

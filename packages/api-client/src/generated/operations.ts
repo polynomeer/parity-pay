@@ -8,6 +8,38 @@
  * 그것이 이 파일을 커밋하는 이유입니다.
  */
 export interface paths {
+    "/api/v1/admin/dead-letters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listDeadLetters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/dead-letters/{deadLetterId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["retryDeadLetter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/invariants": {
         parameters: {
             query?: never;
@@ -471,6 +503,27 @@ export interface components {
             /** Format: date */
             periodStart: string;
         };
+        DeadLetterSummary: {
+            consumerGroup?: string;
+            /** Format: uuid */
+            deadLetterId?: string;
+            error?: string;
+            /** Format: uuid */
+            eventId?: string;
+            eventType?: string;
+            /** Format: date-time */
+            failedAt?: string;
+            /** Format: int64 */
+            offset?: number;
+            /** Format: int32 */
+            partition?: number;
+            recordKey?: string;
+            /** Format: date-time */
+            retriedAt?: string;
+            retriedBy?: string;
+            status?: string;
+            topic?: string;
+        };
         EntryResponse: {
             accountCode?: string;
             /** Format: int64 */
@@ -630,6 +683,13 @@ export interface components {
         ResolveRequest: {
             reason: string;
         };
+        RetryOutcome: {
+            changed?: boolean;
+            /** Format: uuid */
+            deadLetterId?: string;
+            detail?: string;
+            status?: string;
+        };
         RunResponse: {
             /** Format: int32 */
             externalCount?: number;
@@ -728,6 +788,55 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listDeadLetters: {
+        parameters: {
+            query?: {
+                limit?: number;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DeadLetterSummary"][];
+                };
+            };
+        };
+    };
+    retryDeadLetter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deadLetterId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RetryOutcome"];
+                };
+            };
+        };
+    };
     invariants: {
         parameters: {
             query?: never;

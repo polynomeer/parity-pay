@@ -1,5 +1,6 @@
 package io.parity.pay.api.operations;
 
+import io.parity.pay.api.eventing.DeadLetterAdminService;
 import io.parity.pay.api.merchant.Merchant;
 import io.parity.pay.api.merchant.MerchantDirectory;
 import io.parity.pay.api.observability.InvariantMetrics;
@@ -60,6 +61,7 @@ class OperationsController {
     private final AuditLogWriter auditLogWriter;
     private final JdbcTemplate jdbcTemplate;
     private final CurrentPrincipal currentPrincipal;
+    private final DeadLetterAdminService deadLetterAdminService;
 
     OperationsController(
             TopUpRecoveryService recoveryService,
@@ -74,7 +76,8 @@ class OperationsController {
             ApprovalAuthority approvalAuthority,
             AuditLogWriter auditLogWriter,
             JdbcTemplate jdbcTemplate,
-            CurrentPrincipal currentPrincipal) {
+            CurrentPrincipal currentPrincipal,
+            DeadLetterAdminService deadLetterAdminService) {
         this.recoveryService = recoveryService;
         this.timelineService = timelineService;
         this.searchService = searchService;
@@ -88,6 +91,7 @@ class OperationsController {
         this.auditLogWriter = auditLogWriter;
         this.jdbcTemplate = jdbcTemplate;
         this.currentPrincipal = currentPrincipal;
+        this.deadLetterAdminService = deadLetterAdminService;
     }
 
     /**
@@ -419,6 +423,44 @@ class OperationsController {
                 eventId.toString(),
                 request.reason(),
                 "status=FAILED attempts=" + outcome.previousAttemptCount(),
+                "status=" + outcome.status(),
+                outcome.changed() ? AuditLogWriter.Result.SUCCEEDED : AuditLogWriter.Result.NO_CHANGE,
+                outcome.detail());
+
+        return ResponseEntity.ok(outcome);
+    }
+
+    /**
+     * 소비자가 끝내 처리하지 못해 DLT로 보낸 레코드 목록입니다.
+     *
+     * <p>{@code paritypay.consumer.dead_letters_open}이 0이 아닐 때 그 정체를 보는 곳입니다. 여기 있는
+     * 것은 거래내역·정산에서 **빠져 있는** 이벤트일 수 있습니다(결함 M).
+     */
+    @GetMapping("/dead-letters")
+    ResponseEntity<List<DeadLetterAdminService.DeadLetterSummary>> listDeadLetters(
+            @RequestParam(defaultValue = "OPEN") String status, @RequestParam(defaultValue = "50") int limit) {
+        return ResponseEntity.ok(deadLetterAdminService.list(status, limit));
+    }
+
+    /**
+     * DLT 레코드를 원 토픽에 같은 키·같은 payload로 다시 발행합니다.
+     *
+     * <p>내용을 고치는 기능은 없습니다. 코드를 고친 뒤 다시 흘려보내는 용도이고, 소비자가 멱등이므로
+     * 이미 처리된 것이 섞여 있어도 효과는 한 번입니다. 여전히 실패하면 새 DLT 행이 생깁니다.
+     */
+    @PostMapping("/dead-letters/{deadLetterId}/retry")
+    ResponseEntity<DeadLetterAdminService.RetryOutcome> retryDeadLetter(
+            @PathVariable UUID deadLetterId, @Valid @RequestBody ResolveRequest request) {
+        String operatorId = currentPrincipal.actorId();
+        DeadLetterAdminService.RetryOutcome outcome = deadLetterAdminService.retry(deadLetterId, operatorId);
+
+        auditLogWriter.record(
+                operatorId,
+                "DEAD_LETTER_RETRY",
+                "DEAD_LETTER_EVENT",
+                deadLetterId.toString(),
+                request.reason(),
+                "status=OPEN",
                 "status=" + outcome.status(),
                 outcome.changed() ? AuditLogWriter.Result.SUCCEEDED : AuditLogWriter.Result.NO_CHANGE,
                 outcome.detail());
