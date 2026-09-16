@@ -17,8 +17,8 @@
 의도를 **한 로컬 트랜잭션**으로 묶고(ADR-005), 브로커의 at-least-once를 멱등 소비자로 흡수하며(ADR-006),
 외부 결과를 모를 때는 `UNKNOWN`으로 보존하고 조회로만 확정합니다(ADR-007).
 
-**상태 (2026-09-14)**: Phase 0~9 구현 완료. 백엔드 테스트 319 · 프론트엔드 56 · E2E 7, 실패 0. 부하·장애
-실험 31종이 결함 13건(A~M)을 찾았고 전부 고쳤습니다. 근거: [reports/12](../reports/12-portfolio-technical-report-draft.md)
+**상태 (2026-09-14)**: Phase 0~9 구현 완료. 백엔드 테스트 325 · 프론트엔드 56 · E2E 7, 실패 0. 부하·장애
+실험 36종이 결함 14건(A~N)을 찾았고 전부 고쳤습니다. 근거: [reports/12](../reports/12-portfolio-technical-report-draft.md)
 
 ## 2. 저장소 지도
 
@@ -241,6 +241,7 @@ ReconciliationJob ─▶ 기관 명세 API (트랜잭션 밖) ─▶ 못 받으�
 | Transactional Outbox | DB 커밋과 이벤트 발행 사이의 유실 | `outbox_event`, `OutboxPublisher` | ADR-005 |
 | 파티션별 선두만 선점 | 발행기 다중화 시 Aggregate 순서 붕괴 | V18 `outbox_partition_order` | DOC-05 §9, 결함 F |
 | 멱등 소비자 | at-least-once 중복 전달 | `consumed_event(event_id)` 유니크 | ADR-006 |
+| 벌크헤드 + 차단기 (`PgCallGuard`) | 느린·죽은 기관이 프로세스를 잠식하고 미확정을 쌓는 것. 거절은 `FAILED(사유)`, 기관 도달 0 | `apps/pay-api/.../mockpg/guard`, `paritypay.pg.*` | ADR-014 |
 | DLT + 실패 표 + 경보 | 처리할 수 없는 레코드가 조용히 사라지는 것 | `DeadLetterRecoverer`, `dead_letter_event`, `paritypay.events.dlt`, `/admin/dead-letters` | DOC-09 §6, 결함 M |
 | `UNKNOWN` + 조회 전용 복구 | 타임아웃을 실패로 오판한 재시도 → 이중 출금·이중 환불·이중 지급 | `*RecoveryService` ×4, `*_recovery` 테이블, 5초 주기·지수 백오프·리스·8회·"없음" 3회 확인 | ADR-007, DOC-09 §7·§8 |
 | 웹훅 서명·허용 오차·영수증 | 위조·재전송·역순 웹훅 | `webhook_receipt`, `PARITYPAY_WEBHOOK_SECRET` | DOC-09 F-008 |
@@ -359,7 +360,7 @@ TanStack Query의 기본 재시도(쿼리 3회)를 끄고 명시적으로 통제
 
 | 층 | 무엇 | 수 (2026-09-14) |
 |---|---|---|
-| 백엔드 단위·통합·속성·아키텍처 | JUnit 5 + Testcontainers(PostgreSQL·Redpanda 실물) + jqwik + ArchUnit | 319 |
+| 백엔드 단위·통합·속성·아키텍처 | JUnit 5 + Testcontainers(PostgreSQL·Redpanda 실물) + jqwik + ArchUnit | 325 |
 | 프론트 단위 | Vitest + Testing Library + MSW (API 목) | 56 |
 | E2E | Playwright, 목 없음, 실제 스택 전부 | 7 (주간·수동) |
 | 부하·장애 실험 | k6 + 파이썬 하니스, 결과는 reports/11 | 27종 |
@@ -392,6 +393,7 @@ CI 게이트: 빌드·테스트·Spotless·Error Prone·OpenAPI 스냅샷·생�
 | K | 복구 작업이 틱당 한 배치라 초당 10건 상한 — 적체 600건부터 90초 안에 못 답함 | M-012 |
 | L | 미확정 취소가 201로 나가고 취소를 조회할 API가 없음 | M-012 준비 중 |
 | M | 소비자가 처리할 수 없는 레코드를 10회 즉시 재시도 뒤 DLT·지표 없이 버림 | M-018 poison message |
+| N | 외부 PG 호출에 동시성 상한도 차단기도 없어 느린 기관 앞에서 진행 중 결제가 무한정 쌓임 | M-019~M-023 외부기관 격리 |
 
 B·C·F·J·K·L 여섯은 "대비되어 있다"고 문서에 적혀 있던 것이었습니다. → [reports/11](../reports/11-performance-failure-report-template.md), [reports/12 §9·§12](../reports/12-portfolio-technical-report-draft.md)
 

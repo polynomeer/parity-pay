@@ -1,0 +1,9199 @@
+[
+ {
+  "experiment": "ratelimit",
+  "variant": "FIXED_WINDOW",
+  "run": 0,
+  "since": "2026-09-16T04:30:41.360108+00:00",
+  "load": {
+   "payRps": 80,
+   "readRps": 5,
+   "duration": "20s"
+  },
+  "pgMode": "NORMAL",
+  "pgHangMs": 0,
+  "env": {
+   "EXPERIMENT_RATE_LIMITER": "true",
+   "EXPERIMENT_RATE_LIMIT": "50",
+   "EXPERIMENT_RATE_ALGORITHM": "FIXED_WINDOW"
+  },
+  "k6": {
+   "payment": {
+    "avg": 11.5,
+    "med": 11.3,
+    "p(95)": 18.1,
+    "max": 145.0
+   },
+   "read": {
+    "avg": 2.5,
+    "med": 2.3,
+    "p(95)": 3.8,
+    "max": 5.6
+   },
+   "paymentOutcomes": {
+    "201_APPROVED": 1028,
+    "201_FAILED_RATE_LIMITED": 573
+   },
+   "paymentRequests": 1601,
+   "readRequests": 101,
+   "readFailed": 0,
+   "droppedIterations": 0,
+   "readP95PerSecond": [
+    [
+     0,
+     6
+    ],
+    [
+     1,
+     3
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     3
+    ],
+    [
+     4,
+     3
+    ],
+    [
+     5,
+     3
+    ],
+    [
+     6,
+     3
+    ],
+    [
+     7,
+     4
+    ],
+    [
+     8,
+     3
+    ],
+    [
+     9,
+     4
+    ],
+    [
+     10,
+     3
+    ],
+    [
+     11,
+     2
+    ],
+    [
+     12,
+     3
+    ],
+    [
+     13,
+     2
+    ],
+    [
+     14,
+     3
+    ],
+    [
+     15,
+     2
+    ],
+    [
+     16,
+     3
+    ],
+    [
+     17,
+     3
+    ],
+    [
+     18,
+     3
+    ],
+    [
+     19,
+     4
+    ]
+   ],
+   "paymentP95PerSecond": [
+    [
+     0,
+     72
+    ],
+    [
+     1,
+     17
+    ],
+    [
+     2,
+     16
+    ],
+    [
+     3,
+     20
+    ],
+    [
+     4,
+     108
+    ],
+    [
+     5,
+     14
+    ],
+    [
+     6,
+     15
+    ],
+    [
+     7,
+     14
+    ],
+    [
+     8,
+     15
+    ],
+    [
+     9,
+     20
+    ],
+    [
+     10,
+     14
+    ],
+    [
+     11,
+     13
+    ],
+    [
+     12,
+     14
+    ],
+    [
+     13,
+     15
+    ],
+    [
+     14,
+     14
+    ],
+    [
+     15,
+     13
+    ],
+    [
+     16,
+     13
+    ],
+    [
+     17,
+     12
+    ],
+    [
+     18,
+     20
+    ],
+    [
+     19,
+     15
+    ]
+   ]
+  },
+  "pgApprovals": 1028,
+  "pgRequestsSeen": 1028,
+  "pgMaxPer1s": 78,
+  "pgMaxPer100ms": 14,
+  "probeCollapseAtSec": null,
+  "probeP95Ms": 7,
+  "samples": [
+   {
+    "t": 0.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 1.1,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 2.2,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 3.3,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 4.3,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 5.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 30.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 6.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 60.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 7.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 90.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 8.5,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 118.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 9.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 150.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 10.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 180.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 11.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 210.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 12.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 240.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 13.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 270.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 14.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 300.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 15.7,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 330.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 16.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 362.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 17.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 395.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 18.8,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 427.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 19.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 460.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 20.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 492.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 21.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 525.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 23.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 557.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 24.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 573.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   }
+  ],
+  "probes": [
+   [
+    0.0,
+    46,
+    200
+   ],
+   [
+    0.35,
+    13,
+    200
+   ],
+   [
+    0.62,
+    6,
+    200
+   ],
+   [
+    0.88,
+    7,
+    200
+   ],
+   [
+    1.14,
+    5,
+    200
+   ],
+   [
+    1.43,
+    6,
+    200
+   ],
+   [
+    1.69,
+    6,
+    200
+   ],
+   [
+    1.95,
+    6,
+    200
+   ],
+   [
+    2.21,
+    6,
+    200
+   ],
+   [
+    2.48,
+    6,
+    200
+   ],
+   [
+    2.74,
+    7,
+    200
+   ],
+   [
+    3.01,
+    6,
+    200
+   ],
+   [
+    3.28,
+    6,
+    200
+   ],
+   [
+    3.55,
+    6,
+    200
+   ],
+   [
+    3.82,
+    6,
+    200
+   ],
+   [
+    4.07,
+    5,
+    200
+   ],
+   [
+    4.33,
+    5,
+    200
+   ],
+   [
+    4.6,
+    4,
+    200
+   ],
+   [
+    4.86,
+    4,
+    200
+   ],
+   [
+    5.12,
+    4,
+    200
+   ],
+   [
+    5.37,
+    4,
+    200
+   ],
+   [
+    5.64,
+    4,
+    200
+   ],
+   [
+    5.9,
+    4,
+    200
+   ],
+   [
+    6.15,
+    3,
+    200
+   ],
+   [
+    6.41,
+    4,
+    200
+   ],
+   [
+    6.68,
+    4,
+    200
+   ],
+   [
+    6.93,
+    4,
+    200
+   ],
+   [
+    7.19,
+    3,
+    200
+   ],
+   [
+    7.45,
+    4,
+    200
+   ],
+   [
+    7.72,
+    3,
+    200
+   ],
+   [
+    7.97,
+    3,
+    200
+   ],
+   [
+    8.23,
+    3,
+    200
+   ],
+   [
+    8.49,
+    4,
+    200
+   ],
+   [
+    8.76,
+    3,
+    200
+   ],
+   [
+    9.02,
+    3,
+    200
+   ],
+   [
+    9.27,
+    3,
+    200
+   ],
+   [
+    9.53,
+    3,
+    200
+   ],
+   [
+    9.8,
+    3,
+    200
+   ],
+   [
+    10.06,
+    3,
+    200
+   ],
+   [
+    10.32,
+    3,
+    200
+   ],
+   [
+    10.57,
+    3,
+    200
+   ],
+   [
+    10.84,
+    3,
+    200
+   ],
+   [
+    11.1,
+    4,
+    200
+   ],
+   [
+    11.36,
+    3,
+    200
+   ],
+   [
+    11.61,
+    3,
+    200
+   ],
+   [
+    11.88,
+    3,
+    200
+   ],
+   [
+    12.13,
+    3,
+    200
+   ],
+   [
+    12.39,
+    3,
+    200
+   ],
+   [
+    12.64,
+    3,
+    200
+   ],
+   [
+    12.91,
+    3,
+    200
+   ],
+   [
+    13.17,
+    3,
+    200
+   ],
+   [
+    13.42,
+    3,
+    200
+   ],
+   [
+    13.67,
+    4,
+    200
+   ],
+   [
+    13.94,
+    3,
+    200
+   ],
+   [
+    14.2,
+    3,
+    200
+   ],
+   [
+    14.45,
+    3,
+    200
+   ],
+   [
+    14.71,
+    3,
+    200
+   ],
+   [
+    14.98,
+    3,
+    200
+   ],
+   [
+    15.23,
+    3,
+    200
+   ],
+   [
+    15.49,
+    3,
+    200
+   ],
+   [
+    15.75,
+    3,
+    200
+   ],
+   [
+    16.02,
+    3,
+    200
+   ],
+   [
+    16.27,
+    3,
+    200
+   ],
+   [
+    16.53,
+    4,
+    200
+   ],
+   [
+    16.78,
+    3,
+    200
+   ],
+   [
+    17.05,
+    3,
+    200
+   ],
+   [
+    17.3,
+    3,
+    200
+   ],
+   [
+    17.56,
+    3,
+    200
+   ],
+   [
+    17.81,
+    3,
+    200
+   ],
+   [
+    18.07,
+    3,
+    200
+   ],
+   [
+    18.32,
+    2,
+    200
+   ],
+   [
+    18.58,
+    5,
+    200
+   ],
+   [
+    18.84,
+    4,
+    200
+   ],
+   [
+    19.11,
+    4,
+    200
+   ],
+   [
+    19.36,
+    3,
+    200
+   ],
+   [
+    19.62,
+    2,
+    200
+   ],
+   [
+    19.87,
+    3,
+    200
+   ],
+   [
+    20.14,
+    3,
+    200
+   ],
+   [
+    20.4,
+    3,
+    200
+   ],
+   [
+    20.65,
+    3,
+    200
+   ],
+   [
+    20.9,
+    3,
+    200
+   ],
+   [
+    21.17,
+    3,
+    200
+   ],
+   [
+    21.42,
+    2,
+    200
+   ],
+   [
+    21.68,
+    3,
+    200
+   ],
+   [
+    21.93,
+    3,
+    200
+   ],
+   [
+    22.2,
+    3,
+    200
+   ],
+   [
+    22.45,
+    3,
+    200
+   ],
+   [
+    22.7,
+    3,
+    200
+   ],
+   [
+    22.96,
+    3,
+    200
+   ],
+   [
+    23.23,
+    3,
+    200
+   ],
+   [
+    23.48,
+    3,
+    200
+   ],
+   [
+    23.74,
+    11,
+    200
+   ],
+   [
+    24.01,
+    4,
+    200
+   ]
+  ],
+  "circuitTransitions": [],
+  "restoredAtSec": null,
+  "jstack": null,
+  "commitSha": "688669c",
+  "consistency": {
+   "rejectedPayments": 573,
+   "reachedInstitution": 0,
+   "unknownPayments": 0
+  }
+ },
+ {
+  "experiment": "ratelimit",
+  "variant": "FIXED_WINDOW",
+  "run": 1,
+  "since": "2026-09-16T04:31:14.151760+00:00",
+  "load": {
+   "payRps": 80,
+   "readRps": 5,
+   "duration": "20s"
+  },
+  "pgMode": "NORMAL",
+  "pgHangMs": 0,
+  "env": {
+   "EXPERIMENT_RATE_LIMITER": "true",
+   "EXPERIMENT_RATE_LIMIT": "50",
+   "EXPERIMENT_RATE_ALGORITHM": "FIXED_WINDOW"
+  },
+  "k6": {
+   "payment": {
+    "avg": 11.0,
+    "med": 11.2,
+    "p(95)": 18.1,
+    "max": 94.5
+   },
+   "read": {
+    "avg": 2.5,
+    "med": 2.3,
+    "p(95)": 4.0,
+    "max": 5.4
+   },
+   "paymentOutcomes": {
+    "201_APPROVED": 1031,
+    "201_FAILED_RATE_LIMITED": 570
+   },
+   "paymentRequests": 1601,
+   "readRequests": 100,
+   "readFailed": 0,
+   "droppedIterations": 0,
+   "readP95PerSecond": [
+    [
+     0,
+     5
+    ],
+    [
+     1,
+     4
+    ],
+    [
+     2,
+     5
+    ],
+    [
+     3,
+     3
+    ],
+    [
+     4,
+     3
+    ],
+    [
+     5,
+     3
+    ],
+    [
+     6,
+     2
+    ],
+    [
+     7,
+     2
+    ],
+    [
+     8,
+     3
+    ],
+    [
+     9,
+     3
+    ],
+    [
+     10,
+     2
+    ],
+    [
+     11,
+     2
+    ],
+    [
+     12,
+     4
+    ],
+    [
+     13,
+     2
+    ],
+    [
+     14,
+     5
+    ],
+    [
+     15,
+     2
+    ],
+    [
+     16,
+     2
+    ],
+    [
+     17,
+     2
+    ],
+    [
+     18,
+     2
+    ],
+    [
+     19,
+     2
+    ]
+   ],
+   "paymentP95PerSecond": [
+    [
+     0,
+     65
+    ],
+    [
+     1,
+     17
+    ],
+    [
+     2,
+     18
+    ],
+    [
+     3,
+     16
+    ],
+    [
+     4,
+     19
+    ],
+    [
+     5,
+     18
+    ],
+    [
+     6,
+     15
+    ],
+    [
+     7,
+     15
+    ],
+    [
+     8,
+     15
+    ],
+    [
+     9,
+     18
+    ],
+    [
+     10,
+     14
+    ],
+    [
+     11,
+     13
+    ],
+    [
+     12,
+     16
+    ],
+    [
+     13,
+     14
+    ],
+    [
+     14,
+     21
+    ],
+    [
+     15,
+     14
+    ],
+    [
+     16,
+     13
+    ],
+    [
+     17,
+     13
+    ],
+    [
+     18,
+     14
+    ],
+    [
+     19,
+     12
+    ]
+   ]
+  },
+  "pgApprovals": 1031,
+  "pgRequestsSeen": 1031,
+  "pgMaxPer1s": 82,
+  "pgMaxPer100ms": 14,
+  "probeCollapseAtSec": null,
+  "probeP95Ms": 8,
+  "samples": [
+   {
+    "t": 0.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 36.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 1.1,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 2.2,
+    "hikaricp_connections_active": 3.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 3.3,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 4.3,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 5.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 30.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 6.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 60.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 7.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 90.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 8.5,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 120.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 9.6,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 150.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 10.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 180.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 11.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 210.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 12.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 240.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 13.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 272.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 14.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 305.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 15.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 338.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 16.8,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 371.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 17.9,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 404.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 18.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 437.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 20.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 471.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 21.0,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 504.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 22.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 537.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 23.1,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 570.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 24.1,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 570.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   }
+  ],
+  "probes": [
+   [
+    0.0,
+    53,
+    200
+   ],
+   [
+    0.35,
+    7,
+    200
+   ],
+   [
+    0.61,
+    7,
+    200
+   ],
+   [
+    0.87,
+    7,
+    200
+   ],
+   [
+    1.14,
+    9,
+    200
+   ],
+   [
+    1.43,
+    6,
+    200
+   ],
+   [
+    1.69,
+    8,
+    200
+   ],
+   [
+    1.96,
+    8,
+    200
+   ],
+   [
+    2.22,
+    5,
+    200
+   ],
+   [
+    2.49,
+    7,
+    200
+   ],
+   [
+    2.76,
+    5,
+    200
+   ],
+   [
+    3.02,
+    7,
+    200
+   ],
+   [
+    3.29,
+    7,
+    200
+   ],
+   [
+    3.57,
+    7,
+    200
+   ],
+   [
+    3.83,
+    5,
+    200
+   ],
+   [
+    4.09,
+    4,
+    200
+   ],
+   [
+    4.34,
+    7,
+    200
+   ],
+   [
+    4.61,
+    4,
+    200
+   ],
+   [
+    4.88,
+    4,
+    200
+   ],
+   [
+    5.14,
+    4,
+    200
+   ],
+   [
+    5.39,
+    4,
+    200
+   ],
+   [
+    5.66,
+    4,
+    200
+   ],
+   [
+    5.92,
+    4,
+    200
+   ],
+   [
+    6.17,
+    4,
+    200
+   ],
+   [
+    6.43,
+    3,
+    200
+   ],
+   [
+    6.7,
+    4,
+    200
+   ],
+   [
+    6.95,
+    3,
+    200
+   ],
+   [
+    7.21,
+    3,
+    200
+   ],
+   [
+    7.46,
+    4,
+    200
+   ],
+   [
+    7.73,
+    3,
+    200
+   ],
+   [
+    7.99,
+    3,
+    200
+   ],
+   [
+    8.24,
+    4,
+    200
+   ],
+   [
+    8.49,
+    3,
+    200
+   ],
+   [
+    8.76,
+    3,
+    200
+   ],
+   [
+    9.03,
+    3,
+    200
+   ],
+   [
+    9.29,
+    24,
+    200
+   ],
+   [
+    9.56,
+    3,
+    200
+   ],
+   [
+    9.84,
+    4,
+    200
+   ],
+   [
+    10.09,
+    3,
+    200
+   ],
+   [
+    10.34,
+    3,
+    200
+   ],
+   [
+    10.61,
+    3,
+    200
+   ],
+   [
+    10.87,
+    3,
+    200
+   ],
+   [
+    11.13,
+    3,
+    200
+   ],
+   [
+    11.39,
+    3,
+    200
+   ],
+   [
+    11.65,
+    3,
+    200
+   ],
+   [
+    11.91,
+    3,
+    200
+   ],
+   [
+    12.18,
+    3,
+    200
+   ],
+   [
+    12.43,
+    3,
+    200
+   ],
+   [
+    12.68,
+    4,
+    200
+   ],
+   [
+    12.96,
+    5,
+    200
+   ],
+   [
+    13.21,
+    3,
+    200
+   ],
+   [
+    13.47,
+    3,
+    200
+   ],
+   [
+    13.72,
+    2,
+    200
+   ],
+   [
+    13.99,
+    6,
+    200
+   ],
+   [
+    14.25,
+    3,
+    200
+   ],
+   [
+    14.51,
+    4,
+    200
+   ],
+   [
+    14.77,
+    3,
+    200
+   ],
+   [
+    15.03,
+    3,
+    200
+   ],
+   [
+    15.29,
+    3,
+    200
+   ],
+   [
+    15.55,
+    3,
+    200
+   ],
+   [
+    15.8,
+    3,
+    200
+   ],
+   [
+    16.06,
+    3,
+    200
+   ],
+   [
+    16.32,
+    3,
+    200
+   ],
+   [
+    16.58,
+    3,
+    200
+   ],
+   [
+    16.83,
+    3,
+    200
+   ],
+   [
+    17.1,
+    5,
+    200
+   ],
+   [
+    17.36,
+    3,
+    200
+   ],
+   [
+    17.62,
+    3,
+    200
+   ],
+   [
+    17.87,
+    3,
+    200
+   ],
+   [
+    18.14,
+    4,
+    200
+   ],
+   [
+    18.4,
+    6,
+    200
+   ],
+   [
+    18.66,
+    3,
+    200
+   ],
+   [
+    18.92,
+    5,
+    200
+   ],
+   [
+    19.19,
+    3,
+    200
+   ],
+   [
+    19.44,
+    4,
+    200
+   ],
+   [
+    19.71,
+    3,
+    200
+   ],
+   [
+    19.96,
+    3,
+    200
+   ],
+   [
+    20.23,
+    2,
+    200
+   ],
+   [
+    20.49,
+    2,
+    200
+   ],
+   [
+    20.74,
+    5,
+    200
+   ],
+   [
+    21.0,
+    4,
+    200
+   ],
+   [
+    21.27,
+    3,
+    200
+   ],
+   [
+    21.52,
+    3,
+    200
+   ],
+   [
+    21.78,
+    3,
+    200
+   ],
+   [
+    22.03,
+    3,
+    200
+   ],
+   [
+    22.3,
+    3,
+    200
+   ],
+   [
+    22.56,
+    3,
+    200
+   ],
+   [
+    22.81,
+    5,
+    200
+   ],
+   [
+    23.07,
+    3,
+    200
+   ],
+   [
+    23.33,
+    3,
+    200
+   ],
+   [
+    23.59,
+    3,
+    200
+   ],
+   [
+    23.85,
+    4,
+    200
+   ],
+   [
+    24.11,
+    5,
+    200
+   ]
+  ],
+  "circuitTransitions": [],
+  "restoredAtSec": null,
+  "jstack": null,
+  "commitSha": "688669c",
+  "consistency": {
+   "rejectedPayments": 570,
+   "reachedInstitution": 0,
+   "unknownPayments": 0
+  }
+ },
+ {
+  "experiment": "ratelimit",
+  "variant": "FIXED_WINDOW",
+  "run": 2,
+  "since": "2026-09-16T04:31:46.980362+00:00",
+  "load": {
+   "payRps": 80,
+   "readRps": 5,
+   "duration": "20s"
+  },
+  "pgMode": "NORMAL",
+  "pgHangMs": 0,
+  "env": {
+   "EXPERIMENT_RATE_LIMITER": "true",
+   "EXPERIMENT_RATE_LIMIT": "50",
+   "EXPERIMENT_RATE_ALGORITHM": "FIXED_WINDOW"
+  },
+  "k6": {
+   "payment": {
+    "avg": 11.4,
+    "med": 11.0,
+    "p(95)": 20.4,
+    "max": 99.6
+   },
+   "read": {
+    "avg": 2.8,
+    "med": 2.3,
+    "p(95)": 5.2,
+    "max": 14.1
+   },
+   "paymentOutcomes": {
+    "201_APPROVED": 1027,
+    "201_FAILED_RATE_LIMITED": 574
+   },
+   "paymentRequests": 1601,
+   "readRequests": 101,
+   "readFailed": 0,
+   "droppedIterations": 0,
+   "readP95PerSecond": [
+    [
+     0,
+     7
+    ],
+    [
+     1,
+     5
+    ],
+    [
+     2,
+     4
+    ],
+    [
+     3,
+     3
+    ],
+    [
+     4,
+     3
+    ],
+    [
+     5,
+     3
+    ],
+    [
+     6,
+     2
+    ],
+    [
+     7,
+     3
+    ],
+    [
+     8,
+     2
+    ],
+    [
+     9,
+     2
+    ],
+    [
+     10,
+     3
+    ],
+    [
+     11,
+     12
+    ],
+    [
+     12,
+     2
+    ],
+    [
+     13,
+     2
+    ],
+    [
+     14,
+     14
+    ],
+    [
+     15,
+     2
+    ],
+    [
+     16,
+     2
+    ],
+    [
+     17,
+     5
+    ],
+    [
+     18,
+     7
+    ],
+    [
+     19,
+     3
+    ]
+   ],
+   "paymentP95PerSecond": [
+    [
+     0,
+     99
+    ],
+    [
+     1,
+     36
+    ],
+    [
+     2,
+     15
+    ],
+    [
+     3,
+     17
+    ],
+    [
+     4,
+     20
+    ],
+    [
+     5,
+     17
+    ],
+    [
+     6,
+     15
+    ],
+    [
+     7,
+     16
+    ],
+    [
+     8,
+     14
+    ],
+    [
+     9,
+     16
+    ],
+    [
+     10,
+     15
+    ],
+    [
+     11,
+     22
+    ],
+    [
+     12,
+     16
+    ],
+    [
+     13,
+     15
+    ],
+    [
+     14,
+     17
+    ],
+    [
+     15,
+     13
+    ],
+    [
+     16,
+     12
+    ],
+    [
+     17,
+     13
+    ],
+    [
+     18,
+     12
+    ],
+    [
+     19,
+     13
+    ]
+   ]
+  },
+  "pgApprovals": 1027,
+  "pgRequestsSeen": 1027,
+  "pgMaxPer1s": 77,
+  "pgMaxPer100ms": 18,
+  "probeCollapseAtSec": null,
+  "probeP95Ms": 8,
+  "samples": [
+   {
+    "t": 0.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 33.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 1.1,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 2.2,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 37.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 3.3,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 37.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 4.3,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 5.3,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 30.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 6.4,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 60.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 7.4,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 91.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 8.5,
+    "hikaricp_connections_active": 4.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 120.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 9.5,
+    "hikaricp_connections_active": 4.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 151.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 10.5,
+    "hikaricp_connections_active": 4.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 181.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 11.6,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 211.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 12.6,
+    "hikaricp_connections_active": 3.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 241.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 13.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 270.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 14.7,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 300.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 15.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 330.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 16.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 364.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 17.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 398.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 18.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 431.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 19.9,
+    "hikaricp_connections_active": 3.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 463.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 20.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 496.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 22.0,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 530.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 23.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 563.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 24.1,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 574.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   }
+  ],
+  "probes": [
+   [
+    0.0,
+    42,
+    200
+   ],
+   [
+    0.35,
+    7,
+    200
+   ],
+   [
+    0.61,
+    6,
+    200
+   ],
+   [
+    0.87,
+    7,
+    200
+   ],
+   [
+    1.13,
+    7,
+    200
+   ],
+   [
+    1.42,
+    8,
+    200
+   ],
+   [
+    1.68,
+    5,
+    200
+   ],
+   [
+    1.94,
+    7,
+    200
+   ],
+   [
+    2.2,
+    5,
+    200
+   ],
+   [
+    2.48,
+    6,
+    200
+   ],
+   [
+    2.73,
+    6,
+    200
+   ],
+   [
+    2.99,
+    6,
+    200
+   ],
+   [
+    3.25,
+    5,
+    200
+   ],
+   [
+    3.52,
+    5,
+    200
+   ],
+   [
+    3.78,
+    5,
+    200
+   ],
+   [
+    4.04,
+    5,
+    200
+   ],
+   [
+    4.29,
+    5,
+    200
+   ],
+   [
+    4.56,
+    5,
+    200
+   ],
+   [
+    4.82,
+    4,
+    200
+   ],
+   [
+    5.08,
+    4,
+    200
+   ],
+   [
+    5.33,
+    5,
+    200
+   ],
+   [
+    5.61,
+    6,
+    200
+   ],
+   [
+    5.86,
+    4,
+    200
+   ],
+   [
+    6.13,
+    4,
+    200
+   ],
+   [
+    6.38,
+    3,
+    200
+   ],
+   [
+    6.65,
+    4,
+    200
+   ],
+   [
+    6.9,
+    4,
+    200
+   ],
+   [
+    7.16,
+    3,
+    200
+   ],
+   [
+    7.41,
+    4,
+    200
+   ],
+   [
+    7.68,
+    3,
+    200
+   ],
+   [
+    7.94,
+    5,
+    200
+   ],
+   [
+    8.2,
+    3,
+    200
+   ],
+   [
+    8.46,
+    4,
+    200
+   ],
+   [
+    8.73,
+    3,
+    200
+   ],
+   [
+    8.98,
+    3,
+    200
+   ],
+   [
+    9.24,
+    3,
+    200
+   ],
+   [
+    9.49,
+    5,
+    200
+   ],
+   [
+    9.77,
+    3,
+    200
+   ],
+   [
+    10.02,
+    4,
+    200
+   ],
+   [
+    10.28,
+    3,
+    200
+   ],
+   [
+    10.54,
+    4,
+    200
+   ],
+   [
+    10.81,
+    3,
+    200
+   ],
+   [
+    11.06,
+    4,
+    200
+   ],
+   [
+    11.32,
+    3,
+    200
+   ],
+   [
+    11.57,
+    4,
+    200
+   ],
+   [
+    11.85,
+    4,
+    200
+   ],
+   [
+    12.1,
+    4,
+    200
+   ],
+   [
+    12.36,
+    3,
+    200
+   ],
+   [
+    12.61,
+    4,
+    200
+   ],
+   [
+    12.88,
+    3,
+    200
+   ],
+   [
+    13.14,
+    3,
+    200
+   ],
+   [
+    13.39,
+    3,
+    200
+   ],
+   [
+    13.64,
+    3,
+    200
+   ],
+   [
+    13.91,
+    3,
+    200
+   ],
+   [
+    14.17,
+    3,
+    200
+   ],
+   [
+    14.43,
+    8,
+    200
+   ],
+   [
+    14.68,
+    3,
+    200
+   ],
+   [
+    14.95,
+    5,
+    200
+   ],
+   [
+    15.2,
+    3,
+    200
+   ],
+   [
+    15.46,
+    4,
+    200
+   ],
+   [
+    15.71,
+    4,
+    200
+   ],
+   [
+    16.0,
+    4,
+    200
+   ],
+   [
+    16.26,
+    3,
+    200
+   ],
+   [
+    16.52,
+    4,
+    200
+   ],
+   [
+    16.78,
+    3,
+    200
+   ],
+   [
+    17.05,
+    8,
+    200
+   ],
+   [
+    17.31,
+    3,
+    200
+   ],
+   [
+    17.57,
+    3,
+    200
+   ],
+   [
+    17.83,
+    3,
+    200
+   ],
+   [
+    18.09,
+    3,
+    200
+   ],
+   [
+    18.35,
+    2,
+    200
+   ],
+   [
+    18.61,
+    3,
+    200
+   ],
+   [
+    18.86,
+    3,
+    200
+   ],
+   [
+    19.13,
+    3,
+    200
+   ],
+   [
+    19.39,
+    3,
+    200
+   ],
+   [
+    19.64,
+    3,
+    200
+   ],
+   [
+    19.9,
+    3,
+    200
+   ],
+   [
+    20.16,
+    3,
+    200
+   ],
+   [
+    20.42,
+    3,
+    200
+   ],
+   [
+    20.68,
+    3,
+    200
+   ],
+   [
+    20.93,
+    4,
+    200
+   ],
+   [
+    21.21,
+    3,
+    200
+   ],
+   [
+    21.46,
+    3,
+    200
+   ],
+   [
+    21.72,
+    3,
+    200
+   ],
+   [
+    21.98,
+    3,
+    200
+   ],
+   [
+    22.25,
+    3,
+    200
+   ],
+   [
+    22.51,
+    3,
+    200
+   ],
+   [
+    22.77,
+    3,
+    200
+   ],
+   [
+    23.03,
+    3,
+    200
+   ],
+   [
+    23.29,
+    3,
+    200
+   ],
+   [
+    23.55,
+    3,
+    200
+   ],
+   [
+    23.81,
+    4,
+    200
+   ],
+   [
+    24.07,
+    14,
+    200
+   ]
+  ],
+  "circuitTransitions": [],
+  "restoredAtSec": null,
+  "jstack": null,
+  "commitSha": "688669c",
+  "consistency": {
+   "rejectedPayments": 574,
+   "reachedInstitution": 0,
+   "unknownPayments": 0
+  }
+ },
+ {
+  "experiment": "ratelimit",
+  "variant": "TOKEN_BUCKET",
+  "run": 0,
+  "since": "2026-09-16T04:32:20.851137+00:00",
+  "load": {
+   "payRps": 80,
+   "readRps": 5,
+   "duration": "20s"
+  },
+  "pgMode": "NORMAL",
+  "pgHangMs": 0,
+  "env": {
+   "EXPERIMENT_RATE_LIMITER": "true",
+   "EXPERIMENT_RATE_LIMIT": "50",
+   "EXPERIMENT_RATE_ALGORITHM": "TOKEN_BUCKET"
+  },
+  "k6": {
+   "payment": {
+    "avg": 11.0,
+    "med": 11.3,
+    "p(95)": 17.6,
+    "max": 89.0
+   },
+   "read": {
+    "avg": 2.5,
+    "med": 2.3,
+    "p(95)": 4.0,
+    "max": 4.7
+   },
+   "paymentOutcomes": {
+    "201_APPROVED": 1047,
+    "201_FAILED_RATE_LIMITED": 554
+   },
+   "paymentRequests": 1601,
+   "readRequests": 100,
+   "readFailed": 0,
+   "droppedIterations": 0,
+   "readP95PerSecond": [
+    [
+     0,
+     5
+    ],
+    [
+     1,
+     4
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     3
+    ],
+    [
+     4,
+     3
+    ],
+    [
+     5,
+     3
+    ],
+    [
+     6,
+     3
+    ],
+    [
+     7,
+     3
+    ],
+    [
+     8,
+     3
+    ],
+    [
+     9,
+     2
+    ],
+    [
+     10,
+     2
+    ],
+    [
+     11,
+     2
+    ],
+    [
+     12,
+     2
+    ],
+    [
+     13,
+     2
+    ],
+    [
+     14,
+     2
+    ],
+    [
+     15,
+     2
+    ],
+    [
+     16,
+     2
+    ],
+    [
+     17,
+     3
+    ],
+    [
+     18,
+     2
+    ],
+    [
+     19,
+     2
+    ]
+   ],
+   "paymentP95PerSecond": [
+    [
+     0,
+     67
+    ],
+    [
+     1,
+     19
+    ],
+    [
+     2,
+     18
+    ],
+    [
+     3,
+     16
+    ],
+    [
+     4,
+     15
+    ],
+    [
+     5,
+     16
+    ],
+    [
+     6,
+     14
+    ],
+    [
+     7,
+     20
+    ],
+    [
+     8,
+     15
+    ],
+    [
+     9,
+     15
+    ],
+    [
+     10,
+     15
+    ],
+    [
+     11,
+     13
+    ],
+    [
+     12,
+     13
+    ],
+    [
+     13,
+     13
+    ],
+    [
+     14,
+     13
+    ],
+    [
+     15,
+     15
+    ],
+    [
+     16,
+     13
+    ],
+    [
+     17,
+     18
+    ],
+    [
+     18,
+     14
+    ],
+    [
+     19,
+     15
+    ]
+   ]
+  },
+  "pgApprovals": 1047,
+  "pgRequestsSeen": 1047,
+  "pgMaxPer1s": 86,
+  "pgMaxPer100ms": 14,
+  "probeCollapseAtSec": null,
+  "probeP95Ms": 11,
+  "samples": [
+   {
+    "t": 0.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 34.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 1.1,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 37.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 2.2,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 37.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 3.3,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 37.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 4.3,
+    "hikaricp_connections_active": 4.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 5.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 3.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 6.4,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 34.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 7.4,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 65.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 8.5,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 96.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 9.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 127.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 10.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 158.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 11.6,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 189.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 12.6,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 220.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 13.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 252.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 14.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 283.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 15.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 313.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 16.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 345.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 17.8,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 376.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 18.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 407.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 19.9,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 438.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 20.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 469.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 22.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 500.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 23.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 531.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 24.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 554.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   }
+  ],
+  "probes": [
+   [
+    0.0,
+    35,
+    200
+   ],
+   [
+    0.34,
+    11,
+    200
+   ],
+   [
+    0.61,
+    8,
+    200
+   ],
+   [
+    0.87,
+    8,
+    200
+   ],
+   [
+    1.13,
+    7,
+    200
+   ],
+   [
+    1.41,
+    8,
+    200
+   ],
+   [
+    1.67,
+    11,
+    200
+   ],
+   [
+    1.94,
+    6,
+    200
+   ],
+   [
+    2.2,
+    6,
+    200
+   ],
+   [
+    2.48,
+    6,
+    200
+   ],
+   [
+    2.74,
+    5,
+    200
+   ],
+   [
+    3.0,
+    6,
+    200
+   ],
+   [
+    3.26,
+    5,
+    200
+   ],
+   [
+    3.54,
+    7,
+    200
+   ],
+   [
+    3.81,
+    8,
+    200
+   ],
+   [
+    4.06,
+    5,
+    200
+   ],
+   [
+    4.32,
+    5,
+    200
+   ],
+   [
+    4.6,
+    4,
+    200
+   ],
+   [
+    4.86,
+    4,
+    200
+   ],
+   [
+    5.11,
+    4,
+    200
+   ],
+   [
+    5.37,
+    4,
+    200
+   ],
+   [
+    5.63,
+    3,
+    200
+   ],
+   [
+    5.89,
+    7,
+    200
+   ],
+   [
+    6.15,
+    4,
+    200
+   ],
+   [
+    6.4,
+    3,
+    200
+   ],
+   [
+    6.68,
+    3,
+    200
+   ],
+   [
+    6.93,
+    4,
+    200
+   ],
+   [
+    7.19,
+    3,
+    200
+   ],
+   [
+    7.44,
+    3,
+    200
+   ],
+   [
+    7.71,
+    3,
+    200
+   ],
+   [
+    7.97,
+    3,
+    200
+   ],
+   [
+    8.23,
+    3,
+    200
+   ],
+   [
+    8.48,
+    3,
+    200
+   ],
+   [
+    8.75,
+    3,
+    200
+   ],
+   [
+    9.01,
+    3,
+    200
+   ],
+   [
+    9.26,
+    3,
+    200
+   ],
+   [
+    9.52,
+    3,
+    200
+   ],
+   [
+    9.78,
+    3,
+    200
+   ],
+   [
+    10.04,
+    3,
+    200
+   ],
+   [
+    10.29,
+    3,
+    200
+   ],
+   [
+    10.55,
+    3,
+    200
+   ],
+   [
+    10.82,
+    3,
+    200
+   ],
+   [
+    11.07,
+    3,
+    200
+   ],
+   [
+    11.33,
+    3,
+    200
+   ],
+   [
+    11.58,
+    4,
+    200
+   ],
+   [
+    11.85,
+    3,
+    200
+   ],
+   [
+    12.11,
+    3,
+    200
+   ],
+   [
+    12.38,
+    3,
+    200
+   ],
+   [
+    12.64,
+    3,
+    200
+   ],
+   [
+    12.9,
+    3,
+    200
+   ],
+   [
+    13.15,
+    3,
+    200
+   ],
+   [
+    13.41,
+    3,
+    200
+   ],
+   [
+    13.67,
+    3,
+    200
+   ],
+   [
+    13.93,
+    3,
+    200
+   ],
+   [
+    14.19,
+    3,
+    200
+   ],
+   [
+    14.45,
+    3,
+    200
+   ],
+   [
+    14.7,
+    3,
+    200
+   ],
+   [
+    14.98,
+    3,
+    200
+   ],
+   [
+    15.23,
+    3,
+    200
+   ],
+   [
+    15.48,
+    3,
+    200
+   ],
+   [
+    15.74,
+    3,
+    200
+   ],
+   [
+    16.0,
+    3,
+    200
+   ],
+   [
+    16.26,
+    3,
+    200
+   ],
+   [
+    16.51,
+    4,
+    200
+   ],
+   [
+    16.78,
+    3,
+    200
+   ],
+   [
+    17.04,
+    3,
+    200
+   ],
+   [
+    17.3,
+    3,
+    200
+   ],
+   [
+    17.55,
+    2,
+    200
+   ],
+   [
+    17.8,
+    3,
+    200
+   ],
+   [
+    18.08,
+    3,
+    200
+   ],
+   [
+    18.33,
+    3,
+    200
+   ],
+   [
+    18.59,
+    3,
+    200
+   ],
+   [
+    18.85,
+    3,
+    200
+   ],
+   [
+    19.11,
+    3,
+    200
+   ],
+   [
+    19.37,
+    3,
+    200
+   ],
+   [
+    19.63,
+    3,
+    200
+   ],
+   [
+    19.88,
+    3,
+    200
+   ],
+   [
+    20.15,
+    3,
+    200
+   ],
+   [
+    20.41,
+    3,
+    200
+   ],
+   [
+    20.67,
+    3,
+    200
+   ],
+   [
+    20.92,
+    3,
+    200
+   ],
+   [
+    21.19,
+    3,
+    200
+   ],
+   [
+    21.44,
+    3,
+    200
+   ],
+   [
+    21.69,
+    15,
+    200
+   ],
+   [
+    21.96,
+    3,
+    200
+   ],
+   [
+    22.22,
+    3,
+    200
+   ],
+   [
+    22.48,
+    2,
+    200
+   ],
+   [
+    22.73,
+    3,
+    200
+   ],
+   [
+    22.99,
+    3,
+    200
+   ],
+   [
+    23.26,
+    3,
+    200
+   ],
+   [
+    23.51,
+    3,
+    200
+   ],
+   [
+    23.77,
+    4,
+    200
+   ],
+   [
+    24.03,
+    34,
+    200
+   ]
+  ],
+  "circuitTransitions": [],
+  "restoredAtSec": null,
+  "jstack": null,
+  "commitSha": "688669c",
+  "consistency": {
+   "rejectedPayments": 554,
+   "reachedInstitution": 0,
+   "unknownPayments": 0
+  }
+ },
+ {
+  "experiment": "ratelimit",
+  "variant": "TOKEN_BUCKET",
+  "run": 1,
+  "since": "2026-09-16T04:32:53.284026+00:00",
+  "load": {
+   "payRps": 80,
+   "readRps": 5,
+   "duration": "20s"
+  },
+  "pgMode": "NORMAL",
+  "pgHangMs": 0,
+  "env": {
+   "EXPERIMENT_RATE_LIMITER": "true",
+   "EXPERIMENT_RATE_LIMIT": "50",
+   "EXPERIMENT_RATE_ALGORITHM": "TOKEN_BUCKET"
+  },
+  "k6": {
+   "payment": {
+    "avg": 11.2,
+    "med": 11.4,
+    "p(95)": 18.5,
+    "max": 95.6
+   },
+   "read": {
+    "avg": 2.7,
+    "med": 2.3,
+    "p(95)": 3.8,
+    "max": 21.2
+   },
+   "paymentOutcomes": {
+    "201_APPROVED": 1047,
+    "201_FAILED_RATE_LIMITED": 554
+   },
+   "paymentRequests": 1601,
+   "readRequests": 101,
+   "readFailed": 0,
+   "droppedIterations": 0,
+   "readP95PerSecond": [
+    [
+     0,
+     5
+    ],
+    [
+     1,
+     4
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     3
+    ],
+    [
+     4,
+     3
+    ],
+    [
+     5,
+     3
+    ],
+    [
+     6,
+     3
+    ],
+    [
+     7,
+     4
+    ],
+    [
+     8,
+     21
+    ],
+    [
+     9,
+     2
+    ],
+    [
+     10,
+     2
+    ],
+    [
+     11,
+     3
+    ],
+    [
+     12,
+     3
+    ],
+    [
+     13,
+     2
+    ],
+    [
+     14,
+     4
+    ],
+    [
+     15,
+     3
+    ],
+    [
+     16,
+     2
+    ],
+    [
+     17,
+     2
+    ],
+    [
+     18,
+     2
+    ],
+    [
+     19,
+     3
+    ]
+   ],
+   "paymentP95PerSecond": [
+    [
+     0,
+     72
+    ],
+    [
+     1,
+     19
+    ],
+    [
+     2,
+     17
+    ],
+    [
+     3,
+     18
+    ],
+    [
+     4,
+     15
+    ],
+    [
+     5,
+     23
+    ],
+    [
+     6,
+     32
+    ],
+    [
+     7,
+     18
+    ],
+    [
+     8,
+     28
+    ],
+    [
+     9,
+     14
+    ],
+    [
+     10,
+     14
+    ],
+    [
+     11,
+     14
+    ],
+    [
+     12,
+     14
+    ],
+    [
+     13,
+     13
+    ],
+    [
+     14,
+     14
+    ],
+    [
+     15,
+     24
+    ],
+    [
+     16,
+     14
+    ],
+    [
+     17,
+     14
+    ],
+    [
+     18,
+     29
+    ],
+    [
+     19,
+     12
+    ]
+   ]
+  },
+  "pgApprovals": 1047,
+  "pgRequestsSeen": 1047,
+  "pgMaxPer1s": 86,
+  "pgMaxPer100ms": 14,
+  "probeCollapseAtSec": null,
+  "probeP95Ms": 8,
+  "samples": [
+   {
+    "t": 0.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 34.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 1.1,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 2.2,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 3.3,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 4.3,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 5.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 5.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 6.4,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 36.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 7.5,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 67.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 8.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 98.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 9.5,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 130.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 10.6,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 161.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 11.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 191.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 12.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 224.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 13.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 255.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 14.7,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 286.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 15.8,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 317.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 16.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 348.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 17.8,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 379.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 18.9,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 410.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 19.9,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 441.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 21.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 472.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 22.0,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 503.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 23.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 535.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 24.1,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 554.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   }
+  ],
+  "probes": [
+   [
+    0.0,
+    43,
+    200
+   ],
+   [
+    0.35,
+    8,
+    200
+   ],
+   [
+    0.62,
+    6,
+    200
+   ],
+   [
+    0.88,
+    8,
+    200
+   ],
+   [
+    1.15,
+    6,
+    200
+   ],
+   [
+    1.42,
+    6,
+    200
+   ],
+   [
+    1.69,
+    5,
+    200
+   ],
+   [
+    1.95,
+    5,
+    200
+   ],
+   [
+    2.21,
+    7,
+    200
+   ],
+   [
+    2.5,
+    7,
+    200
+   ],
+   [
+    2.76,
+    7,
+    200
+   ],
+   [
+    3.02,
+    6,
+    200
+   ],
+   [
+    3.29,
+    5,
+    200
+   ],
+   [
+    3.56,
+    6,
+    200
+   ],
+   [
+    3.82,
+    6,
+    200
+   ],
+   [
+    4.07,
+    4,
+    200
+   ],
+   [
+    4.33,
+    4,
+    200
+   ],
+   [
+    4.6,
+    4,
+    200
+   ],
+   [
+    4.86,
+    4,
+    200
+   ],
+   [
+    5.12,
+    3,
+    200
+   ],
+   [
+    5.37,
+    3,
+    200
+   ],
+   [
+    5.64,
+    4,
+    200
+   ],
+   [
+    5.9,
+    4,
+    200
+   ],
+   [
+    6.16,
+    4,
+    200
+   ],
+   [
+    6.42,
+    3,
+    200
+   ],
+   [
+    6.69,
+    4,
+    200
+   ],
+   [
+    6.95,
+    3,
+    200
+   ],
+   [
+    7.2,
+    4,
+    200
+   ],
+   [
+    7.46,
+    4,
+    200
+   ],
+   [
+    7.73,
+    3,
+    200
+   ],
+   [
+    7.99,
+    4,
+    200
+   ],
+   [
+    8.25,
+    3,
+    200
+   ],
+   [
+    8.5,
+    3,
+    200
+   ],
+   [
+    8.77,
+    3,
+    200
+   ],
+   [
+    9.02,
+    4,
+    200
+   ],
+   [
+    9.27,
+    5,
+    200
+   ],
+   [
+    9.53,
+    3,
+    200
+   ],
+   [
+    9.8,
+    3,
+    200
+   ],
+   [
+    10.06,
+    3,
+    200
+   ],
+   [
+    10.31,
+    3,
+    200
+   ],
+   [
+    10.57,
+    3,
+    200
+   ],
+   [
+    10.83,
+    3,
+    200
+   ],
+   [
+    11.09,
+    3,
+    200
+   ],
+   [
+    11.34,
+    3,
+    200
+   ],
+   [
+    11.6,
+    3,
+    200
+   ],
+   [
+    11.87,
+    29,
+    200
+   ],
+   [
+    12.16,
+    3,
+    200
+   ],
+   [
+    12.42,
+    4,
+    200
+   ],
+   [
+    12.68,
+    3,
+    200
+   ],
+   [
+    12.94,
+    3,
+    200
+   ],
+   [
+    13.2,
+    3,
+    200
+   ],
+   [
+    13.45,
+    3,
+    200
+   ],
+   [
+    13.71,
+    3,
+    200
+   ],
+   [
+    13.98,
+    3,
+    200
+   ],
+   [
+    14.23,
+    3,
+    200
+   ],
+   [
+    14.49,
+    4,
+    200
+   ],
+   [
+    14.75,
+    3,
+    200
+   ],
+   [
+    15.01,
+    3,
+    200
+   ],
+   [
+    15.27,
+    3,
+    200
+   ],
+   [
+    15.53,
+    3,
+    200
+   ],
+   [
+    15.78,
+    3,
+    200
+   ],
+   [
+    16.05,
+    3,
+    200
+   ],
+   [
+    16.3,
+    3,
+    200
+   ],
+   [
+    16.56,
+    3,
+    200
+   ],
+   [
+    16.82,
+    3,
+    200
+   ],
+   [
+    17.09,
+    3,
+    200
+   ],
+   [
+    17.34,
+    3,
+    200
+   ],
+   [
+    17.59,
+    3,
+    200
+   ],
+   [
+    17.85,
+    3,
+    200
+   ],
+   [
+    18.11,
+    3,
+    200
+   ],
+   [
+    18.36,
+    3,
+    200
+   ],
+   [
+    18.62,
+    3,
+    200
+   ],
+   [
+    18.88,
+    3,
+    200
+   ],
+   [
+    19.14,
+    4,
+    200
+   ],
+   [
+    19.4,
+    10,
+    200
+   ],
+   [
+    19.66,
+    3,
+    200
+   ],
+   [
+    19.92,
+    3,
+    200
+   ],
+   [
+    20.18,
+    3,
+    200
+   ],
+   [
+    20.44,
+    3,
+    200
+   ],
+   [
+    20.7,
+    3,
+    200
+   ],
+   [
+    20.95,
+    3,
+    200
+   ],
+   [
+    21.22,
+    3,
+    200
+   ],
+   [
+    21.48,
+    3,
+    200
+   ],
+   [
+    21.74,
+    3,
+    200
+   ],
+   [
+    22.0,
+    4,
+    200
+   ],
+   [
+    22.27,
+    3,
+    200
+   ],
+   [
+    22.52,
+    3,
+    200
+   ],
+   [
+    22.78,
+    3,
+    200
+   ],
+   [
+    23.03,
+    3,
+    200
+   ],
+   [
+    23.29,
+    3,
+    200
+   ],
+   [
+    23.55,
+    3,
+    200
+   ],
+   [
+    23.81,
+    4,
+    200
+   ],
+   [
+    24.07,
+    5,
+    200
+   ]
+  ],
+  "circuitTransitions": [],
+  "restoredAtSec": null,
+  "jstack": null,
+  "commitSha": "688669c",
+  "consistency": {
+   "rejectedPayments": 554,
+   "reachedInstitution": 0,
+   "unknownPayments": 0
+  }
+ },
+ {
+  "experiment": "ratelimit",
+  "variant": "TOKEN_BUCKET",
+  "run": 2,
+  "since": "2026-09-16T04:33:26.108420+00:00",
+  "load": {
+   "payRps": 80,
+   "readRps": 5,
+   "duration": "20s"
+  },
+  "pgMode": "NORMAL",
+  "pgHangMs": 0,
+  "env": {
+   "EXPERIMENT_RATE_LIMITER": "true",
+   "EXPERIMENT_RATE_LIMIT": "50",
+   "EXPERIMENT_RATE_ALGORITHM": "TOKEN_BUCKET"
+  },
+  "k6": {
+   "payment": {
+    "avg": 11.1,
+    "med": 11.4,
+    "p(95)": 18.6,
+    "max": 91.3
+   },
+   "read": {
+    "avg": 2.6,
+    "med": 2.2,
+    "p(95)": 4.1,
+    "max": 12.6
+   },
+   "paymentOutcomes": {
+    "201_APPROVED": 1047,
+    "201_FAILED_RATE_LIMITED": 554
+   },
+   "paymentRequests": 1601,
+   "readRequests": 101,
+   "readFailed": 0,
+   "droppedIterations": 0,
+   "readP95PerSecond": [
+    [
+     0,
+     7
+    ],
+    [
+     1,
+     3
+    ],
+    [
+     2,
+     4
+    ],
+    [
+     3,
+     3
+    ],
+    [
+     4,
+     3
+    ],
+    [
+     5,
+     3
+    ],
+    [
+     6,
+     3
+    ],
+    [
+     7,
+     2
+    ],
+    [
+     8,
+     3
+    ],
+    [
+     9,
+     2
+    ],
+    [
+     10,
+     2
+    ],
+    [
+     11,
+     2
+    ],
+    [
+     12,
+     4
+    ],
+    [
+     13,
+     2
+    ],
+    [
+     14,
+     3
+    ],
+    [
+     15,
+     13
+    ],
+    [
+     16,
+     2
+    ],
+    [
+     17,
+     2
+    ],
+    [
+     18,
+     2
+    ],
+    [
+     19,
+     2
+    ]
+   ],
+   "paymentP95PerSecond": [
+    [
+     0,
+     63
+    ],
+    [
+     1,
+     18
+    ],
+    [
+     2,
+     24
+    ],
+    [
+     3,
+     19
+    ],
+    [
+     4,
+     16
+    ],
+    [
+     5,
+     18
+    ],
+    [
+     6,
+     20
+    ],
+    [
+     7,
+     14
+    ],
+    [
+     8,
+     14
+    ],
+    [
+     9,
+     14
+    ],
+    [
+     10,
+     14
+    ],
+    [
+     11,
+     14
+    ],
+    [
+     12,
+     17
+    ],
+    [
+     13,
+     16
+    ],
+    [
+     14,
+     15
+    ],
+    [
+     15,
+     23
+    ],
+    [
+     16,
+     13
+    ],
+    [
+     17,
+     15
+    ],
+    [
+     18,
+     12
+    ],
+    [
+     19,
+     14
+    ]
+   ]
+  },
+  "pgApprovals": 1047,
+  "pgRequestsSeen": 1047,
+  "pgMaxPer1s": 86,
+  "pgMaxPer100ms": 13,
+  "probeCollapseAtSec": null,
+  "probeP95Ms": 8,
+  "samples": [
+   {
+    "t": 0.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 36.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 1.1,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 36.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 2.2,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 36.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 3.3,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 36.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 4.3,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 5.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 6.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 6.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 37.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 7.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 68.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 8.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 100.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 9.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 131.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 10.6,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 162.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 11.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 193.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 12.7,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 224.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 13.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 255.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 14.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 286.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 15.8,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 318.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 16.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 349.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 17.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 380.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 18.9,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 411.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 19.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 442.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 21.0,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 473.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 22.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 504.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 23.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 535.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   }
+  ],
+  "probes": [
+   [
+    0.0,
+    48,
+    200
+   ],
+   [
+    0.35,
+    7,
+    200
+   ],
+   [
+    0.62,
+    8,
+    200
+   ],
+   [
+    0.88,
+    7,
+    200
+   ],
+   [
+    1.13,
+    7,
+    200
+   ],
+   [
+    1.42,
+    6,
+    200
+   ],
+   [
+    1.68,
+    8,
+    200
+   ],
+   [
+    1.95,
+    7,
+    200
+   ],
+   [
+    2.22,
+    6,
+    200
+   ],
+   [
+    2.5,
+    7,
+    200
+   ],
+   [
+    2.76,
+    7,
+    200
+   ],
+   [
+    3.03,
+    6,
+    200
+   ],
+   [
+    3.29,
+    5,
+    200
+   ],
+   [
+    3.57,
+    5,
+    200
+   ],
+   [
+    3.82,
+    5,
+    200
+   ],
+   [
+    4.08,
+    4,
+    200
+   ],
+   [
+    4.34,
+    4,
+    200
+   ],
+   [
+    4.61,
+    4,
+    200
+   ],
+   [
+    4.87,
+    4,
+    200
+   ],
+   [
+    5.13,
+    4,
+    200
+   ],
+   [
+    5.39,
+    4,
+    200
+   ],
+   [
+    5.65,
+    3,
+    200
+   ],
+   [
+    5.91,
+    4,
+    200
+   ],
+   [
+    6.17,
+    3,
+    200
+   ],
+   [
+    6.43,
+    4,
+    200
+   ],
+   [
+    6.7,
+    4,
+    200
+   ],
+   [
+    6.95,
+    3,
+    200
+   ],
+   [
+    7.2,
+    5,
+    200
+   ],
+   [
+    7.47,
+    3,
+    200
+   ],
+   [
+    7.73,
+    3,
+    200
+   ],
+   [
+    7.99,
+    3,
+    200
+   ],
+   [
+    8.25,
+    3,
+    200
+   ],
+   [
+    8.51,
+    4,
+    200
+   ],
+   [
+    8.78,
+    3,
+    200
+   ],
+   [
+    9.04,
+    3,
+    200
+   ],
+   [
+    9.29,
+    4,
+    200
+   ],
+   [
+    9.55,
+    3,
+    200
+   ],
+   [
+    9.81,
+    3,
+    200
+   ],
+   [
+    10.07,
+    3,
+    200
+   ],
+   [
+    10.32,
+    3,
+    200
+   ],
+   [
+    10.58,
+    3,
+    200
+   ],
+   [
+    10.85,
+    4,
+    200
+   ],
+   [
+    11.11,
+    3,
+    200
+   ],
+   [
+    11.37,
+    3,
+    200
+   ],
+   [
+    11.63,
+    3,
+    200
+   ],
+   [
+    11.9,
+    3,
+    200
+   ],
+   [
+    12.15,
+    3,
+    200
+   ],
+   [
+    12.41,
+    3,
+    200
+   ],
+   [
+    12.66,
+    3,
+    200
+   ],
+   [
+    12.93,
+    3,
+    200
+   ],
+   [
+    13.19,
+    3,
+    200
+   ],
+   [
+    13.44,
+    3,
+    200
+   ],
+   [
+    13.7,
+    3,
+    200
+   ],
+   [
+    13.97,
+    3,
+    200
+   ],
+   [
+    14.22,
+    3,
+    200
+   ],
+   [
+    14.48,
+    3,
+    200
+   ],
+   [
+    14.73,
+    3,
+    200
+   ],
+   [
+    14.99,
+    3,
+    200
+   ],
+   [
+    15.25,
+    3,
+    200
+   ],
+   [
+    15.5,
+    17,
+    200
+   ],
+   [
+    15.77,
+    3,
+    200
+   ],
+   [
+    16.04,
+    3,
+    200
+   ],
+   [
+    16.3,
+    3,
+    200
+   ],
+   [
+    16.56,
+    3,
+    200
+   ],
+   [
+    16.82,
+    2,
+    200
+   ],
+   [
+    17.08,
+    3,
+    200
+   ],
+   [
+    17.34,
+    3,
+    200
+   ],
+   [
+    17.6,
+    2,
+    200
+   ],
+   [
+    17.85,
+    3,
+    200
+   ],
+   [
+    18.12,
+    2,
+    200
+   ],
+   [
+    18.37,
+    3,
+    200
+   ],
+   [
+    18.63,
+    3,
+    200
+   ],
+   [
+    18.88,
+    3,
+    200
+   ],
+   [
+    19.15,
+    3,
+    200
+   ],
+   [
+    19.41,
+    3,
+    200
+   ],
+   [
+    19.66,
+    3,
+    200
+   ],
+   [
+    19.92,
+    3,
+    200
+   ],
+   [
+    20.19,
+    3,
+    200
+   ],
+   [
+    20.45,
+    3,
+    200
+   ],
+   [
+    20.7,
+    3,
+    200
+   ],
+   [
+    20.96,
+    4,
+    200
+   ],
+   [
+    21.23,
+    3,
+    200
+   ],
+   [
+    21.48,
+    3,
+    200
+   ],
+   [
+    21.74,
+    3,
+    200
+   ],
+   [
+    21.99,
+    3,
+    200
+   ],
+   [
+    22.26,
+    3,
+    200
+   ],
+   [
+    22.51,
+    3,
+    200
+   ],
+   [
+    22.77,
+    3,
+    200
+   ],
+   [
+    23.02,
+    3,
+    200
+   ],
+   [
+    23.29,
+    3,
+    200
+   ],
+   [
+    23.55,
+    3,
+    200
+   ],
+   [
+    23.81,
+    117,
+    200
+   ]
+  ],
+  "circuitTransitions": [],
+  "restoredAtSec": null,
+  "jstack": null,
+  "commitSha": "688669c",
+  "consistency": {
+   "rejectedPayments": 554,
+   "reachedInstitution": 0,
+   "unknownPayments": 0
+  }
+ },
+ {
+  "experiment": "ratelimit",
+  "variant": "SLIDING_WINDOW",
+  "run": 0,
+  "since": "2026-09-16T04:33:58.356010+00:00",
+  "load": {
+   "payRps": 80,
+   "readRps": 5,
+   "duration": "20s"
+  },
+  "pgMode": "NORMAL",
+  "pgHangMs": 0,
+  "env": {
+   "EXPERIMENT_RATE_LIMITER": "true",
+   "EXPERIMENT_RATE_LIMIT": "50",
+   "EXPERIMENT_RATE_ALGORITHM": "SLIDING_WINDOW"
+  },
+  "k6": {
+   "payment": {
+    "avg": 11.2,
+    "med": 11.2,
+    "p(95)": 19.8,
+    "max": 96.6
+   },
+   "read": {
+    "avg": 2.8,
+    "med": 2.3,
+    "p(95)": 5.2,
+    "max": 20.6
+   },
+   "paymentOutcomes": {
+    "201_APPROVED": 1000,
+    "201_FAILED_RATE_LIMITED": 601
+   },
+   "paymentRequests": 1601,
+   "readRequests": 101,
+   "readFailed": 0,
+   "droppedIterations": 0,
+   "readP95PerSecond": [
+    [
+     0,
+     21
+    ],
+    [
+     1,
+     6
+    ],
+    [
+     2,
+     9
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     4,
+     4
+    ],
+    [
+     5,
+     3
+    ],
+    [
+     6,
+     3
+    ],
+    [
+     7,
+     2
+    ],
+    [
+     8,
+     2
+    ],
+    [
+     9,
+     2
+    ],
+    [
+     10,
+     3
+    ],
+    [
+     11,
+     2
+    ],
+    [
+     12,
+     3
+    ],
+    [
+     13,
+     3
+    ],
+    [
+     14,
+     2
+    ],
+    [
+     15,
+     2
+    ],
+    [
+     16,
+     3
+    ],
+    [
+     17,
+     3
+    ],
+    [
+     18,
+     2
+    ],
+    [
+     19,
+     4
+    ]
+   ],
+   "paymentP95PerSecond": [
+    [
+     0,
+     69
+    ],
+    [
+     1,
+     25
+    ],
+    [
+     2,
+     17
+    ],
+    [
+     3,
+     53
+    ],
+    [
+     4,
+     16
+    ],
+    [
+     5,
+     14
+    ],
+    [
+     6,
+     14
+    ],
+    [
+     7,
+     15
+    ],
+    [
+     8,
+     15
+    ],
+    [
+     9,
+     13
+    ],
+    [
+     10,
+     24
+    ],
+    [
+     11,
+     14
+    ],
+    [
+     12,
+     16
+    ],
+    [
+     13,
+     20
+    ],
+    [
+     14,
+     12
+    ],
+    [
+     15,
+     13
+    ],
+    [
+     16,
+     14
+    ],
+    [
+     17,
+     18
+    ],
+    [
+     18,
+     14
+    ],
+    [
+     19,
+     13
+    ]
+   ]
+  },
+  "pgApprovals": 1000,
+  "pgRequestsSeen": 1000,
+  "pgMaxPer1s": 52,
+  "pgMaxPer100ms": 14,
+  "probeCollapseAtSec": null,
+  "probeP95Ms": 10,
+  "samples": [
+   {
+    "t": 0.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 1.1,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 2.2,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 3.3,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 35.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 4.3,
+    "hikaricp_connections_active": 3.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 4.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 5.4,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 37.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 6.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 73.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 7.5,
+    "hikaricp_connections_active": 3.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 106.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 8.5,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 139.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 9.6,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 172.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 10.6,
+    "hikaricp_connections_active": 3.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 204.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 11.6,
+    "hikaricp_connections_active": 3.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 236.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 12.6,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 269.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 13.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 303.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 14.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 336.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 15.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 368.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 16.8,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 401.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 17.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 433.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 18.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 464.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 19.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 495.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 20.9,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 527.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 22.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 558.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 23.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 589.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 24.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 601.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   }
+  ],
+  "probes": [
+   [
+    0.0,
+    35,
+    200
+   ],
+   [
+    0.35,
+    10,
+    200
+   ],
+   [
+    0.62,
+    8,
+    200
+   ],
+   [
+    0.88,
+    8,
+    200
+   ],
+   [
+    1.14,
+    6,
+    200
+   ],
+   [
+    1.42,
+    6,
+    200
+   ],
+   [
+    1.68,
+    6,
+    200
+   ],
+   [
+    1.94,
+    5,
+    200
+   ],
+   [
+    2.2,
+    6,
+    200
+   ],
+   [
+    2.49,
+    10,
+    200
+   ],
+   [
+    2.76,
+    7,
+    200
+   ],
+   [
+    3.02,
+    6,
+    200
+   ],
+   [
+    3.29,
+    6,
+    200
+   ],
+   [
+    3.56,
+    8,
+    200
+   ],
+   [
+    3.82,
+    5,
+    200
+   ],
+   [
+    4.08,
+    6,
+    200
+   ],
+   [
+    4.33,
+    4,
+    200
+   ],
+   [
+    4.6,
+    4,
+    200
+   ],
+   [
+    4.86,
+    3,
+    200
+   ],
+   [
+    5.11,
+    4,
+    200
+   ],
+   [
+    5.37,
+    4,
+    200
+   ],
+   [
+    5.65,
+    26,
+    200
+   ],
+   [
+    5.92,
+    3,
+    200
+   ],
+   [
+    6.18,
+    4,
+    200
+   ],
+   [
+    6.44,
+    3,
+    200
+   ],
+   [
+    6.71,
+    3,
+    200
+   ],
+   [
+    6.97,
+    11,
+    200
+   ],
+   [
+    7.23,
+    3,
+    200
+   ],
+   [
+    7.48,
+    4,
+    200
+   ],
+   [
+    7.75,
+    3,
+    200
+   ],
+   [
+    8.01,
+    3,
+    200
+   ],
+   [
+    8.26,
+    3,
+    200
+   ],
+   [
+    8.52,
+    3,
+    200
+   ],
+   [
+    8.78,
+    3,
+    200
+   ],
+   [
+    9.04,
+    3,
+    200
+   ],
+   [
+    9.3,
+    3,
+    200
+   ],
+   [
+    9.55,
+    3,
+    200
+   ],
+   [
+    9.82,
+    3,
+    200
+   ],
+   [
+    10.07,
+    3,
+    200
+   ],
+   [
+    10.33,
+    3,
+    200
+   ],
+   [
+    10.58,
+    3,
+    200
+   ],
+   [
+    10.84,
+    3,
+    200
+   ],
+   [
+    11.1,
+    3,
+    200
+   ],
+   [
+    11.35,
+    4,
+    200
+   ],
+   [
+    11.61,
+    3,
+    200
+   ],
+   [
+    11.88,
+    3,
+    200
+   ],
+   [
+    12.14,
+    3,
+    200
+   ],
+   [
+    12.39,
+    3,
+    200
+   ],
+   [
+    12.64,
+    3,
+    200
+   ],
+   [
+    12.91,
+    3,
+    200
+   ],
+   [
+    13.17,
+    3,
+    200
+   ],
+   [
+    13.43,
+    3,
+    200
+   ],
+   [
+    13.69,
+    3,
+    200
+   ],
+   [
+    13.95,
+    6,
+    200
+   ],
+   [
+    14.21,
+    4,
+    200
+   ],
+   [
+    14.47,
+    3,
+    200
+   ],
+   [
+    14.73,
+    3,
+    200
+   ],
+   [
+    14.99,
+    3,
+    200
+   ],
+   [
+    15.25,
+    3,
+    200
+   ],
+   [
+    15.5,
+    3,
+    200
+   ],
+   [
+    15.76,
+    3,
+    200
+   ],
+   [
+    16.02,
+    3,
+    200
+   ],
+   [
+    16.28,
+    2,
+    200
+   ],
+   [
+    16.53,
+    3,
+    200
+   ],
+   [
+    16.79,
+    3,
+    200
+   ],
+   [
+    17.06,
+    3,
+    200
+   ],
+   [
+    17.32,
+    3,
+    200
+   ],
+   [
+    17.58,
+    3,
+    200
+   ],
+   [
+    17.83,
+    3,
+    200
+   ],
+   [
+    18.1,
+    3,
+    200
+   ],
+   [
+    18.35,
+    3,
+    200
+   ],
+   [
+    18.61,
+    3,
+    200
+   ],
+   [
+    18.87,
+    3,
+    200
+   ],
+   [
+    19.14,
+    3,
+    200
+   ],
+   [
+    19.4,
+    3,
+    200
+   ],
+   [
+    19.65,
+    3,
+    200
+   ],
+   [
+    19.91,
+    3,
+    200
+   ],
+   [
+    20.17,
+    3,
+    200
+   ],
+   [
+    20.42,
+    3,
+    200
+   ],
+   [
+    20.68,
+    3,
+    200
+   ],
+   [
+    20.94,
+    3,
+    200
+   ],
+   [
+    21.2,
+    3,
+    200
+   ],
+   [
+    21.46,
+    3,
+    200
+   ],
+   [
+    21.71,
+    3,
+    200
+   ],
+   [
+    21.96,
+    3,
+    200
+   ],
+   [
+    22.23,
+    3,
+    200
+   ],
+   [
+    22.49,
+    2,
+    200
+   ],
+   [
+    22.74,
+    3,
+    200
+   ],
+   [
+    23.0,
+    3,
+    200
+   ],
+   [
+    23.26,
+    3,
+    200
+   ],
+   [
+    23.51,
+    3,
+    200
+   ],
+   [
+    23.78,
+    4,
+    200
+   ],
+   [
+    24.03,
+    4,
+    200
+   ]
+  ],
+  "circuitTransitions": [],
+  "restoredAtSec": null,
+  "jstack": null,
+  "commitSha": "688669c",
+  "consistency": {
+   "rejectedPayments": 601,
+   "reachedInstitution": 0,
+   "unknownPayments": 0
+  }
+ },
+ {
+  "experiment": "ratelimit",
+  "variant": "SLIDING_WINDOW",
+  "run": 1,
+  "since": "2026-09-16T04:34:31.780344+00:00",
+  "load": {
+   "payRps": 80,
+   "readRps": 5,
+   "duration": "20s"
+  },
+  "pgMode": "NORMAL",
+  "pgHangMs": 0,
+  "env": {
+   "EXPERIMENT_RATE_LIMITER": "true",
+   "EXPERIMENT_RATE_LIMIT": "50",
+   "EXPERIMENT_RATE_ALGORITHM": "SLIDING_WINDOW"
+  },
+  "k6": {
+   "payment": {
+    "avg": 11.5,
+    "med": 11.2,
+    "p(95)": 17.8,
+    "max": 162.4
+   },
+   "read": {
+    "avg": 3.5,
+    "med": 2.2,
+    "p(95)": 3.7,
+    "max": 111.7
+   },
+   "paymentOutcomes": {
+    "201_APPROVED": 998,
+    "201_FAILED_RATE_LIMITED": 603
+   },
+   "paymentRequests": 1601,
+   "readRequests": 101,
+   "readFailed": 0,
+   "droppedIterations": 0,
+   "readP95PerSecond": [
+    [
+     0,
+     5
+    ],
+    [
+     1,
+     3
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     3
+    ],
+    [
+     5,
+     3
+    ],
+    [
+     6,
+     3
+    ],
+    [
+     7,
+     3
+    ],
+    [
+     8,
+     3
+    ],
+    [
+     9,
+     2
+    ],
+    [
+     10,
+     2
+    ],
+    [
+     11,
+     3
+    ],
+    [
+     12,
+     2
+    ],
+    [
+     13,
+     2
+    ],
+    [
+     14,
+     112
+    ],
+    [
+     15,
+     2
+    ],
+    [
+     16,
+     2
+    ],
+    [
+     17,
+     2
+    ],
+    [
+     18,
+     2
+    ],
+    [
+     19,
+     2
+    ]
+   ],
+   "paymentP95PerSecond": [
+    [
+     0,
+     71
+    ],
+    [
+     1,
+     19
+    ],
+    [
+     2,
+     16
+    ],
+    [
+     3,
+     17
+    ],
+    [
+     4,
+     15
+    ],
+    [
+     5,
+     14
+    ],
+    [
+     6,
+     15
+    ],
+    [
+     7,
+     15
+    ],
+    [
+     8,
+     17
+    ],
+    [
+     9,
+     23
+    ],
+    [
+     10,
+     14
+    ],
+    [
+     11,
+     14
+    ],
+    [
+     12,
+     14
+    ],
+    [
+     13,
+     13
+    ],
+    [
+     14,
+     145
+    ],
+    [
+     15,
+     14
+    ],
+    [
+     16,
+     16
+    ],
+    [
+     17,
+     13
+    ],
+    [
+     18,
+     12
+    ],
+    [
+     19,
+     22
+    ]
+   ]
+  },
+  "pgApprovals": 998,
+  "pgRequestsSeen": 998,
+  "pgMaxPer1s": 52,
+  "pgMaxPer100ms": 18,
+  "probeCollapseAtSec": null,
+  "probeP95Ms": 7,
+  "samples": [
+   {
+    "t": 0.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 34.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 1.1,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 37.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 2.2,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 37.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 3.3,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 37.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 4.3,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 5.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 34.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 6.4,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 65.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 7.4,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 96.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 8.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 128.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 9.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 161.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 10.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 192.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 11.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 225.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 12.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 258.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 13.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 291.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 14.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 323.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 15.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 357.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 16.7,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 390.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 17.8,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 423.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 18.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 456.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 19.8,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 488.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 20.9,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 521.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 21.9,
+    "hikaricp_connections_active": 3.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 553.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 22.9,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 585.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 24.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 603.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   }
+  ],
+  "probes": [
+   [
+    0.0,
+    41,
+    200
+   ],
+   [
+    0.34,
+    10,
+    200
+   ],
+   [
+    0.6,
+    8,
+    200
+   ],
+   [
+    0.87,
+    6,
+    200
+   ],
+   [
+    1.13,
+    6,
+    200
+   ],
+   [
+    1.41,
+    7,
+    200
+   ],
+   [
+    1.67,
+    6,
+    200
+   ],
+   [
+    1.93,
+    6,
+    200
+   ],
+   [
+    2.19,
+    6,
+    200
+   ],
+   [
+    2.47,
+    6,
+    200
+   ],
+   [
+    2.74,
+    7,
+    200
+   ],
+   [
+    3.0,
+    7,
+    200
+   ],
+   [
+    3.26,
+    7,
+    200
+   ],
+   [
+    3.54,
+    6,
+    200
+   ],
+   [
+    3.81,
+    8,
+    200
+   ],
+   [
+    4.06,
+    5,
+    200
+   ],
+   [
+    4.32,
+    4,
+    200
+   ],
+   [
+    4.59,
+    4,
+    200
+   ],
+   [
+    4.84,
+    4,
+    200
+   ],
+   [
+    5.1,
+    4,
+    200
+   ],
+   [
+    5.35,
+    4,
+    200
+   ],
+   [
+    5.62,
+    3,
+    200
+   ],
+   [
+    5.87,
+    3,
+    200
+   ],
+   [
+    6.13,
+    4,
+    200
+   ],
+   [
+    6.38,
+    4,
+    200
+   ],
+   [
+    6.65,
+    4,
+    200
+   ],
+   [
+    6.91,
+    3,
+    200
+   ],
+   [
+    7.17,
+    3,
+    200
+   ],
+   [
+    7.42,
+    4,
+    200
+   ],
+   [
+    7.69,
+    3,
+    200
+   ],
+   [
+    7.94,
+    3,
+    200
+   ],
+   [
+    8.2,
+    3,
+    200
+   ],
+   [
+    8.46,
+    3,
+    200
+   ],
+   [
+    8.72,
+    3,
+    200
+   ],
+   [
+    8.98,
+    3,
+    200
+   ],
+   [
+    9.23,
+    3,
+    200
+   ],
+   [
+    9.48,
+    3,
+    200
+   ],
+   [
+    9.75,
+    3,
+    200
+   ],
+   [
+    10.0,
+    3,
+    200
+   ],
+   [
+    10.26,
+    3,
+    200
+   ],
+   [
+    10.51,
+    3,
+    200
+   ],
+   [
+    10.77,
+    4,
+    200
+   ],
+   [
+    11.03,
+    3,
+    200
+   ],
+   [
+    11.29,
+    3,
+    200
+   ],
+   [
+    11.54,
+    3,
+    200
+   ],
+   [
+    11.81,
+    3,
+    200
+   ],
+   [
+    12.07,
+    3,
+    200
+   ],
+   [
+    12.33,
+    3,
+    200
+   ],
+   [
+    12.58,
+    3,
+    200
+   ],
+   [
+    12.85,
+    3,
+    200
+   ],
+   [
+    13.11,
+    3,
+    200
+   ],
+   [
+    13.36,
+    3,
+    200
+   ],
+   [
+    13.62,
+    3,
+    200
+   ],
+   [
+    13.88,
+    3,
+    200
+   ],
+   [
+    14.14,
+    3,
+    200
+   ],
+   [
+    14.39,
+    3,
+    200
+   ],
+   [
+    14.64,
+    4,
+    200
+   ],
+   [
+    14.91,
+    3,
+    200
+   ],
+   [
+    15.18,
+    3,
+    200
+   ],
+   [
+    15.43,
+    3,
+    200
+   ],
+   [
+    15.69,
+    3,
+    200
+   ],
+   [
+    15.96,
+    3,
+    200
+   ],
+   [
+    16.22,
+    3,
+    200
+   ],
+   [
+    16.47,
+    4,
+    200
+   ],
+   [
+    16.73,
+    5,
+    200
+   ],
+   [
+    17.0,
+    3,
+    200
+   ],
+   [
+    17.25,
+    3,
+    200
+   ],
+   [
+    17.51,
+    3,
+    200
+   ],
+   [
+    17.77,
+    4,
+    200
+   ],
+   [
+    18.03,
+    3,
+    200
+   ],
+   [
+    18.29,
+    3,
+    200
+   ],
+   [
+    18.54,
+    3,
+    200
+   ],
+   [
+    18.8,
+    3,
+    200
+   ],
+   [
+    19.06,
+    3,
+    200
+   ],
+   [
+    19.32,
+    3,
+    200
+   ],
+   [
+    19.57,
+    3,
+    200
+   ],
+   [
+    19.82,
+    3,
+    200
+   ],
+   [
+    20.09,
+    3,
+    200
+   ],
+   [
+    20.35,
+    3,
+    200
+   ],
+   [
+    20.6,
+    3,
+    200
+   ],
+   [
+    20.86,
+    3,
+    200
+   ],
+   [
+    21.13,
+    3,
+    200
+   ],
+   [
+    21.38,
+    3,
+    200
+   ],
+   [
+    21.64,
+    3,
+    200
+   ],
+   [
+    21.89,
+    3,
+    200
+   ],
+   [
+    22.16,
+    3,
+    200
+   ],
+   [
+    22.42,
+    3,
+    200
+   ],
+   [
+    22.67,
+    3,
+    200
+   ],
+   [
+    22.93,
+    2,
+    200
+   ],
+   [
+    23.19,
+    3,
+    200
+   ],
+   [
+    23.45,
+    3,
+    200
+   ],
+   [
+    23.71,
+    3,
+    200
+   ],
+   [
+    23.96,
+    7,
+    200
+   ]
+  ],
+  "circuitTransitions": [],
+  "restoredAtSec": null,
+  "jstack": null,
+  "commitSha": "688669c",
+  "consistency": {
+   "rejectedPayments": 603,
+   "reachedInstitution": 0,
+   "unknownPayments": 0
+  }
+ },
+ {
+  "experiment": "ratelimit",
+  "variant": "SLIDING_WINDOW",
+  "run": 2,
+  "since": "2026-09-16T04:35:04.653472+00:00",
+  "load": {
+   "payRps": 80,
+   "readRps": 5,
+   "duration": "20s"
+  },
+  "pgMode": "NORMAL",
+  "pgHangMs": 0,
+  "env": {
+   "EXPERIMENT_RATE_LIMITER": "true",
+   "EXPERIMENT_RATE_LIMIT": "50",
+   "EXPERIMENT_RATE_ALGORITHM": "SLIDING_WINDOW"
+  },
+  "k6": {
+   "payment": {
+    "avg": 10.7,
+    "med": 11.1,
+    "p(95)": 17.9,
+    "max": 89.0
+   },
+   "read": {
+    "avg": 2.6,
+    "med": 2.2,
+    "p(95)": 4.2,
+    "max": 7.7
+   },
+   "paymentOutcomes": {
+    "201_APPROVED": 1000,
+    "201_FAILED_RATE_LIMITED": 600
+   },
+   "paymentRequests": 1600,
+   "readRequests": 101,
+   "readFailed": 0,
+   "droppedIterations": 0,
+   "readP95PerSecond": [
+    [
+     0,
+     8
+    ],
+    [
+     1,
+     4
+    ],
+    [
+     2,
+     5
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     4,
+     4
+    ],
+    [
+     5,
+     3
+    ],
+    [
+     6,
+     3
+    ],
+    [
+     7,
+     2
+    ],
+    [
+     8,
+     3
+    ],
+    [
+     9,
+     2
+    ],
+    [
+     10,
+     4
+    ],
+    [
+     11,
+     3
+    ],
+    [
+     12,
+     3
+    ],
+    [
+     13,
+     3
+    ],
+    [
+     14,
+     3
+    ],
+    [
+     15,
+     2
+    ],
+    [
+     16,
+     2
+    ],
+    [
+     17,
+     2
+    ],
+    [
+     18,
+     2
+    ],
+    [
+     19,
+     3
+    ]
+   ],
+   "paymentP95PerSecond": [
+    [
+     0,
+     65
+    ],
+    [
+     1,
+     18
+    ],
+    [
+     2,
+     21
+    ],
+    [
+     3,
+     17
+    ],
+    [
+     4,
+     24
+    ],
+    [
+     5,
+     14
+    ],
+    [
+     6,
+     17
+    ],
+    [
+     7,
+     14
+    ],
+    [
+     8,
+     14
+    ],
+    [
+     9,
+     13
+    ],
+    [
+     10,
+     14
+    ],
+    [
+     11,
+     13
+    ],
+    [
+     12,
+     15
+    ],
+    [
+     13,
+     13
+    ],
+    [
+     14,
+     18
+    ],
+    [
+     15,
+     14
+    ],
+    [
+     16,
+     25
+    ],
+    [
+     17,
+     14
+    ],
+    [
+     18,
+     16
+    ],
+    [
+     19,
+     13
+    ]
+   ]
+  },
+  "pgApprovals": 1000,
+  "pgRequestsSeen": 1000,
+  "pgMaxPer1s": 52,
+  "pgMaxPer100ms": 14,
+  "probeCollapseAtSec": null,
+  "probeP95Ms": 7,
+  "samples": [
+   {
+    "t": 0.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 34.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 1.1,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 2.2,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 37.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 3.3,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 37.0,
+    "paritypay_pg_circuit_failure_rate": -1.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 4.3,
+    "hikaricp_connections_active": 2.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 0.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 5.4,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 34.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 6.4,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 66.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 7.4,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 99.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 8.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 133.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 9.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 165.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 10.5,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 197.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 11.6,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 231.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 12.6,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 264.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 13.7,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 296.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 14.7,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 330.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 15.7,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 363.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 16.8,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 396.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 17.8,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 428.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 18.8,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 461.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 19.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 493.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 20.9,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 38.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 526.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 22.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 558.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 23.0,
+    "hikaricp_connections_active": 1.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 1.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 589.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   },
+   {
+    "t": 24.0,
+    "hikaricp_connections_active": 0.0,
+    "hikaricp_connections_pending": 0.0,
+    "jvm_threads_live_threads": 39.0,
+    "paritypay_pg_circuit_failure_rate": 0.0,
+    "paritypay_pg_circuit_state": 0.0,
+    "paritypay_pg_in_flight": 0.0,
+    "rejected_BULKHEAD_FULL": 0.0,
+    "rejected_CIRCUIT_OPEN": 0.0,
+    "rejected_RATE_LIMITED": 600.0,
+    "tomcat_threads_busy_threads": -1.0,
+    "tomcat_threads_config_max_threads": -1.0
+   }
+  ],
+  "probes": [
+   [
+    0.0,
+    49,
+    200
+   ],
+   [
+    0.35,
+    8,
+    200
+   ],
+   [
+    0.61,
+    6,
+    200
+   ],
+   [
+    0.87,
+    6,
+    200
+   ],
+   [
+    1.13,
+    6,
+    200
+   ],
+   [
+    1.41,
+    5,
+    200
+   ],
+   [
+    1.67,
+    7,
+    200
+   ],
+   [
+    1.94,
+    9,
+    200
+   ],
+   [
+    2.2,
+    6,
+    200
+   ],
+   [
+    2.48,
+    8,
+    200
+   ],
+   [
+    2.75,
+    6,
+    200
+   ],
+   [
+    3.01,
+    7,
+    200
+   ],
+   [
+    3.28,
+    5,
+    200
+   ],
+   [
+    3.56,
+    7,
+    200
+   ],
+   [
+    3.81,
+    7,
+    200
+   ],
+   [
+    4.07,
+    5,
+    200
+   ],
+   [
+    4.33,
+    5,
+    200
+   ],
+   [
+    4.6,
+    4,
+    200
+   ],
+   [
+    4.86,
+    4,
+    200
+   ],
+   [
+    5.12,
+    4,
+    200
+   ],
+   [
+    5.37,
+    3,
+    200
+   ],
+   [
+    5.64,
+    4,
+    200
+   ],
+   [
+    5.89,
+    4,
+    200
+   ],
+   [
+    6.15,
+    4,
+    200
+   ],
+   [
+    6.41,
+    4,
+    200
+   ],
+   [
+    6.68,
+    4,
+    200
+   ],
+   [
+    6.93,
+    4,
+    200
+   ],
+   [
+    7.19,
+    3,
+    200
+   ],
+   [
+    7.44,
+    3,
+    200
+   ],
+   [
+    7.71,
+    4,
+    200
+   ],
+   [
+    7.96,
+    4,
+    200
+   ],
+   [
+    8.23,
+    3,
+    200
+   ],
+   [
+    8.48,
+    3,
+    200
+   ],
+   [
+    8.75,
+    4,
+    200
+   ],
+   [
+    9.01,
+    3,
+    200
+   ],
+   [
+    9.27,
+    3,
+    200
+   ],
+   [
+    9.52,
+    3,
+    200
+   ],
+   [
+    9.78,
+    3,
+    200
+   ],
+   [
+    10.04,
+    3,
+    200
+   ],
+   [
+    10.29,
+    3,
+    200
+   ],
+   [
+    10.54,
+    4,
+    200
+   ],
+   [
+    10.81,
+    3,
+    200
+   ],
+   [
+    11.07,
+    3,
+    200
+   ],
+   [
+    11.33,
+    3,
+    200
+   ],
+   [
+    11.58,
+    3,
+    200
+   ],
+   [
+    11.86,
+    3,
+    200
+   ],
+   [
+    12.11,
+    3,
+    200
+   ],
+   [
+    12.37,
+    3,
+    200
+   ],
+   [
+    12.62,
+    3,
+    200
+   ],
+   [
+    12.88,
+    3,
+    200
+   ],
+   [
+    13.14,
+    3,
+    200
+   ],
+   [
+    13.4,
+    3,
+    200
+   ],
+   [
+    13.66,
+    3,
+    200
+   ],
+   [
+    13.93,
+    3,
+    200
+   ],
+   [
+    14.18,
+    3,
+    200
+   ],
+   [
+    14.44,
+    3,
+    200
+   ],
+   [
+    14.7,
+    3,
+    200
+   ],
+   [
+    14.96,
+    3,
+    200
+   ],
+   [
+    15.22,
+    3,
+    200
+   ],
+   [
+    15.48,
+    3,
+    200
+   ],
+   [
+    15.73,
+    3,
+    200
+   ],
+   [
+    16.0,
+    3,
+    200
+   ],
+   [
+    16.26,
+    3,
+    200
+   ],
+   [
+    16.52,
+    3,
+    200
+   ],
+   [
+    16.77,
+    3,
+    200
+   ],
+   [
+    17.04,
+    3,
+    200
+   ],
+   [
+    17.29,
+    3,
+    200
+   ],
+   [
+    17.54,
+    3,
+    200
+   ],
+   [
+    17.8,
+    4,
+    200
+   ],
+   [
+    18.06,
+    3,
+    200
+   ],
+   [
+    18.32,
+    3,
+    200
+   ],
+   [
+    18.58,
+    3,
+    200
+   ],
+   [
+    18.84,
+    3,
+    200
+   ],
+   [
+    19.1,
+    3,
+    200
+   ],
+   [
+    19.36,
+    3,
+    200
+   ],
+   [
+    19.62,
+    3,
+    200
+   ],
+   [
+    19.88,
+    3,
+    200
+   ],
+   [
+    20.14,
+    3,
+    200
+   ],
+   [
+    20.4,
+    3,
+    200
+   ],
+   [
+    20.66,
+    2,
+    200
+   ],
+   [
+    20.92,
+    4,
+    200
+   ],
+   [
+    21.19,
+    3,
+    200
+   ],
+   [
+    21.44,
+    3,
+    200
+   ],
+   [
+    21.7,
+    3,
+    200
+   ],
+   [
+    21.96,
+    2,
+    200
+   ],
+   [
+    22.22,
+    4,
+    200
+   ],
+   [
+    22.48,
+    3,
+    200
+   ],
+   [
+    22.74,
+    3,
+    200
+   ],
+   [
+    22.99,
+    2,
+    200
+   ],
+   [
+    23.26,
+    3,
+    200
+   ],
+   [
+    23.51,
+    3,
+    200
+   ],
+   [
+    23.77,
+    4,
+    200
+   ],
+   [
+    24.03,
+    3,
+    200
+   ]
+  ],
+  "circuitTransitions": [],
+  "restoredAtSec": null,
+  "jstack": null,
+  "commitSha": "688669c",
+  "consistency": {
+   "rejectedPayments": 600,
+   "reachedInstitution": 0,
+   "unknownPayments": 0
+  }
+ }
+]

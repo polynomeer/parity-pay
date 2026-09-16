@@ -8,8 +8,8 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 
 이 프로젝트의 목표는 "정상 결제가 되는 것"이 아니라 **중복 요청, 동시 잔액 차감, 외부 승인 후 응답 유실, 이벤트 중복 전달, 프로세스 재시작 상황에서도 금융 불변조건이 깨지지 않는 것**입니다. 모든 구현 판단은 이 기준으로 합니다.
 
-현재 상태: **Phase 0~9 구현 완료** (2026-09-10). 백엔드 319 테스트·프론트엔드 56 테스트·E2E 7건이
-실패 없이 돕니다. 부하·장애 실험 31종을 실행해 결함 13건(A~M)을 찾아 고쳤고, 결과는
+현재 상태: **Phase 0~9 구현 완료** (2026-09-10). 백엔드 325 테스트·프론트엔드 56 테스트·E2E 7건이
+실패 없이 돕니다. 부하·장애 실험 36종을 실행해 결함 14건(A~N)을 찾아 고쳤고, 결과는
 [reports/11](reports/11-performance-failure-report-template.md)에 있습니다.
 
 ## 2. 절대 규칙 (INV) — 어떤 코드도 이것을 깰 수 없습니다
@@ -66,6 +66,7 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 | 화면에 무엇을 보여줄지 | [docs/15-ui-screen-plan.md](docs/15-ui-screen-plan.md) |
 | UI 구현 순서·백엔드 격차 | [docs/16-ui-implementation-plan.md](docs/16-ui-implementation-plan.md) |
 | 배포 형태·오리진·비밀값 | [docs/adr/011-deployment-shape.md](docs/adr/011-deployment-shape.md) |
+| 외부기관 호출 격리·차단기·거절의 의미 | [docs/adr/014-external-call-isolation.md](docs/adr/014-external-call-isolation.md) |
 | 화면 스타일·상태 색·메뉴 규칙 | [docs/adr/012-frontend-design-system.md](docs/adr/012-frontend-design-system.md) |
 | 로컬 스택 기동·포트 우회 | [docs/adr/013-local-dev-stack-script.md](docs/adr/013-local-dev-stack-script.md) |
 | 왜 이렇게 결정했는지 | [docs/adr/README.md](docs/adr/README.md) |

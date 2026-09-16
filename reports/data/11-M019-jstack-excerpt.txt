@@ -1,0 +1,79 @@
+2026-09-16 12:55:01
+Full thread dump OpenJDK 64-Bit Server VM (21.0.7+6-LTS mixed mode, sharing):
+
+
+# 발췌: 전체 스레드 250개, http-nio-8180-exec-* 202개, 그중 기관 소켓 읽기 대기 200개.
+# 원본 4.1 MB 중 대표 스택 3개만 남겼습니다(전부 같은 모양입니다). 근거: reports/11 M-019
+
+"http-nio-8180-exec-1" #41 [30235] daemon prio=5 os_prio=31 cpu=687.71ms elapsed=41.09s tid=0x000000082693f800 nid=30235 runnable  [0x0000000170454000]
+   java.lang.Thread.State: RUNNABLE
+	at sun.nio.ch.Net.poll(java.base@21.0.7/Native Method)
+	at sun.nio.ch.NioSocketImpl.park(java.base@21.0.7/NioSocketImpl.java:191)
+	at sun.nio.ch.NioSocketImpl.timedRead(java.base@21.0.7/NioSocketImpl.java:280)
+	at sun.nio.ch.NioSocketImpl.implRead(java.base@21.0.7/NioSocketImpl.java:304)
+	at sun.nio.ch.NioSocketImpl.read(java.base@21.0.7/NioSocketImpl.java:346)
+	at sun.nio.ch.NioSocketImpl$1.read(java.base@21.0.7/NioSocketImpl.java:796)
+	at java.net.Socket$SocketInputStream.read(java.base@21.0.7/Socket.java:1099)
+	at java.io.BufferedInputStream.fill(java.base@21.0.7/BufferedInputStream.java:291)
+	at java.io.BufferedInputStream.read1(java.base@21.0.7/BufferedInputStream.java:347)
+	at java.io.BufferedInputStream.implRead(java.base@21.0.7/BufferedInputStream.java:420)
+	at java.io.BufferedInputStream.read(java.base@21.0.7/BufferedInputStream.java:399)
+	at sun.net.www.http.HttpClient.parseHTTPHeader(java.base@21.0.7/HttpClient.java:827)
+	at sun.net.www.http.HttpClient.parseHTTP(java.base@21.0.7/HttpClient.java:759)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream0(java.base@21.0.7/HttpURLConnection.java:1705)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream(java.base@21.0.7/HttpURLConnection.java:1614)
+	at sun.net.www.protocol.http.HttpURLConnection.getHeaderFieldKey(java.base@21.0.7/HttpURLConnection.java:3303)
+	at org.springframework.http.client.SimpleClientHttpResponse.getHeaders(SimpleClientHttpResponse.java:69)
+	at org.springframework.web.client.DefaultRestClient$DefaultConvertibleClientHttpResponse.getHeaders(DefaultRestClient.java:978)
+	at org.springframework.web.client.DefaultRestClient.getContentType(DefaultRestClient.java:279)
+	at org.springframework.web.client.DefaultRestClient.readWithMessageConverters(DefaultRestClient.java:221)
+	...
+
+"http-nio-8180-exec-2" #42 [39171] daemon prio=5 os_prio=31 cpu=574.88ms elapsed=41.09s tid=0x000000082693ea00 nid=39171 runnable  [0x000000017065f000]
+   java.lang.Thread.State: RUNNABLE
+	at sun.nio.ch.Net.poll(java.base@21.0.7/Native Method)
+	at sun.nio.ch.NioSocketImpl.park(java.base@21.0.7/NioSocketImpl.java:191)
+	at sun.nio.ch.NioSocketImpl.timedRead(java.base@21.0.7/NioSocketImpl.java:280)
+	at sun.nio.ch.NioSocketImpl.implRead(java.base@21.0.7/NioSocketImpl.java:304)
+	at sun.nio.ch.NioSocketImpl.read(java.base@21.0.7/NioSocketImpl.java:346)
+	at sun.nio.ch.NioSocketImpl$1.read(java.base@21.0.7/NioSocketImpl.java:796)
+	at java.net.Socket$SocketInputStream.read(java.base@21.0.7/Socket.java:1099)
+	at java.io.BufferedInputStream.fill(java.base@21.0.7/BufferedInputStream.java:291)
+	at java.io.BufferedInputStream.read1(java.base@21.0.7/BufferedInputStream.java:347)
+	at java.io.BufferedInputStream.implRead(java.base@21.0.7/BufferedInputStream.java:420)
+	at java.io.BufferedInputStream.read(java.base@21.0.7/BufferedInputStream.java:399)
+	at sun.net.www.http.HttpClient.parseHTTPHeader(java.base@21.0.7/HttpClient.java:827)
+	at sun.net.www.http.HttpClient.parseHTTP(java.base@21.0.7/HttpClient.java:759)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream0(java.base@21.0.7/HttpURLConnection.java:1705)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream(java.base@21.0.7/HttpURLConnection.java:1614)
+	at sun.net.www.protocol.http.HttpURLConnection.getHeaderFieldKey(java.base@21.0.7/HttpURLConnection.java:3303)
+	at org.springframework.http.client.SimpleClientHttpResponse.getHeaders(SimpleClientHttpResponse.java:69)
+	at org.springframework.web.client.DefaultRestClient$DefaultConvertibleClientHttpResponse.getHeaders(DefaultRestClient.java:978)
+	at org.springframework.web.client.DefaultRestClient.getContentType(DefaultRestClient.java:279)
+	at org.springframework.web.client.DefaultRestClient.readWithMessageConverters(DefaultRestClient.java:221)
+	...
+
+"http-nio-8180-exec-3" #43 [38659] daemon prio=5 os_prio=31 cpu=386.67ms elapsed=41.09s tid=0x0000000829674000 nid=38659 runnable  [0x000000017086b000]
+   java.lang.Thread.State: RUNNABLE
+	at sun.nio.ch.Net.poll(java.base@21.0.7/Native Method)
+	at sun.nio.ch.NioSocketImpl.park(java.base@21.0.7/NioSocketImpl.java:191)
+	at sun.nio.ch.NioSocketImpl.timedRead(java.base@21.0.7/NioSocketImpl.java:280)
+	at sun.nio.ch.NioSocketImpl.implRead(java.base@21.0.7/NioSocketImpl.java:304)
+	at sun.nio.ch.NioSocketImpl.read(java.base@21.0.7/NioSocketImpl.java:346)
+	at sun.nio.ch.NioSocketImpl$1.read(java.base@21.0.7/NioSocketImpl.java:796)
+	at java.net.Socket$SocketInputStream.read(java.base@21.0.7/Socket.java:1099)
+	at java.io.BufferedInputStream.fill(java.base@21.0.7/BufferedInputStream.java:291)
+	at java.io.BufferedInputStream.read1(java.base@21.0.7/BufferedInputStream.java:347)
+	at java.io.BufferedInputStream.implRead(java.base@21.0.7/BufferedInputStream.java:420)
+	at java.io.BufferedInputStream.read(java.base@21.0.7/BufferedInputStream.java:399)
+	at sun.net.www.http.HttpClient.parseHTTPHeader(java.base@21.0.7/HttpClient.java:827)
+	at sun.net.www.http.HttpClient.parseHTTP(java.base@21.0.7/HttpClient.java:759)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream0(java.base@21.0.7/HttpURLConnection.java:1705)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream(java.base@21.0.7/HttpURLConnection.java:1614)
+	at sun.net.www.protocol.http.HttpURLConnection.getHeaderFieldKey(java.base@21.0.7/HttpURLConnection.java:3303)
+	at org.springframework.http.client.SimpleClientHttpResponse.getHeaders(SimpleClientHttpResponse.java:69)
+	at org.springframework.web.client.DefaultRestClient$DefaultConvertibleClientHttpResponse.getHeaders(DefaultRestClient.java:978)
+	at org.springframework.web.client.DefaultRestClient.getContentType(DefaultRestClient.java:279)
+	at org.springframework.web.client.DefaultRestClient.readWithMessageConverters(DefaultRestClient.java:221)
+	...
+
