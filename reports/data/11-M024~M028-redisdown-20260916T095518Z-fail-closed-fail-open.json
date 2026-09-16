@@ -1,0 +1,589 @@
+{
+  "commit": "68269bb",
+  "args": {
+    "experiment": "redisdown",
+    "jar": "apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar",
+    "runs": 3,
+    "variants": null,
+    "port": 8180,
+    "db_url": "jdbc:postgresql://localhost:5432/paritypay",
+    "kafka": "localhost:9092",
+    "db_container": "paritypay-postgres",
+    "redis_container": "paritypay-redis",
+    "redis_port": 6379,
+    "threads": 16,
+    "wallets": 4,
+    "duration": 60,
+    "initial_balance": 60000,
+    "amount": 1000,
+    "ttl": "200ms",
+    "hold_min": 300,
+    "hold_max": 500,
+    "keep_redis": true,
+    "log_dir": "/tmp/lock-lease/full",
+    "out": "/tmp/lock-lease/full"
+  },
+  "results": [
+    {
+      "experiment": "redisdown",
+      "variant": "fail-closed",
+      "run": 1,
+      "runId": "redisdown-fail-closed-1-095520",
+      "env": {
+        "EXPERIMENT_RUN_ID": "redisdown-fail-closed-1-095520",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_PLAIN",
+        "EXPERIMENT_LOCK_ON_REDIS_DOWN": "FAIL_CLOSED"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [
+        {
+          "atSec": 20.0,
+          "event": "redis killed"
+        },
+        {
+          "atSec": 40.2,
+          "event": "redis restarted"
+        }
+      ],
+      "client": {
+        "requests": 22817,
+        "outcomes": {
+          "EXTERNAL_TEMPORARY_ERROR:lock: redis unavailable": 22049,
+          "APPROVED": 583,
+          "INSUFFICIENT_BALANCE:available balance is not sufficient": 185
+        },
+        "throughputPerSec": 374.14,
+        "p50Ms": 13.7,
+        "p95Ms": 30.5,
+        "maxMs": 5327.4
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a9a4-8cd7-7000-9c7b-c15658f46140",
+          "snapshot": 0,
+          "ledger": -83000,
+          "drift": 83000,
+          "approved": 143,
+          "affordable": 60,
+          "excessApprovals": 83,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a4-8f66-7000-bd54-e0677394ec21",
+          "snapshot": 0,
+          "ledger": -90000,
+          "drift": 90000,
+          "approved": 150,
+          "affordable": 60,
+          "excessApprovals": 90,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a4-9051-7000-ae87-741156ae920c",
+          "snapshot": 0,
+          "ledger": -83000,
+          "drift": 83000,
+          "approved": 143,
+          "affordable": 60,
+          "excessApprovals": 83,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a4-914b-7000-876a-5df93e936228",
+          "snapshot": 0,
+          "ledger": -87000,
+          "drift": 87000,
+          "approved": 147,
+          "affordable": 60,
+          "excessApprovals": 87,
+          "ledgerNegative": true
+        }
+      ],
+      "totalDrift": 343000,
+      "walletsWithDrift": 4,
+      "excessApprovals": 343,
+      "walletsLedgerNegative": 4,
+      "holds": {
+        "holds": 768,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 1120,
+        "ownedOverlappingPairs": 1120,
+        "lostUpdatePairs": 841,
+        "maxSimultaneousOwners": 4,
+        "releaseResults": {
+          "EXPIRED": 19,
+          "REDIS_DOWN": 8,
+          "STOLEN": 741
+        },
+        "outcomes": {
+          "APPROVED": 583,
+          "INSUFFICIENT": 185
+        }
+      },
+      "fenceRejected": 0
+    },
+    {
+      "experiment": "redisdown",
+      "variant": "fail-closed",
+      "run": 2,
+      "runId": "redisdown-fail-closed-2-095635",
+      "env": {
+        "EXPERIMENT_RUN_ID": "redisdown-fail-closed-2-095635",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_PLAIN",
+        "EXPERIMENT_LOCK_ON_REDIS_DOWN": "FAIL_CLOSED"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [
+        {
+          "atSec": 20.0,
+          "event": "redis killed"
+        },
+        {
+          "atSec": 40.0,
+          "event": "redis restarted"
+        }
+      ],
+      "client": {
+        "requests": 20854,
+        "outcomes": {
+          "EXTERNAL_TEMPORARY_ERROR:lock: redis unavailable": 20108,
+          "APPROVED": 600,
+          "INSUFFICIENT_BALANCE:available balance is not sufficient": 146
+        },
+        "throughputPerSec": 316.63,
+        "p50Ms": 15.3,
+        "p95Ms": 31.6,
+        "maxMs": 6172.0
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a9a5-aecd-7000-91cb-629fd449d21c",
+          "snapshot": 0,
+          "ledger": -86000,
+          "drift": 86000,
+          "approved": 146,
+          "affordable": 60,
+          "excessApprovals": 86,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a5-b11d-7000-9072-0d962e796fed",
+          "snapshot": 0,
+          "ledger": -89000,
+          "drift": 89000,
+          "approved": 149,
+          "affordable": 60,
+          "excessApprovals": 89,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a5-b212-7000-91b7-edd720386d73",
+          "snapshot": 0,
+          "ledger": -94000,
+          "drift": 94000,
+          "approved": 154,
+          "affordable": 60,
+          "excessApprovals": 94,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a5-b305-7000-b02c-86337c175a05",
+          "snapshot": 0,
+          "ledger": -91000,
+          "drift": 91000,
+          "approved": 151,
+          "affordable": 60,
+          "excessApprovals": 91,
+          "ledgerNegative": true
+        }
+      ],
+      "totalDrift": 360000,
+      "walletsWithDrift": 4,
+      "excessApprovals": 360,
+      "walletsLedgerNegative": 4,
+      "holds": {
+        "holds": 746,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 1124,
+        "ownedOverlappingPairs": 1124,
+        "lostUpdatePairs": 888,
+        "maxSimultaneousOwners": 4,
+        "releaseResults": {
+          "EXPIRED": 31,
+          "REDIS_DOWN": 26,
+          "STOLEN": 689
+        },
+        "outcomes": {
+          "APPROVED": 600,
+          "INSUFFICIENT": 146
+        }
+      },
+      "fenceRejected": 0
+    },
+    {
+      "experiment": "redisdown",
+      "variant": "fail-closed",
+      "run": 3,
+      "runId": "redisdown-fail-closed-3-095759",
+      "env": {
+        "EXPERIMENT_RUN_ID": "redisdown-fail-closed-3-095759",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_PLAIN",
+        "EXPERIMENT_LOCK_ON_REDIS_DOWN": "FAIL_CLOSED"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [
+        {
+          "atSec": 20.1,
+          "event": "redis killed"
+        },
+        {
+          "atSec": 40.2,
+          "event": "redis restarted"
+        }
+      ],
+      "client": {
+        "requests": 22840,
+        "outcomes": {
+          "EXTERNAL_TEMPORARY_ERROR:lock: redis unavailable": 22075,
+          "APPROVED": 590,
+          "INSUFFICIENT_BALANCE:available balance is not sufficient": 174,
+          "EXTERNAL_TEMPORARY_ERROR:lock: wait timed out": 1
+        },
+        "throughputPerSec": 374.84,
+        "p50Ms": 14.3,
+        "p95Ms": 27.7,
+        "maxMs": 5022.7
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a9a7-93cb-7000-b510-b36a7cb26e28",
+          "snapshot": 0,
+          "ledger": -86000,
+          "drift": 86000,
+          "approved": 146,
+          "affordable": 60,
+          "excessApprovals": 86,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a7-95eb-7000-9442-b3ff69520fcf",
+          "snapshot": 0,
+          "ledger": -93000,
+          "drift": 93000,
+          "approved": 153,
+          "affordable": 60,
+          "excessApprovals": 93,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a7-96d7-7000-98d7-7527df4323fd",
+          "snapshot": 0,
+          "ledger": -84000,
+          "drift": 84000,
+          "approved": 144,
+          "affordable": 60,
+          "excessApprovals": 84,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a7-97c1-7000-85dd-24ac0a249d32",
+          "snapshot": 0,
+          "ledger": -87000,
+          "drift": 87000,
+          "approved": 147,
+          "affordable": 60,
+          "excessApprovals": 87,
+          "ledgerNegative": true
+        }
+      ],
+      "totalDrift": 350000,
+      "walletsWithDrift": 4,
+      "excessApprovals": 350,
+      "walletsLedgerNegative": 4,
+      "holds": {
+        "holds": 764,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 1114,
+        "ownedOverlappingPairs": 1114,
+        "lostUpdatePairs": 850,
+        "maxSimultaneousOwners": 3,
+        "releaseResults": {
+          "EXPIRED": 29,
+          "REDIS_DOWN": 5,
+          "STOLEN": 730
+        },
+        "outcomes": {
+          "APPROVED": 590,
+          "INSUFFICIENT": 174
+        }
+      },
+      "fenceRejected": 0
+    },
+    {
+      "experiment": "redisdown",
+      "variant": "fail-open",
+      "run": 1,
+      "runId": "redisdown-fail-open-1-095953",
+      "env": {
+        "EXPERIMENT_RUN_ID": "redisdown-fail-open-1-095953",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_PLAIN",
+        "EXPERIMENT_LOCK_ON_REDIS_DOWN": "FAIL_OPEN"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [
+        {
+          "atSec": 20.3,
+          "event": "redis killed"
+        },
+        {
+          "atSec": 40.0,
+          "event": "redis restarted"
+        }
+      ],
+      "client": {
+        "requests": 1559,
+        "outcomes": {
+          "INSUFFICIENT_BALANCE:available balance is not sufficient": 828,
+          "APPROVED": 731
+        },
+        "throughputPerSec": 25.56,
+        "p50Ms": 486.6,
+        "p95Ms": 1371.8,
+        "maxMs": 3360.9
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a9a9-4ca4-7000-9263-708838258a92",
+          "snapshot": 0,
+          "ledger": -120000,
+          "drift": 120000,
+          "approved": 180,
+          "affordable": 60,
+          "excessApprovals": 120,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a9-4ebf-7000-9475-ae5eaffb67e0",
+          "snapshot": 0,
+          "ledger": -113000,
+          "drift": 113000,
+          "approved": 173,
+          "affordable": 60,
+          "excessApprovals": 113,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a9-4fb2-7000-be15-2b2a99b62e8f",
+          "snapshot": 0,
+          "ledger": -129000,
+          "drift": 129000,
+          "approved": 189,
+          "affordable": 60,
+          "excessApprovals": 129,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9a9-50a3-7000-908a-307678900435",
+          "snapshot": 0,
+          "ledger": -129000,
+          "drift": 129000,
+          "approved": 189,
+          "affordable": 60,
+          "excessApprovals": 129,
+          "ledgerNegative": true
+        }
+      ],
+      "totalDrift": 491000,
+      "walletsWithDrift": 4,
+      "excessApprovals": 491,
+      "walletsLedgerNegative": 4,
+      "holds": {
+        "holds": 1559,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 3423,
+        "ownedOverlappingPairs": 1125,
+        "lostUpdatePairs": 1549,
+        "maxSimultaneousOwners": 3,
+        "releaseResults": {
+          "EXPIRED": 25,
+          "NO_LOCK": 784,
+          "REDIS_DOWN": 8,
+          "STOLEN": 742
+        },
+        "outcomes": {
+          "APPROVED": 731,
+          "INSUFFICIENT": 828
+        }
+      },
+      "fenceRejected": 0
+    },
+    {
+      "experiment": "redisdown",
+      "variant": "fail-open",
+      "run": 2,
+      "runId": "redisdown-fail-open-2-100145",
+      "env": {
+        "EXPERIMENT_RUN_ID": "redisdown-fail-open-2-100145",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_PLAIN",
+        "EXPERIMENT_LOCK_ON_REDIS_DOWN": "FAIL_OPEN"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [
+        {
+          "atSec": 20.0,
+          "event": "redis killed"
+        },
+        {
+          "atSec": 40.2,
+          "event": "redis restarted"
+        }
+      ],
+      "client": {
+        "requests": 1500,
+        "outcomes": {
+          "INSUFFICIENT_BALANCE:available balance is not sufficient": 774,
+          "APPROVED": 726
+        },
+        "throughputPerSec": 21.29,
+        "p50Ms": 483.5,
+        "p95Ms": 1509.6,
+        "maxMs": 10387.9
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a9ab-05ef-7000-b9a5-645c43974620",
+          "snapshot": 0,
+          "ledger": -124000,
+          "drift": 124000,
+          "approved": 184,
+          "affordable": 60,
+          "excessApprovals": 124,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9ab-0819-7000-9f1c-a92672a5335d",
+          "snapshot": 0,
+          "ledger": -115000,
+          "drift": 115000,
+          "approved": 175,
+          "affordable": 60,
+          "excessApprovals": 115,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9ab-0910-7000-aaf8-e52d04fd8539",
+          "snapshot": 0,
+          "ledger": -122000,
+          "drift": 122000,
+          "approved": 182,
+          "affordable": 60,
+          "excessApprovals": 122,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9ab-09f7-7000-b938-2556c6945233",
+          "snapshot": 0,
+          "ledger": -125000,
+          "drift": 125000,
+          "approved": 185,
+          "affordable": 60,
+          "excessApprovals": 125,
+          "ledgerNegative": true
+        }
+      ],
+      "totalDrift": 486000,
+      "walletsWithDrift": 4,
+      "excessApprovals": 486,
+      "walletsLedgerNegative": 4,
+      "holds": {
+        "holds": 1500,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 3396,
+        "ownedOverlappingPairs": 1043,
+        "lostUpdatePairs": 1559,
+        "maxSimultaneousOwners": 4,
+        "releaseResults": {
+          "EXPIRED": 36,
+          "NO_LOCK": 810,
+          "REDIS_DOWN": 17,
+          "STOLEN": 637
+        },
+        "outcomes": {
+          "APPROVED": 726,
+          "INSUFFICIENT": 774
+        }
+      },
+      "fenceRejected": 0
+    }
+  ]
+}

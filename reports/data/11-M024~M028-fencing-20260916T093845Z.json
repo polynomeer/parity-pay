@@ -1,0 +1,632 @@
+{
+  "commit": "68269bb",
+  "args": {
+    "experiment": "fencing",
+    "jar": "apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar",
+    "runs": 3,
+    "variants": null,
+    "port": 8180,
+    "db_url": "jdbc:postgresql://localhost:5432/paritypay",
+    "kafka": "localhost:9092",
+    "db_container": "paritypay-postgres",
+    "redis_container": "paritypay-redis",
+    "redis_port": 6379,
+    "threads": 16,
+    "wallets": 4,
+    "duration": 60,
+    "initial_balance": 60000,
+    "amount": 1000,
+    "ttl": "200ms",
+    "hold_min": 300,
+    "hold_max": 500,
+    "keep_redis": true,
+    "log_dir": "/tmp/lock-lease/full",
+    "out": "/tmp/lock-lease/full"
+  },
+  "results": [
+    {
+      "experiment": "fencing",
+      "variant": "fence-at-write",
+      "run": 1,
+      "runId": "fencing-fence-at-write-1-093846",
+      "env": {
+        "EXPERIMENT_RUN_ID": "fencing-fence-at-write-1-093846",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_FENCE_WRITE"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [],
+      "client": {
+        "requests": 1170,
+        "outcomes": {
+          "APPROVED": 590,
+          "INSUFFICIENT_BALANCE:available balance is not sufficient": 578,
+          "EXTERNAL_TEMPORARY_ERROR:lock: wait timed out": 1,
+          "INVALID_STATE_TRANSITION:fence: lease expired before the write": 1
+        },
+        "throughputPerSec": 19.18,
+        "p50Ms": 697.9,
+        "p95Ms": 1603.9,
+        "maxMs": 5033.0
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a995-5d9c-7000-9789-dfa223ea8062",
+          "snapshot": 0,
+          "ledger": -91000,
+          "drift": 91000,
+          "approved": 151,
+          "affordable": 60,
+          "excessApprovals": 91,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a995-5f8e-7000-b46b-e64ba407ed10",
+          "snapshot": 0,
+          "ledger": -80000,
+          "drift": 80000,
+          "approved": 140,
+          "affordable": 60,
+          "excessApprovals": 80,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a995-6066-7000-a43a-a0b1957a4b5d",
+          "snapshot": 0,
+          "ledger": -85000,
+          "drift": 85000,
+          "approved": 145,
+          "affordable": 60,
+          "excessApprovals": 85,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a995-613d-7000-a754-b2c0d358f1b5",
+          "snapshot": 0,
+          "ledger": -94000,
+          "drift": 94000,
+          "approved": 154,
+          "affordable": 60,
+          "excessApprovals": 94,
+          "ledgerNegative": true
+        }
+      ],
+      "totalDrift": 350000,
+      "walletsWithDrift": 4,
+      "excessApprovals": 350,
+      "walletsLedgerNegative": 4,
+      "holds": {
+        "holds": 1169,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 1732,
+        "ownedOverlappingPairs": 1732,
+        "lostUpdatePairs": 864,
+        "maxSimultaneousOwners": 3,
+        "releaseResults": {
+          "EXPIRED": 36,
+          "STOLEN": 1133
+        },
+        "outcomes": {
+          "APPROVED": 590,
+          "FENCE_REJECTED_WRITE": 1,
+          "INSUFFICIENT": 578
+        }
+      },
+      "fenceRejected": 1
+    },
+    {
+      "experiment": "fencing",
+      "variant": "fence-at-write",
+      "run": 2,
+      "runId": "fencing-fence-at-write-2-093959",
+      "env": {
+        "EXPERIMENT_RUN_ID": "fencing-fence-at-write-2-093959",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_FENCE_WRITE"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [],
+      "client": {
+        "requests": 1167,
+        "outcomes": {
+          "APPROVED": 593,
+          "INSUFFICIENT_BALANCE:available balance is not sufficient": 574
+        },
+        "throughputPerSec": 19.11,
+        "p50Ms": 710.0,
+        "p95Ms": 1611.8,
+        "maxMs": 5033.8
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a996-7ac3-7000-afe8-3038099a662a",
+          "snapshot": 0,
+          "ledger": -84000,
+          "drift": 84000,
+          "approved": 144,
+          "affordable": 60,
+          "excessApprovals": 84,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a996-7cec-7000-bdd9-0b60d471745c",
+          "snapshot": 0,
+          "ledger": -88000,
+          "drift": 88000,
+          "approved": 148,
+          "affordable": 60,
+          "excessApprovals": 88,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a996-7dd1-7000-8558-bb8001592321",
+          "snapshot": 0,
+          "ledger": -91000,
+          "drift": 91000,
+          "approved": 151,
+          "affordable": 60,
+          "excessApprovals": 91,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a996-7eb8-7000-9d43-3ab5de721286",
+          "snapshot": 0,
+          "ledger": -90000,
+          "drift": 90000,
+          "approved": 150,
+          "affordable": 60,
+          "excessApprovals": 90,
+          "ledgerNegative": true
+        }
+      ],
+      "totalDrift": 353000,
+      "walletsWithDrift": 4,
+      "excessApprovals": 353,
+      "walletsLedgerNegative": 4,
+      "holds": {
+        "holds": 1167,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 1713,
+        "ownedOverlappingPairs": 1713,
+        "lostUpdatePairs": 876,
+        "maxSimultaneousOwners": 3,
+        "releaseResults": {
+          "EXPIRED": 37,
+          "STOLEN": 1130
+        },
+        "outcomes": {
+          "APPROVED": 593,
+          "INSUFFICIENT": 574
+        }
+      },
+      "fenceRejected": 0
+    },
+    {
+      "experiment": "fencing",
+      "variant": "fence-at-write",
+      "run": 3,
+      "runId": "fencing-fence-at-write-3-094112",
+      "env": {
+        "EXPERIMENT_RUN_ID": "fencing-fence-at-write-3-094112",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_FENCE_WRITE"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [],
+      "client": {
+        "requests": 1168,
+        "outcomes": {
+          "APPROVED": 593,
+          "INSUFFICIENT_BALANCE:available balance is not sufficient": 575
+        },
+        "throughputPerSec": 19.14,
+        "p50Ms": 704.7,
+        "p95Ms": 1624.7,
+        "maxMs": 3454.8
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a997-981a-7000-ae0f-ae1a197299db",
+          "snapshot": 0,
+          "ledger": -82000,
+          "drift": 82000,
+          "approved": 142,
+          "affordable": 60,
+          "excessApprovals": 82,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a997-9a61-7000-a849-e79f29491925",
+          "snapshot": 0,
+          "ledger": -88000,
+          "drift": 88000,
+          "approved": 148,
+          "affordable": 60,
+          "excessApprovals": 88,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a997-9b4b-7000-b460-c78a21991c51",
+          "snapshot": 0,
+          "ledger": -95000,
+          "drift": 95000,
+          "approved": 155,
+          "affordable": 60,
+          "excessApprovals": 95,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a997-9c2e-7000-baf1-afa053d01564",
+          "snapshot": 0,
+          "ledger": -88000,
+          "drift": 88000,
+          "approved": 148,
+          "affordable": 60,
+          "excessApprovals": 88,
+          "ledgerNegative": true
+        }
+      ],
+      "totalDrift": 353000,
+      "walletsWithDrift": 4,
+      "excessApprovals": 353,
+      "walletsLedgerNegative": 4,
+      "holds": {
+        "holds": 1168,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 1729,
+        "ownedOverlappingPairs": 1729,
+        "lostUpdatePairs": 870,
+        "maxSimultaneousOwners": 3,
+        "releaseResults": {
+          "EXPIRED": 27,
+          "STOLEN": 1141
+        },
+        "outcomes": {
+          "APPROVED": 593,
+          "INSUFFICIENT": 575
+        }
+      },
+      "fenceRejected": 0
+    },
+    {
+      "experiment": "fencing",
+      "variant": "fence-at-read",
+      "run": 1,
+      "runId": "fencing-fence-at-read-1-094225",
+      "env": {
+        "EXPERIMENT_RUN_ID": "fencing-fence-at-read-1-094225",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_FENCE_CLAIM"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [],
+      "client": {
+        "requests": 1159,
+        "outcomes": {
+          "INVALID_STATE_TRANSITION:fence: lease expired before the write": 1153,
+          "APPROVED": 6
+        },
+        "throughputPerSec": 18.98,
+        "p50Ms": 731.1,
+        "p95Ms": 1612.2,
+        "maxMs": 3454.3
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a998-b4fe-7000-b846-83d933931c8b",
+          "snapshot": 59000,
+          "ledger": 59000,
+          "drift": 0,
+          "approved": 1,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        },
+        {
+          "walletId": "01a0a998-b755-7000-84fa-a3e7fb4a5c4f",
+          "snapshot": 59000,
+          "ledger": 59000,
+          "drift": 0,
+          "approved": 1,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        },
+        {
+          "walletId": "01a0a998-b849-7000-90c3-5ef34272c9ac",
+          "snapshot": 58000,
+          "ledger": 58000,
+          "drift": 0,
+          "approved": 2,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        },
+        {
+          "walletId": "01a0a998-b92f-7000-ae4d-ce1153539f7c",
+          "snapshot": 58000,
+          "ledger": 58000,
+          "drift": 0,
+          "approved": 2,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        }
+      ],
+      "totalDrift": 0,
+      "walletsWithDrift": 0,
+      "excessApprovals": 0,
+      "walletsLedgerNegative": 0,
+      "holds": {
+        "holds": 1159,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 1770,
+        "ownedOverlappingPairs": 1770,
+        "lostUpdatePairs": 0,
+        "maxSimultaneousOwners": 4,
+        "releaseResults": {
+          "EXPIRED": 27,
+          "STOLEN": 1132
+        },
+        "outcomes": {
+          "APPROVED": 6,
+          "FENCE_REJECTED_WRITE": 1153
+        }
+      },
+      "fenceRejected": 1153
+    },
+    {
+      "experiment": "fencing",
+      "variant": "fence-at-read",
+      "run": 2,
+      "runId": "fencing-fence-at-read-2-094348",
+      "env": {
+        "EXPERIMENT_RUN_ID": "fencing-fence-at-read-2-094348",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_FENCE_CLAIM"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [],
+      "client": {
+        "requests": 1167,
+        "outcomes": {
+          "INVALID_STATE_TRANSITION:fence: lease expired before the write": 1163,
+          "APPROVED": 4
+        },
+        "throughputPerSec": 19.15,
+        "p50Ms": 717.6,
+        "p95Ms": 1506.5,
+        "maxMs": 5013.7
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a99a-98b9-7000-9743-14d5545e4c0a",
+          "snapshot": 59000,
+          "ledger": 59000,
+          "drift": 0,
+          "approved": 1,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        },
+        {
+          "walletId": "01a0a99a-9aed-7000-bf21-84f040cc92c9",
+          "snapshot": 59000,
+          "ledger": 59000,
+          "drift": 0,
+          "approved": 1,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        },
+        {
+          "walletId": "01a0a99a-9bd4-7000-ba07-0a3d6712db7c",
+          "snapshot": 59000,
+          "ledger": 59000,
+          "drift": 0,
+          "approved": 1,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        },
+        {
+          "walletId": "01a0a99a-9cb7-7000-8d28-ebf02caebfa5",
+          "snapshot": 59000,
+          "ledger": 59000,
+          "drift": 0,
+          "approved": 1,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        }
+      ],
+      "totalDrift": 0,
+      "walletsWithDrift": 0,
+      "excessApprovals": 0,
+      "walletsLedgerNegative": 0,
+      "holds": {
+        "holds": 1167,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 1747,
+        "ownedOverlappingPairs": 1747,
+        "lostUpdatePairs": 0,
+        "maxSimultaneousOwners": 3,
+        "releaseResults": {
+          "EXPIRED": 32,
+          "STOLEN": 1135
+        },
+        "outcomes": {
+          "APPROVED": 4,
+          "FENCE_REJECTED_WRITE": 1163
+        }
+      },
+      "fenceRejected": 1163
+    },
+    {
+      "experiment": "fencing",
+      "variant": "fence-at-read",
+      "run": 3,
+      "runId": "fencing-fence-at-read-3-094541",
+      "env": {
+        "EXPERIMENT_RUN_ID": "fencing-fence-at-read-3-094541",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_FENCE_CLAIM"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [],
+      "client": {
+        "requests": 1170,
+        "outcomes": {
+          "INVALID_STATE_TRANSITION:fence: lease expired before the write": 1165,
+          "APPROVED": 4,
+          "EXTERNAL_TEMPORARY_ERROR:lock: wait timed out": 1
+        },
+        "throughputPerSec": 19.19,
+        "p50Ms": 700.1,
+        "p95Ms": 1579.6,
+        "maxMs": 5027.4
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a99c-5093-7000-8ac7-ef7dac0bcdfc",
+          "snapshot": 59000,
+          "ledger": 59000,
+          "drift": 0,
+          "approved": 1,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        },
+        {
+          "walletId": "01a0a99c-526f-7000-a1c1-eb37aa5e529a",
+          "snapshot": 59000,
+          "ledger": 59000,
+          "drift": 0,
+          "approved": 1,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        },
+        {
+          "walletId": "01a0a99c-5357-7000-8f86-9935f4ae9824",
+          "snapshot": 59000,
+          "ledger": 59000,
+          "drift": 0,
+          "approved": 1,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        },
+        {
+          "walletId": "01a0a99c-5426-7000-abf9-ae8b9220d550",
+          "snapshot": 59000,
+          "ledger": 59000,
+          "drift": 0,
+          "approved": 1,
+          "affordable": 60,
+          "excessApprovals": 0,
+          "ledgerNegative": false
+        }
+      ],
+      "totalDrift": 0,
+      "walletsWithDrift": 0,
+      "excessApprovals": 0,
+      "walletsLedgerNegative": 0,
+      "holds": {
+        "holds": 1169,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 1722,
+        "ownedOverlappingPairs": 1722,
+        "lostUpdatePairs": 0,
+        "maxSimultaneousOwners": 3,
+        "releaseResults": {
+          "EXPIRED": 26,
+          "STOLEN": 1143
+        },
+        "outcomes": {
+          "APPROVED": 4,
+          "FENCE_REJECTED_WRITE": 1165
+        }
+      },
+      "fenceRejected": 1165
+    }
+  ]
+}

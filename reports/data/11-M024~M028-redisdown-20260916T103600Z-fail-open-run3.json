@@ -1,0 +1,141 @@
+{
+  "commit": "503d8b1",
+  "args": {
+    "experiment": "redisdown",
+    "jar": "apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar",
+    "runs": 1,
+    "first_run": 3,
+    "variants": "fail-open",
+    "port": 8180,
+    "db_url": "jdbc:postgresql://localhost:5432/paritypay",
+    "kafka": "localhost:9092",
+    "db_container": "paritypay-postgres",
+    "redis_container": "paritypay-redis",
+    "redis_port": 6379,
+    "threads": 16,
+    "wallets": 4,
+    "duration": 60,
+    "initial_balance": 60000,
+    "amount": 1000,
+    "ttl": "200ms",
+    "hold_min": 300,
+    "hold_max": 500,
+    "keep_redis": false,
+    "log_dir": "/tmp/lock-lease/full",
+    "out": "/tmp/lock-lease/full"
+  },
+  "results": [
+    {
+      "experiment": "redisdown",
+      "variant": "fail-open",
+      "run": 3,
+      "runId": "redisdown-fail-open-3-103602",
+      "env": {
+        "EXPERIMENT_RUN_ID": "redisdown-fail-open-3-103602",
+        "EXPERIMENT_REDIS_URI": "redis://localhost:6379",
+        "EXPERIMENT_LOCK_TTL": "200ms",
+        "EXPERIMENT_LOCK_HOLD_MIN_MS": "300",
+        "EXPERIMENT_LOCK_HOLD_MAX_MS": "500",
+        "EXPERIMENT_LOCK_MODE": "LOCK_PLAIN",
+        "EXPERIMENT_LOCK_ON_REDIS_DOWN": "FAIL_OPEN"
+      },
+      "load": {
+        "threads": 16,
+        "wallets": 4,
+        "durationSec": 60,
+        "initialBalance": 60000,
+        "amount": 1000
+      },
+      "pauses": 0,
+      "pauseEverySec": null,
+      "pauseSeconds": null,
+      "events": [
+        {
+          "atSec": 20.2,
+          "event": "redis killed"
+        },
+        {
+          "atSec": 40.2,
+          "event": "redis restarted"
+        }
+      ],
+      "client": {
+        "requests": 1274,
+        "outcomes": {
+          "APPROVED": 715,
+          "INSUFFICIENT_BALANCE:available balance is not sufficient": 559
+        },
+        "throughputPerSec": 11.9,
+        "p50Ms": 666.8,
+        "p95Ms": 3172.6,
+        "maxMs": 37164.2
+      },
+      "wallets": [
+        {
+          "walletId": "01a0a9c9-f2fc-7000-b883-6daa525d3bdb",
+          "snapshot": 0,
+          "ledger": -119000,
+          "drift": 119000,
+          "approved": 179,
+          "affordable": 60,
+          "excessApprovals": 119,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9c9-f75e-7000-b2b2-e389f89cf9dc",
+          "snapshot": 0,
+          "ledger": -122000,
+          "drift": 122000,
+          "approved": 182,
+          "affordable": 60,
+          "excessApprovals": 122,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9c9-f8bb-7000-8253-7dc07a9cc9ab",
+          "snapshot": 0,
+          "ledger": -118000,
+          "drift": 118000,
+          "approved": 178,
+          "affordable": 60,
+          "excessApprovals": 118,
+          "ledgerNegative": true
+        },
+        {
+          "walletId": "01a0a9c9-f9fd-7000-9e43-7bc842490de3",
+          "snapshot": 0,
+          "ledger": -116000,
+          "drift": 116000,
+          "approved": 176,
+          "affordable": 60,
+          "excessApprovals": 116,
+          "ledgerNegative": true
+        }
+      ],
+      "totalDrift": 475000,
+      "walletsWithDrift": 4,
+      "excessApprovals": 475,
+      "walletsLedgerNegative": 4,
+      "holds": {
+        "holds": 1274,
+        "unreleased": 0,
+        "renewals": 0,
+        "overlappingPairs": 2468,
+        "ownedOverlappingPairs": 632,
+        "lostUpdatePairs": 1261,
+        "maxSimultaneousOwners": 4,
+        "releaseResults": {
+          "EXPIRED": 25,
+          "NO_LOCK": 889,
+          "REDIS_DOWN": 9,
+          "STOLEN": 351
+        },
+        "outcomes": {
+          "APPROVED": 715,
+          "INSUFFICIENT": 559
+        }
+      },
+      "fenceRejected": 0
+    }
+  ]
+}

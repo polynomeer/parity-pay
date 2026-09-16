@@ -11,7 +11,7 @@ ADR은 중요한 기술 선택의 맥락, 대안, 결정과 결과를 기록합�
 | [ADR-001](001-modular-monolith.md) | 모듈러 모놀리스로 시작 | Accepted (2026-09-06) |
 | [ADR-002](002-postgresql-system-of-record.md) | PostgreSQL을 금융 원장의 시스템 오브 레코드로 사용 | Accepted (2026-09-06) |
 | [ADR-003](003-double-entry-ledger.md) | 이중부기·불변 원장 사용 | Accepted (2026-09-06) |
-| [ADR-004](004-atomic-balance-update.md) | 지갑 잔액 조건부 원자 업데이트 | Accepted (2026-09-06, 비교 측정 근거) |
+| [ADR-004](004-atomic-balance-update.md) | 지갑 잔액 조건부 원자 업데이트 | Accepted (2026-09-06, 비교 측정 근거; 2026-09-16 분산락 실험 M-024~M-028로 재확인) |
 | [ADR-005](005-transactional-outbox.md) | Transactional Outbox 사용 | Accepted (2026-09-06) |
 | [ADR-006](006-at-least-once-idempotent-consumer.md) | at-least-once와 멱등 소비자 | Accepted (2026-09-06) |
 | [ADR-007](007-unknown-state.md) | 외부 결과 불명확 상태 UNKNOWN 도입 | Accepted (2026-09-06) |
