@@ -37,7 +37,9 @@ public interface ApprovePaymentUseCase {
             Money approvedAmount,
             Money canceledAmount,
             Money cancellableAmount,
-            Instant approvedAt) {
+            Instant approvedAt,
+            // FAILED일 때의 사유입니다. 기관의 거절 코드이거나, 보내지 않고 거절한 이유(CIRCUIT_OPEN 등)입니다.
+            String failureReason) {
 
         public static PaymentView of(Payment payment) {
             return new PaymentView(
@@ -48,7 +50,8 @@ public interface ApprovePaymentUseCase {
                     payment.approvedAmount(),
                     payment.completedCancellationAmount(),
                     payment.cancellableAmount(),
-                    payment.approvedAt());
+                    payment.approvedAt(),
+                    payment.failureReason());
         }
     }
 }

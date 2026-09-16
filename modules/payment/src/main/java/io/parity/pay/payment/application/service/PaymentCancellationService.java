@@ -11,6 +11,7 @@ import io.parity.pay.payment.application.event.PaymentEvents;
 import io.parity.pay.payment.application.port.in.CancelPaymentUseCase;
 import io.parity.pay.payment.application.port.out.PaymentCancellationRepository;
 import io.parity.pay.payment.application.port.out.PaymentRepository;
+import io.parity.pay.payment.application.port.out.PgCallRejectedException;
 import io.parity.pay.payment.application.port.out.PgRefundPort;
 import io.parity.pay.payment.application.port.out.PgRefundPort.PgRefundResult;
 import io.parity.pay.payment.domain.Payment;
@@ -195,6 +196,10 @@ public class PaymentCancellationService implements CancelPaymentUseCase {
         PgRefundResult result;
         try {
             result = pgRefundPort.refund(cancellation.id(), payment.id(), command.amount());
+        } catch (PgCallRejectedException e) {
+            // 보내지 않았으므로 환불은 나가지 않았습니다. 예약은 FAILED 경로가 풉니다.
+            log.info("pg refund rejected before sending for cancellation {}: {}", cancellation.id(), e.reason());
+            result = PgRefundResult.declined(e.reason());
         } catch (RuntimeException e) {
             log.warn("pg refund outcome is unknown for cancellation {}", cancellation.id(), e);
             result = PgRefundResult.unknown(null);

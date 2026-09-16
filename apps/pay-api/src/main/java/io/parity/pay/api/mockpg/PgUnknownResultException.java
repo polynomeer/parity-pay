@@ -7,9 +7,9 @@ package io.parity.pay.api.mockpg;
  * 환불되었는지 모른다.** 이것을 실패로 바꾸면 청구된 결제를 실패로 알리거나, 나간 환불을 다시
  * 보내게 됩니다. 근거: ADR-007
  */
-class PgUnknownResultException extends RuntimeException {
+public class PgUnknownResultException extends RuntimeException {
 
-    PgUnknownResultException(String message, Throwable cause) {
+    public PgUnknownResultException(String message, Throwable cause) {
         super(message, cause);
     }
 }

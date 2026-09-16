@@ -163,7 +163,8 @@ class PaymentController {
             long canceledAmount,
             long cancellableAmount,
             String currency,
-            Instant approvedAt) {
+            Instant approvedAt,
+            String failureReason) {
 
         static PaymentResponse from(PaymentView view) {
             return new PaymentResponse(
@@ -175,7 +176,8 @@ class PaymentController {
                     view.canceledAmount().amount(),
                     view.cancellableAmount().amount(),
                     view.requestedAmount().currency().name(),
-                    view.approvedAt());
+                    view.approvedAt(),
+                    view.failureReason());
         }
     }
 

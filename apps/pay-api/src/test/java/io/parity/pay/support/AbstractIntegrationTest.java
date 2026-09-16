@@ -3,6 +3,7 @@ package io.parity.pay.support;
 import io.parity.pay.ParityPayApplication;
 import io.parity.pay.api.mockbank.MockBankBehavior;
 import io.parity.pay.api.mockpg.MockPgBehavior;
+import io.parity.pay.api.mockpg.guard.PgCallGuard;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -96,6 +97,9 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     private MockPgBehavior externalPg;
 
+    @Autowired
+    private PgCallGuard pgCallGuard;
+
     /**
      * 외부 기관의 상태를 되돌립니다.
      *
@@ -110,6 +114,9 @@ public abstract class AbstractIntegrationTest {
     void resetExternalInstitutions() {
         externalBank.resetLedgerAndBehavior();
         externalPg.resetLedgerAndBehavior();
+        // 차단기도 컨텍스트 하나를 공유합니다. 앞 시험이 타임아웃 열 건으로 열어 둔 차단기가 다음 시험의
+        // 결제를 보내지 않고 거절하면, 그 시험은 자기가 시험하려던 것과 무관한 이유로 깨집니다(ADR-014).
+        pgCallGuard.resetCircuitForTests();
     }
 
     @DynamicPropertySource

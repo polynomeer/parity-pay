@@ -1,0 +1,49 @@
+# ==========================================================================================
+# 실험 전용 프로필입니다. **설계가 아닙니다.** 운영·로컬·테스트 어디에서도 켜지 않습니다.
+#
+# reports/11 M-019~M-023(외부기관 장애 격리)이 `load-tests/external-isolation-experiment.py`로 이
+# 프로필을 켜고, 아래 환경변수로 설정 하나씩을 기본값에서 벗어나게 합니다. 환경변수를 주지 않으면 이
+# 프로필을 켜도 값은 기본과 같습니다.
+#
+# 기본값(application.yml + PgResilienceProperties)이 왜 그 값인지가 이 실험의 결론입니다:
+#   - 읽기 타임아웃 3초 → 느린 기관이 스레드·연결을 무한정 붙잡지 못함 (M-019)
+#   - 승인 재시도 없음 → 요청 증폭도 이중 청구도 없음. 대신 미확정·조회 (M-020)
+#   - 차단기·벌크헤드 켬 → 죽은 기관 앞에서 즉시 거절, 무관한 API는 살아 있음 (M-021·M-023)
+#   - 리미터 끔 → 기관 상한을 알 때만 켬 (M-022)
+#
+# 근거: ADR-014, ADR-007, docs/05-technical-design.md §10
+# ==========================================================================================
+server:
+  tomcat:
+    mbeanregistry:
+      # M-019가 Tomcat 스레드 지표(tomcat_threads_busy_threads)를 읽습니다. 기본은 꺼져 있습니다.
+      enabled: true
+spring:
+  threads:
+    virtual:
+      # M-019: false면 Tomcat 플랫폼 스레드(최대 200)입니다. 느린 기관이 그것을 전부 붙잡는 붕괴를 재현합니다.
+      enabled: ${EXPERIMENT_VIRTUAL_THREADS:true}
+paritypay:
+  mock-pg:
+    # M-019: "타임아웃 없음"은 아주 긴 값으로 만듭니다.
+    read-timeout: ${EXPERIMENT_PG_READ_TIMEOUT:3s}
+    resilience:
+      bulkhead:
+        enabled: ${EXPERIMENT_BULKHEAD:true}
+        max-concurrent-calls: ${EXPERIMENT_BULKHEAD_MAX:50}
+      circuit-breaker:
+        enabled: ${EXPERIMENT_CIRCUIT:true}
+        sliding-window-size: ${EXPERIMENT_CIRCUIT_WINDOW:20}
+        minimum-number-of-calls: ${EXPERIMENT_CIRCUIT_MIN_CALLS:10}
+        failure-rate-threshold: ${EXPERIMENT_CIRCUIT_FAILURE_RATE:50}
+        wait-duration-in-open-state: ${EXPERIMENT_CIRCUIT_OPEN_WAIT:10s}
+        permitted-calls-in-half-open-state: ${EXPERIMENT_CIRCUIT_HALF_OPEN_CALLS:3}
+      rate-limiter:
+        enabled: ${EXPERIMENT_RATE_LIMITER:false}
+        limit-per-second: ${EXPERIMENT_RATE_LIMIT:50}
+        algorithm: ${EXPERIMENT_RATE_ALGORITHM:TOKEN_BUCKET}
+      retry:
+        # M-020: 설계 위반입니다. 승인 재요청이 무엇을 만드는지 재기 위해서만 켭니다.
+        enabled: ${EXPERIMENT_RETRY:false}
+        max-attempts: ${EXPERIMENT_RETRY_ATTEMPTS:3}
+        backoff: ${EXPERIMENT_RETRY_BACKOFF:NONE}

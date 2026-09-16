@@ -41,6 +41,12 @@ dependencies {
     // Testcontainers 서비스 연결도 만들어지지 않습니다.
     // Spring Boot 4는 RestClient/RestTemplate 지원도 별도 모듈입니다. MockBankClient·MockPgClient가
     // RestClient를 쓰고, 시험의 TestRestTemplate도 이 모듈의 RestTemplateBuilder를 필요로 합니다.
+    // 외부기관 호출 격리 — 차단기·벌크헤드·리미터. Spring 통합 없이 라이브러리만 씁니다.
+    // 근거: ADR-014
+    implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-bulkhead:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-ratelimiter:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-retry:2.2.0")
     implementation("org.springframework.boot:spring-boot-restclient")
     implementation("org.springframework.boot:spring-boot-kafka")
     testImplementation("org.springframework.boot:spring-boot-resttestclient")

@@ -1,6 +1,8 @@
 package io.parity.pay.api.mockpg;
 
+import io.parity.pay.api.mockpg.guard.PgCallGuard;
 import io.parity.pay.payment.application.port.out.PgApprovalPort;
+import io.parity.pay.payment.application.port.out.PgCallRejectedException;
 import io.parity.pay.shared.id.MerchantId;
 import io.parity.pay.shared.id.PaymentId;
 import io.parity.pay.shared.money.Money;
@@ -25,9 +27,11 @@ class MockPgApprovalAdapter implements PgApprovalPort {
     private static final UUID PROVIDER_ID = UUID.fromString("00000000-0000-7000-8000-000000000001");
 
     private final MockPgClient client;
+    private final PgCallGuard guard;
 
-    MockPgApprovalAdapter(MockPgClient client) {
+    MockPgApprovalAdapter(MockPgClient client, PgCallGuard guard) {
         this.client = client;
+        this.guard = guard;
     }
 
     @Override
@@ -37,8 +41,9 @@ class MockPgApprovalAdapter implements PgApprovalPort {
 
     @Override
     public PgApprovalResult approve(PaymentId paymentId, MerchantId merchantId, Money amount, String orderId) {
+        // 격리 장치가 거절하면 PgCallRejectedException이 그대로 나갑니다 — 요청이 나가지 않았다는 뜻입니다.
         MockPgClient.ResultResponse response =
-                client.approve(paymentId.toString(), merchantId.value(), orderId, amount.amount());
+                guard.money(() -> client.approve(paymentId.toString(), merchantId.value(), orderId, amount.amount()));
         return response.succeeded()
                 ? PgApprovalResult.approved(response.externalReferenceId())
                 : PgApprovalResult.declined(response.failureReason());
@@ -47,10 +52,10 @@ class MockPgApprovalAdapter implements PgApprovalPort {
     @Override
     public ApprovalStatus getStatus(PaymentId paymentId) {
         try {
-            return client.approvalStatus(paymentId.toString())
+            return guard.query(() -> client.approvalStatus(paymentId.toString()))
                     .map(status -> "APPROVED".equals(status) ? ApprovalStatus.APPROVED : ApprovalStatus.DECLINED)
                     .orElse(ApprovalStatus.NOT_FOUND);
-        } catch (PgUnknownResultException e) {
+        } catch (PgUnknownResultException | PgCallRejectedException e) {
             // 물어보지 못한 것과 "기록 없음"은 다릅니다. 후자로 취급하면 조회 장애가 곧 "청구되지
             // 않았다"는 결론이 됩니다. 근거: docs/09-consistency-recovery.md §7
             return ApprovalStatus.UNAVAILABLE;

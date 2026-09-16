@@ -7,6 +7,7 @@ import io.parity.pay.payment.application.port.out.PaymentCancellationRepository;
 import io.parity.pay.payment.application.port.out.PaymentRepository;
 import io.parity.pay.payment.application.port.out.PgApprovalPort;
 import io.parity.pay.payment.application.port.out.PgApprovalPort.PgApprovalResult;
+import io.parity.pay.payment.application.port.out.PgCallRejectedException;
 import io.parity.pay.payment.domain.Payment;
 import io.parity.pay.payment.domain.PaymentCancellation;
 import io.parity.pay.shared.error.BusinessException;
@@ -92,6 +93,11 @@ public class PaymentService implements ApprovePaymentUseCase, PaymentQuery {
         try {
             result = pgApprovalPort.approve(
                     payment.id(), payment.merchantId(), payment.requestedAmount(), payment.orderId());
+        } catch (PgCallRejectedException e) {
+            // 요청이 나가지 않았습니다. 외부에 아무 일도 없었으므로 미확정이 아니라 알려진 실패입니다.
+            // 미확정으로 두면 차단기가 열린 동안의 결제 전부가 복구 작업의 조회 대상이 됩니다.
+            log.info("pg approval rejected before sending for payment {}: {}", payment.id(), e.reason());
+            result = PgApprovalResult.declined(e.reason());
         } catch (RuntimeException e) {
             log.warn("pg approval outcome is unknown for payment {}", payment.id(), e);
             result = PgApprovalResult.unknown(null);

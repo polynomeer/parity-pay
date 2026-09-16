@@ -1,5 +1,7 @@
 package io.parity.pay.api.mockpg;
 
+import io.parity.pay.api.mockpg.guard.PgCallGuard;
+import io.parity.pay.payment.application.port.out.PgCallRejectedException;
 import io.parity.pay.payment.application.port.out.PgRefundPort;
 import io.parity.pay.shared.id.CancellationId;
 import io.parity.pay.shared.id.PaymentId;
@@ -16,15 +18,17 @@ import org.springframework.stereotype.Component;
 class MockPgRefundAdapter implements PgRefundPort {
 
     private final MockPgClient client;
+    private final PgCallGuard guard;
 
-    MockPgRefundAdapter(MockPgClient client) {
+    MockPgRefundAdapter(MockPgClient client, PgCallGuard guard) {
         this.client = client;
+        this.guard = guard;
     }
 
     @Override
     public PgRefundResult refund(CancellationId cancellationId, PaymentId paymentId, Money amount) {
         MockPgClient.ResultResponse response =
-                client.refund(cancellationId.toString(), paymentId.toString(), amount.amount());
+                guard.money(() -> client.refund(cancellationId.toString(), paymentId.toString(), amount.amount()));
         return response.succeeded()
                 ? PgRefundResult.refunded(response.externalReferenceId())
                 : PgRefundResult.declined(response.failureReason());
@@ -33,10 +37,10 @@ class MockPgRefundAdapter implements PgRefundPort {
     @Override
     public RefundStatus getStatus(CancellationId cancellationId) {
         try {
-            return client.refundStatus(cancellationId.toString())
+            return guard.query(() -> client.refundStatus(cancellationId.toString()))
                     .map(status -> "REFUNDED".equals(status) ? RefundStatus.REFUNDED : RefundStatus.DECLINED)
                     .orElse(RefundStatus.NOT_FOUND);
-        } catch (PgUnknownResultException e) {
+        } catch (PgUnknownResultException | PgCallRejectedException e) {
             return RefundStatus.UNAVAILABLE;
         }
     }

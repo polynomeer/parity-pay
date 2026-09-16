@@ -1,6 +1,11 @@
 spring:
   application:
     name: mock-pg
+  threads:
+    virtual:
+      # 장애 시나리오가 응답을 붙잡고 있는 동안 기관 자신의 스레드 풀이 먼저 마르면 안 됩니다 — 그러면
+      # 재현되는 것은 우리 쪽 붕괴가 아니라 대역의 한계입니다(M-019). 가상 스레드면 붙잡힌 요청이 싸집니다.
+      enabled: true
   datasource:
     # 이 기관의 데이터베이스입니다. pay-api와 다른 데이터베이스여야 합니다.
     url: ${MOCK_PG_DB_URL:jdbc:postgresql://localhost:5432/paritypay_pg}

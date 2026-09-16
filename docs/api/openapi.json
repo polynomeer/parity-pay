@@ -248,6 +248,9 @@
             "currency" : {
               "type" : "string"
             },
+            "failureReason" : {
+              "type" : "string"
+            },
             "orderId" : {
               "type" : "string"
             },

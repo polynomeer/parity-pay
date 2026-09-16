@@ -507,6 +507,7 @@ export interface components {
             /** Format: int64 */
             cancellableAmount?: number;
             currency?: string;
+            failureReason?: string;
             orderId?: string;
             /** Format: uuid */
             paymentId?: string;
