@@ -8,7 +8,8 @@ set -euo pipefail
 JAR=${JAR:?bootJar 경로를 JAR로 지정하세요}
 RUNS=${RUNS:-3}
 PORT=${PORT:-8085}
-DB_URL=${DB_URL:-jdbc:postgresql://localhost:5435/paritypay}
+# compose의 기본 호스트 포트는 5432이고, scripts/dev.sh가 우회한 포트는 PARITYPAY_DB_PORT로 넘어옵니다.
+DB_URL=${DB_URL:-jdbc:postgresql://localhost:${PARITYPAY_DB_PORT:-5432}/paritypay}
 KAFKA=${KAFKA:-localhost:9092}
 CONTAINER=${PG_CONTAINER:-paritypay-postgres}
 OUT=${OUT:-/tmp/p004}

@@ -144,7 +144,9 @@ def main():
     parser.add_argument("--jar", required=True)
     parser.add_argument("--events", type=int, default=4000)
     parser.add_argument("--base-port", type=int, default=8180)
-    parser.add_argument("--db-url", default="jdbc:postgresql://localhost:5435/paritypay")
+    # compose의 기본 호스트 포트는 5432이고, scripts/dev.sh가 우회한 포트는 PARITYPAY_DB_PORT로 넘어옵니다.
+    parser.add_argument("--db-url",
+                        default=f"jdbc:postgresql://localhost:{os.environ.get('PARITYPAY_DB_PORT', '5432')}/paritypay")
     parser.add_argument("--kafka", default="localhost:9092")
     parser.add_argument("--container", default="paritypay-postgres")
     parser.add_argument("--broker-container", default="paritypay-redpanda")
