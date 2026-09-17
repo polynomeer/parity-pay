@@ -424,6 +424,7 @@ deploy/run.sh                        # 배포 형태 (nginx·TLS·이미지 빌�
 3. 왜 이렇게 했는지 → [ADR 001~013](adr/README.md)
 4. 만들기 전에 → DOC-04(정책) · DOC-06(상태) · DOC-07(분개) · DOC-08(계약) · DOC-09(복구)
 5. 무엇이 실제로 측정됐는지 → reports/11 · reports/12
+6. 실험을 직접 돌리고 읽으려면 → [DOC-19 실험 실행](19-experiment-runbook.md) · [DOC-20 결과 해석](20-experiment-result-interpretation.md)
 
 ## 16. 알려진 한계와 미측정
 

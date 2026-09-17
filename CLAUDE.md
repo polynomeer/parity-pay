@@ -62,6 +62,8 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 | 멱등성·동시성·Outbox·복구 | [docs/09-consistency-recovery.md](docs/09-consistency-recovery.md) |
 | 테스트 작성 | [docs/10-test-strategy.md](docs/10-test-strategy.md) |
 | 다음에 할 일 | [docs/13-implementation-checklist.md](docs/13-implementation-checklist.md) |
+| 부하·장애 실험을 실행할 때 | [docs/19-experiment-runbook.md](docs/19-experiment-runbook.md) |
+| 실험 출력·시뮬레이터 화면을 읽고 판정할 때 | [docs/20-experiment-result-interpretation.md](docs/20-experiment-result-interpretation.md) |
 | 클라이언트 계약·앱 구분 | [docs/14-frontend-design.md](docs/14-frontend-design.md) |
 | 화면에 무엇을 보여줄지 | [docs/15-ui-screen-plan.md](docs/15-ui-screen-plan.md) |
 | UI 구현 순서·백엔드 격차 | [docs/16-ui-implementation-plan.md](docs/16-ui-implementation-plan.md) |

@@ -232,7 +232,8 @@ k6 run load-tests/payment-baseline.js                  # P-001 서로 다른 지
 k6 run -e SAME_WALLET=true load-tests/payment-baseline.js  # P-002 동일 지갑 경합
 ```
 
-결과 기록 규칙은 [load-tests/README.md](load-tests/README.md)에 있습니다.
+41종 전부의 실행 명령·사전 조건·결과 위치는 [실험 실행 안내서](docs/19-experiment-runbook.md)에, 출력을 읽는 법은
+[결과 해석 안내서](docs/20-experiment-result-interpretation.md)에 있습니다. 결과 기록 규칙은 [load-tests/README.md](load-tests/README.md)입니다.
 
 ### 데모 요청
 

@@ -237,3 +237,5 @@ JPA 엔티티에는 `@SuppressWarnings("UnusedVariable")`이 붙어 있습니다
 ## 12. 테스트 결과 기록
 
 각 결과에는 커밋 SHA, 환경, 실행 명령, 시작·종료 시각, 데이터 seed, 성공·실패와 증거 경로를 기록합니다. 수동으로 수정한 그래프만 남기지 않고 원본 결과 파일을 함께 보존합니다.
+
+실행 절차와 실험 목록은 [DOC-19](19-experiment-runbook.md), 출력을 읽는 법은 [DOC-20](20-experiment-result-interpretation.md)에 있습니다.
