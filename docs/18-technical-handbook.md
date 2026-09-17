@@ -2,7 +2,7 @@
 
 > **에이전트 지침**
 > - **읽는 시점**: 저장소를 처음 볼 때, 어떤 모듈·흐름이 어디에 있는지 한 번에 훑고 싶을 때, 발표·인수인계 자료가 필요할 때.
-> - **이 문서가 정하는 것**: 아무것도 정하지 않습니다. 이 문서는 **종합 안내서**이고, 정책·구조·계약의 기준은 각 절이 가리키는 문서입니다(DOC-00 §3 단일 진실의 원천). 여기 적힌 수치는 2026-09-14 기준 실측이며 근거 위치를 함께 적었습니다.
+> - **이 문서가 정하는 것**: 아무것도 정하지 않습니다. 이 문서는 **종합 안내서**이고, 정책·구조·계약의 기준은 각 절이 가리키는 문서입니다(DOC-00 §3 단일 진실의 원천). 여기 적힌 수치는 2026-09-17 기준 실측이며 근거 위치를 함께 적었습니다.
 > - **강제 규칙**: 이 문서를 고쳐서 정책을 바꾸지 않습니다. 기준 문서를 고치고 이 문서는 따라갑니다. 측정하지 않은 수치를 적지 않습니다.
 
 ## 1. 한 페이지 요약
@@ -17,7 +17,7 @@
 의도를 **한 로컬 트랜잭션**으로 묶고(ADR-005), 브로커의 at-least-once를 멱등 소비자로 흡수하며(ADR-006),
 외부 결과를 모를 때는 `UNKNOWN`으로 보존하고 조회로만 확정합니다(ADR-007).
 
-**상태 (2026-09-14)**: Phase 0~9 구현 완료. 백엔드 테스트 328 · 프론트엔드 56 · E2E 7, 실패 0. 부하·장애
+**상태 (2026-09-17)**: Phase 0~9 구현 완료. 백엔드 테스트 328 · 프론트엔드 56 · E2E 7, 실패 0. 부하·장애
 실험 41종이 결함 14건(A~N)을 찾았고 전부 고쳤습니다(M-024~M-028은 분산락을 일부러 만들어 ADR-004를 재확인한 실험, 결함 아님). 근거: [reports/12](../reports/12-portfolio-technical-report-draft.md)
 
 ## 2. 저장소 지도
@@ -44,7 +44,7 @@ parity-pay/
 ├── deploy/               배포 형태(nginx·TLS·compose), 관측 스택 설정, postgres 초기화
 ├── load-tests/           k6 스크립트, 장애·부하·다중 인스턴스 실험 파이썬, E2E 실행기
 ├── scripts/              dev.sh(로컬 스택), 문서 링크·불변조건 커버리지 검사
-├── docs/                 DOC-00~18, ADR-001~013
+├── docs/                 DOC-00~20, ADR-001~014
 └── reports/              11 성능·장애 보고서(실측), 12 포트폴리오 기술 보고서
 ```
 
@@ -70,7 +70,7 @@ Gradle 멀티모듈(백엔드)과 pnpm 워크스페이스(프론트엔드)는 �
 | 스타일 | 순수 CSS + `@paritypay/ui` 토큰 | | Tailwind 아님 ([ADR-012](adr/012-frontend-design-system.md)) |
 | 실행 | Docker Compose | | 로컬 `docker-compose.yml`, 배포 `docker-compose.deploy.yml` |
 
-기준 문서: [DOC-05 §2](05-technical-design.md). Redis는 compose에 있지만 **백엔드가 쓰지 않습니다.**
+기준 문서: [DOC-05 §2](05-technical-design.md). Redis는 compose에 있지만 **운영 경로는 쓰지 않습니다** — M-024~M-028이 분산락을 일부러 만들어 대조한 `experiment-lock` 프로필만 씁니다(ADR-004).
 
 ## 4. 아키텍처
 
@@ -350,6 +350,7 @@ TanStack Query의 기본 재시도(쿼리 3회)를 끄고 명시적으로 통제
   소비 지연, 정산 실패·대사 불일치, **불변조건 게이지** `paritypay.invariant.unbalanced_ledger_transactions`
   (INV-001)·`negative_wallet_balances`(INV-003)·`over_cancelled_payments`(INV-005)·`balance_snapshot_drift`
   (INV-010), 30초 캐시(결함 G 이후), `refresh_age_seconds`로 캐시가 멈춘 것을 드러냄
+- **외부·소비자 지표**: `paritypay.pg.in_flight`·`circuit_state`·`circuit_failure_rate`·`rejected`(사유별)·`retries`(ADR-014, 결함 N), `paritypay.consumer.dead_letters`·`dead_letters_open`(결함 M)
 - **경보**: 불변조건은 임계치 없이 0이 아니면 즉시(`deploy/observability/rules/invariants.yml`)
 - **트레이스**: OTLP → Jaeger. 로컬은 `scripts/dev.sh --observability`
 - **DB**: `pg_stat_statements`·`pg_stat_activity` 10ms 샘플링을 실험 하니스가 읽음(M-007·M-013)
@@ -358,12 +359,12 @@ TanStack Query의 기본 재시도(쿼리 3회)를 끄고 명시적으로 통제
 
 ## 12. 테스트와 품질 게이트
 
-| 층 | 무엇 | 수 (2026-09-14) |
+| 층 | 무엇 | 수 (2026-09-17) |
 |---|---|---|
-| 백엔드 단위·통합·속성·아키텍처 | JUnit 5 + Testcontainers(PostgreSQL·Redpanda 실물) + jqwik + ArchUnit | 325 |
+| 백엔드 단위·통합·속성·아키텍처 | JUnit 5 + Testcontainers(PostgreSQL·Redpanda 실물) + jqwik + ArchUnit | 328 |
 | 프론트 단위 | Vitest + Testing Library + MSW (API 목) | 56 |
 | E2E | Playwright, 목 없음, 실제 스택 전부 | 7 (주간·수동) |
-| 부하·장애 실험 | k6 + 파이썬 하니스, 결과는 reports/11 | 27종 |
+| 부하·장애 실험 | k6 + 파이썬 하니스 23개, 결과는 reports/11·13. 실행법 [DOC-19](19-experiment-runbook.md), 해석 [DOC-20](20-experiment-result-interpretation.md) | 41종 |
 
 원칙: 커버리지보다 **금융 분기·상태 전이 전수 검증**. 속성 테스트는 seed를 출력하고 반례는 회귀 테스트로
 승격. 실패 테스트를 `@Disabled`로 덮지 않음. `FROM-CACHE`는 실행이 아님 — `--rerun-tasks --no-build-cache`.
@@ -374,7 +375,7 @@ CI 게이트: 빌드·테스트·Spotless·Error Prone·OpenAPI 스냅샷·생�
 동시 부분 취소 6건 → 3건 성공 / Outbox 발행기 재시작 이어서 발행 / 중복 전달 → 거래내역 1줄 /
 승인 후 타임아웃 → `UNKNOWN → SUCCEEDED` 금액 1회 / 지급 응답 유실 → `UNKNOWN → PAID` 지급 1회.
 
-## 13. 실험이 찾은 결함 A~L
+## 13. 실험이 찾은 결함 A~N
 
 전부 실제로 띄우고 부하를 주고 죽이고 브라우저로 열어 봐야 나왔습니다. 설계 검토로 나온 것은 없습니다.
 
@@ -421,7 +422,7 @@ deploy/run.sh                        # 배포 형태 (nginx·TLS·이미지 빌�
 
 1. 용어가 낯설면 → [DOC-17 도메인 용어](17-domain-glossary.md)
 2. 이 문서(DOC-18)로 전체 그림
-3. 왜 이렇게 했는지 → [ADR 001~013](adr/README.md)
+3. 왜 이렇게 했는지 → [ADR 001~014](adr/README.md)
 4. 만들기 전에 → DOC-04(정책) · DOC-06(상태) · DOC-07(분개) · DOC-08(계약) · DOC-09(복구)
 5. 무엇이 실제로 측정됐는지 → reports/11 · reports/12
 6. 실험을 직접 돌리고 읽으려면 → [DOC-19 실험 실행](19-experiment-runbook.md) · [DOC-20 결과 해석](20-experiment-result-interpretation.md)
@@ -431,7 +432,7 @@ deploy/run.sh                        # 배포 형태 (nginx·TLS·이미지 빌�
 - 송금·출금(JE-005·006), 위험 규칙(`risk`), 포인트(`2040`)는 정의만 있고 구현 범위 밖입니다.
 - `PaymentFailed`·`PaymentResultUnknown` 이벤트는 카탈로그에 있지만 생산자가 없습니다.
 - 성능 수치는 노트북 한 대에서 부하 도구·앱·DB가 CPU를 나눠 쓴 결과라 **절대 한계가 아니라 모양**입니다(reports/11 §2).
-- E2E는 PR 게이트가 아닙니다(주간·수동). 디자인 변경(ADR-012) 뒤 E2E는 아직 돌리지 않았습니다.
+- E2E는 PR 게이트가 아닙니다(주간·수동). 마지막 실행은 디자인 변경(ADR-012) 당일 7건 통과(선택자 하나 고침, `e6db74d`).
 - 화면의 명도 대비(WCAG)는 측정하지 않았습니다.
 - Prometheus 스크레이프 대상이 `host.docker.internal:8080`으로 고정되어 있어 `pay-api` 포트를 우회하면 지표가 끊깁니다(ADR-013).
-- Redis는 compose에 떠 있지만 쓰는 곳이 없습니다.
+- Redis는 compose에 떠 있지만 운영 경로에서 쓰는 곳이 없습니다. `experiment-lock` 프로필(M-024~M-028)만 씁니다.
