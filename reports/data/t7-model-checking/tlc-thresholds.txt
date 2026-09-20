@@ -1,0 +1,16 @@
+=== threshold 2 ===
+Error: Invariant NoFalseFailure is violated.
+42 states generated, 28 distinct states found, 11 states left on queue.
+The depth of the complete state graph search is 5.
+=== threshold 3 ===
+Error: Invariant NoFalseFailure is violated.
+82 states generated, 49 distinct states found, 17 states left on queue.
+The depth of the complete state graph search is 6.
+=== threshold 5 ===
+Error: Invariant NoFalseFailure is violated.
+210 states generated, 111 distinct states found, 30 states left on queue.
+The depth of the complete state graph search is 8.
+=== threshold 8 ===
+Error: Invariant NoFalseFailure is violated.
+502 states generated, 241 distinct states found, 44 states left on queue.
+The depth of the complete state graph search is 11.
