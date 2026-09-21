@@ -17,7 +17,7 @@
 |---|---|---|
 | 프로젝트가 무엇이고 무엇을 증명했는지 | [README](../README.md) → [RPT-02 포트폴리오 기술 보고서](../reports/12-portfolio-technical-report.md) | 20분 |
 | 설계 결정의 근거 | [ADR 목록](adr/README.md)의 "읽는 순서" → 관심 있는 ADR의 Outcome | 30분 |
-| 실험이 실제로 무엇을 재고 무엇을 찾았는지 | [RPT-01 성능·장애 보고서](../reports/11-performance-failure-report-template.md) §7 결론 → 관심 실험 하나 → [DOC-18 §13 결함 A~N](18-technical-handbook.md) | 30분~ |
+| 실험이 실제로 무엇을 재고 무엇을 찾았는지 | [RPT-01 성능·장애 보고서](../reports/11-performance-failure-report.md) §7 결론 → 관심 실험 하나 → [DOC-18 §13 결함 A~N](18-technical-handbook.md) | 30분~ |
 | 코드를 읽으려면 | [DOC-17 용어](17-domain-glossary.md) → [DOC-18 기술 안내서](18-technical-handbook.md) → [DOC-05 기술 설계서](05-technical-design.md) → [DOC-09 정합성·복구](09-consistency-recovery.md) → [DOC-06](06-domain-state-design.md)·[DOC-07](07-ledger-journal-catalog.md) | 반나절 |
 | 내 기계에서 돌려 보려면 | [DOC-21 실행·데모 안내서](21-quickstart-and-demo.md) → [DOC-19 실험 실행 안내서](19-experiment-runbook.md) → [DOC-20 결과 해석](20-experiment-result-interpretation.md) | 30분 |
 | 화면과 클라이언트 계약 | [DOC-14 프론트엔드 설계서](14-frontend-design.md) → [DOC-15 화면 계획](15-ui-screen-plan.md) → [ADR-012](adr/012-frontend-design-system.md) | 1시간 |

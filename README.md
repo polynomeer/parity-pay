@@ -26,7 +26,7 @@ ParityPay는 플랫폼 안에 내장되는 **페이머니 서비스**(충전·�
 |---|---|---|---|
 | 1 | 결과 한 장 | 바로 아래 [실험이 보여 준 것](#실험이-보여-준-것) | 이 프로젝트가 무엇을 증명했는지 숫자로 |
 | 2 | 설계와 판단의 이유 | [포트폴리오 기술 보고서](reports/12-portfolio-technical-report.md) | 문제 정의 → 구조 → 검증 → 회고, 한 문서 |
-| 3 | 실험 원본 | [성능·장애 보고서](reports/11-performance-failure-report-template.md) | 41종의 방법·표·분석·원본 경로. 틀렸던 가설도 그대로 |
+| 3 | 실험 원본 | [성능·장애 보고서](reports/11-performance-failure-report.md) | 41종의 방법·표·분석·원본 경로. 틀렸던 가설도 그대로 |
 | 4 | 왜 이렇게 결정했나 | [ADR 14편](docs/adr/README.md) | 각 결정의 대안·근거·실험 결과(Outcome) |
 | 5 | 직접 띄워 보기 | `scripts/dev.sh` → [실행·데모 안내서](docs/21-quickstart-and-demo.md) | 운영 콘솔의 장애 시뮬레이터에서 직접 깨뜨려 볼 수 있습니다 |
 
@@ -40,7 +40,7 @@ ParityPay는 플랫폼 안에 내장되는 **페이머니 서비스**(충전·�
 ## 실험이 보여 준 것
 
 같은 코드를 실제로 띄우고 부하를 주고 죽여서 잰 결과 중 대표적인 것들입니다. 전부
-[reports/11](reports/11-performance-failure-report-template.md)에 방법·표·원본이 있습니다.
+[reports/11](reports/11-performance-failure-report.md)에 방법·표·원본이 있습니다.
 
 | 무엇을 했나 | 결과 | 근거 |
 |---|---|---|
@@ -227,7 +227,7 @@ load-tests/run-e2e.sh     # 실제 스택 E2E (약 1분)
 
 | 읽는 사람 | 경로 |
 |---|---|
-| 프로젝트를 평가하려는 분 | 이 README → [reports/12 포트폴리오 기술 보고서](reports/12-portfolio-technical-report.md) → [reports/11](reports/11-performance-failure-report-template.md)에서 관심 있는 실험 하나 → 관련 [ADR](docs/adr/README.md) |
+| 프로젝트를 평가하려는 분 | 이 README → [reports/12 포트폴리오 기술 보고서](reports/12-portfolio-technical-report.md) → [reports/11](reports/11-performance-failure-report.md)에서 관심 있는 실험 하나 → 관련 [ADR](docs/adr/README.md) |
 | 코드를 읽으려는 분 | [도메인 용어](docs/17-domain-glossary.md) → [기술 안내서](docs/18-technical-handbook.md) → [기술 설계서](docs/05-technical-design.md) · [정합성·복구 설계서](docs/09-consistency-recovery.md) |
 | 실험을 재현하려는 분 | [실행·데모 안내서](docs/21-quickstart-and-demo.md) → [실험 실행 안내서](docs/19-experiment-runbook.md) → [결과 해석 안내서](docs/20-experiment-result-interpretation.md) |
 | AI 에이전트로 작업하려는 분 | [CLAUDE.md](CLAUDE.md) — 매 작업의 규칙과 어떤 문서를 언제 읽는지 |
@@ -239,7 +239,7 @@ load-tests/run-e2e.sh     # 실제 스택 E2E (약 1분)
 ## 알려진 한계
 
 - 성능 수치는 노트북 한 대에서 부하 도구·앱·DB가 CPU를 나눠 쓴 결과입니다. **절대 한계가 아니라 모양**이며, 같은
-  환경의 상대 비교로만 씁니다([reports/11 §2](reports/11-performance-failure-report-template.md)).
+  환경의 상대 비교로만 씁니다([reports/11 §2](reports/11-performance-failure-report.md)).
 - 단일 인스턴스·단일 DB입니다. 발행기·소비자의 다중 인스턴스는 실측했지만(M-001·M-002·M-005) API 인스턴스 여러 대와
   DB 이중화는 범위 밖입니다. 어디에서 먼저 막히는지는 M-013에 있습니다.
 - 벌크헤드·차단기의 수치(50, 윈도 20, OPEN 10초)는 "상한이 있어야 한다"의 자리표시자이지 이 환경에서 최적화한 값이
@@ -275,7 +275,7 @@ the broker mid-publish, hung the external PG for 30 s, and let a distributed-loc
 Every number in the reports is measured; anything unmeasured is marked as such.
 
 Start with [reports/12](reports/12-portfolio-technical-report.md) (Korean), then
-[reports/11](reports/11-performance-failure-report-template.md) for the experiment record and
+[reports/11](reports/11-performance-failure-report.md) for the experiment record and
 [docs/adr](docs/adr/README.md) for the decisions. `scripts/dev.sh` brings the whole stack up locally.
 
 </details>

@@ -94,7 +94,7 @@ Phase 7에서 인증을 넣을 때 토큰 두 개를 모두 응답 본문으로 
 ## Outcome
 
 구현하고 위 항목을 전부 시험으로 확인했습니다. 결과는
-[reports/11](../../reports/11-performance-failure-report-template.md)이 아니라 시험 자체가 증거입니다 —
+[reports/11](../../reports/11-performance-failure-report.md)이 아니라 시험 자체가 증거입니다 —
 성능이 아니라 계약 변경이기 때문입니다.
 
 - 백엔드: `AuthenticationApiTest`(본문에 없음, 쿠키 속성, 쿠키 없이·본문으로는 실패, 회전, 로그아웃

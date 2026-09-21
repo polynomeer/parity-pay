@@ -102,7 +102,7 @@ F-001·F-002는 실제로 프로세스를 죽여서도 확인합니다
 (`load-tests/crash-recovery-experiment.py`). 트래픽이 흐르는 동안 `SIGKILL`을 보내고, 재시작한 뒤
 응답을 받지 못한 요청을 같은 멱등 키로 재전송해 최종 효과가 1회인지 셉니다. 경계를 흉내 내는
 자동화 테스트는 우리가 생각한 지점에서만 멈추므로, 임의 시점에 죽는 실험이 따로 필요합니다.
-결과는 [reports/11](../reports/11-performance-failure-report-template.md) F-001·F-002에 있습니다.
+결과는 [reports/11](../reports/11-performance-failure-report.md) F-001·F-002에 있습니다.
 
 ## 7. 성능 테스트
 

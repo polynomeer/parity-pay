@@ -396,7 +396,7 @@ CI 게이트: 빌드·테스트·Spotless·Error Prone·OpenAPI 스냅샷·생�
 | M | 소비자가 처리할 수 없는 레코드를 10회 즉시 재시도 뒤 DLT·지표 없이 버림 | M-018 poison message |
 | N | 외부 PG 호출에 동시성 상한도 차단기도 없어 느린 기관 앞에서 진행 중 결제가 무한정 쌓임 | M-019~M-023 외부기관 격리 |
 
-B·C·F·J·K·L 여섯은 "대비되어 있다"고 문서에 적혀 있던 것이었습니다. → [reports/11](../reports/11-performance-failure-report-template.md), [reports/12 §9·§12](../reports/12-portfolio-technical-report.md)
+B·C·F·J·K·L 여섯은 "대비되어 있다"고 문서에 적혀 있던 것이었습니다. → [reports/11](../reports/11-performance-failure-report.md), [reports/12 §9·§12](../reports/12-portfolio-technical-report.md)
 
 ## 14. 개발 환경과 명령
 

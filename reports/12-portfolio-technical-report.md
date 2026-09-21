@@ -364,7 +364,7 @@ ADR-004는 잔액 차감에 분산락을 쓰지 않고 조건부 원자 UPDATE�
 
 ## 9. 검증 전략
 
-단위·통합 테스트 외에 속성 기반 테스트, 동일 지갑 경합, 장애 주입과 부하 테스트를 수행합니다. 정확한 결과는 [성능·장애 테스트 보고서](11-performance-failure-report-template.md)에서 커밋과 실행 환경을 함께 공개합니다.
+단위·통합 테스트 외에 속성 기반 테스트, 동일 지갑 경합, 장애 주입과 부하 테스트를 수행합니다. 정확한 결과는 [성능·장애 테스트 보고서](11-performance-failure-report.md)에서 커밋과 실행 환경을 함께 공개합니다.
 
 ### 결과 요약 (2026-09-17, 백엔드 328 · 프론트엔드 56 · E2E 7 / 실패 0, 벤치마크와 E2E는 주간 실행)
 
@@ -384,32 +384,32 @@ ADR-004는 잔액 차감에 분산락을 쓰지 않고 조건부 원자 UPDATE�
 | 동시 재발급 | 같은 쿠키 8건 동시 → 정확히 1건 성공 (고치기 전에는 전부 성공) | `AuthenticationApiTest` |
 | 잔액 전략 비교 | 조건부 갱신 채택 (§5) | `BalanceStrategyBenchmarkTest` |
 | 원장 속성 기반 테스트 | 취소·분개 시퀀스와 금액 연산 3종 | `*PropertyTest` (jqwik) |
-| HTTP 부하 테스트 | P-001~P-005 실측, 결함 5건 발견 | [보고서 §3](11-performance-failure-report-template.md) |
-| DB 락 대기 관측 | 동일 지갑 대기의 84%가 잔액 행 `Lock`, 풀 대기 최대 3 | [보고서 M-007](11-performance-failure-report-template.md) |
-| 잠금 보유 구간 단축 | 결제 17→4~7 ms, 취소 28→2~3 ms, 처리량 1.75·1.88배 | [보고서 M-007·M-009](11-performance-failure-report-template.md) |
-| 거래내역 깊은 페이지 | 110만 건에서 깊이 무관 0.06~0.09 ms, 필터로 버린 행 0 | [보고서 M-008](11-performance-failure-report-template.md) |
-| 프로세스 강제 종료 후 재시도 | 3회 실행 전부 정확히 1회 | [보고서 F-001·F-002](11-performance-failure-report-template.md) |
+| HTTP 부하 테스트 | P-001~P-005 실측, 결함 5건 발견 | [보고서 §3](11-performance-failure-report.md) |
+| DB 락 대기 관측 | 동일 지갑 대기의 84%가 잔액 행 `Lock`, 풀 대기 최대 3 | [보고서 M-007](11-performance-failure-report.md) |
+| 잠금 보유 구간 단축 | 결제 17→4~7 ms, 취소 28→2~3 ms, 처리량 1.75·1.88배 | [보고서 M-007·M-009](11-performance-failure-report.md) |
+| 거래내역 깊은 페이지 | 110만 건에서 깊이 무관 0.06~0.09 ms, 필터로 버린 행 0 | [보고서 M-008](11-performance-failure-report.md) |
+| 프로세스 강제 종료 후 재시도 | 3회 실행 전부 정확히 1회 | [보고서 F-001·F-002](11-performance-failure-report.md) |
 | 발행기 4대 동시 실행 | 유실·중복 0, 순서 역전 0 (고치기 전 50건) | `OutboxMultiInstanceTest` |
 | 소비자 8대 동시 소비 | 거래내역 1줄, 소비 이력 1건 | `ConsumerMultiInstanceTest` |
-| 실제 재분배 중 중복 전달 | 진짜 중복 1,934건, 거래내역은 이벤트 수와 동일 | [보고서 M-005](11-performance-failure-report-template.md) |
+| 실제 재분배 중 중복 전달 | 진짜 중복 1,934건, 거래내역은 이벤트 수와 동일 | [보고서 M-005](11-performance-failure-report.md) |
 | 웹훅 중복·역순 | 서명 검증, 중복 1회 효과, 상태 회귀 없음 | `PgWebhookIntegrationTest` |
 | 기관 명세 미수신 | 대사가 멈춤, 불일치 0건 (전량 오탐 방지) | `ReconciliationIntegrationTest` |
-| 원장 집계 비용 | 지갑 50만 건 43ms, 전 지갑 200만 건 3.6초 | [보고서 M-006](11-performance-failure-report-template.md) |
+| 원장 집계 비용 | 지갑 50만 건 43ms, 전 지갑 200만 건 3.6초 | [보고서 M-006](11-performance-failure-report.md) |
 | 외부 PG 환불 응답 유실 | `UNKNOWN` → 조회 → `COMPLETED`, 환불 1회 | `PgRefundIntegrationTest` |
-| 미확정 1,000건 적체 | 전부 1회 확정. 최대 확정 시간 130.6 → 42.1초, 90초 초과 450 → 0건 | [보고서 M-012](11-performance-failure-report-template.md) |
-| 단일 DB 포화 곡선 | VU 10~80·풀 20/40, 잠금 대기 0%, DB는 시간의 75~84%를 앱을 기다림. 첫 한계는 커넥션 풀 | [보고서 M-013](11-performance-failure-report-template.md) |
+| 미확정 1,000건 적체 | 전부 1회 확정. 최대 확정 시간 130.6 → 42.1초, 90초 초과 450 → 0건 | [보고서 M-012](11-performance-failure-report.md) |
+| 단일 DB 포화 곡선 | VU 10~80·풀 20/40, 잠금 대기 0%, DB는 시간의 75~84%를 앱을 기다림. 첫 한계는 커넥션 풀 | [보고서 M-013](11-performance-failure-report.md) |
 | 비밀번호 재설정 메일 왕복 | 실제 SMTP → Mailpit → 링크 → 새 비밀번호 → 1회용 확인 → 로그인 | E2E `password-reset.spec` |
 | 장애 시뮬레이터 9개 × 3회 | 27회 전부 기대 종결, 원장 1회, 게이지 0. 미확정 → 확정 31~35초 / 43~44초 | [reports/13](13-failure-scenario-matrix-report.md) |
-| 소비자 커밋 전 `SIGKILL` (BATCH vs 자동 커밋) | 6회 전부 유실 0, 중복 30~1,909건 흡수 | [보고서 M-015](11-performance-failure-report-template.md) |
-| 발행 중 브로커 `SIGKILL` (acks) | `all` 유실 0 ×3, `1`·`0`은 100~200건 유실 | [보고서 M-016](11-performance-failure-report-template.md) |
-| 파티션 키 Aggregate vs 랜덤 | 랜덤은 결제 32~33% 순서 역전·3,600원씩 과지급, Aggregate는 0 | [보고서 M-017](11-performance-failure-report-template.md) |
-| poison message | 파티션 정지 1.3~1.6초 → 고친 뒤 126~486 ms, DLT 행·레코드 남음, 유실 0 | [보고서 M-018](11-performance-failure-report-template.md), `DeadLetterIntegrationTest` |
-| 타임아웃 없음 + 기관 30초 지연 | 플랫폼 스레드 23.7~24.0초에 붕괴, 가상 스레드는 무관 API p95 7~8 ms | [보고서 M-019](11-performance-failure-report-template.md) |
-| 재시도 3회 | 기관 요청 정확히 3.00배, 지터로 봉우리 안 낮아짐 | [보고서 M-020](11-performance-failure-report-template.md) |
-| 차단기 | OPEN 중 결제 즉시 `FAILED`, 기관 도달 0, 회복 뒤 3.8~3.9초 닫힘 | [보고서 M-021](11-performance-failure-report-template.md) |
-| 기관 TPS 상한 3종 | 고정 윈도 경계 77~82, 토큰 버킷 첫 1초 86, 슬라이딩 ≤52 | [보고서 M-022](11-performance-failure-report-template.md) |
-| 벌크헤드 50 | M-019 붕괴 조건에서 붕괴 없음, 조회 p95 9.5~10.2 ms | [보고서 M-023](11-performance-failure-report-template.md), `PgCallGuardTest`, `PgIsolationIntegrationTest` |
-| 분산락 lease 만료 (채택하지 않은 경로) | 락 변형은 소유 겹침 1,697~1,770·drift 34만~35만 원, 대조군(조건부 UPDATE)은 전부 0 | [보고서 M-024~M-028](11-performance-failure-report-template.md) |
+| 소비자 커밋 전 `SIGKILL` (BATCH vs 자동 커밋) | 6회 전부 유실 0, 중복 30~1,909건 흡수 | [보고서 M-015](11-performance-failure-report.md) |
+| 발행 중 브로커 `SIGKILL` (acks) | `all` 유실 0 ×3, `1`·`0`은 100~200건 유실 | [보고서 M-016](11-performance-failure-report.md) |
+| 파티션 키 Aggregate vs 랜덤 | 랜덤은 결제 32~33% 순서 역전·3,600원씩 과지급, Aggregate는 0 | [보고서 M-017](11-performance-failure-report.md) |
+| poison message | 파티션 정지 1.3~1.6초 → 고친 뒤 126~486 ms, DLT 행·레코드 남음, 유실 0 | [보고서 M-018](11-performance-failure-report.md), `DeadLetterIntegrationTest` |
+| 타임아웃 없음 + 기관 30초 지연 | 플랫폼 스레드 23.7~24.0초에 붕괴, 가상 스레드는 무관 API p95 7~8 ms | [보고서 M-019](11-performance-failure-report.md) |
+| 재시도 3회 | 기관 요청 정확히 3.00배, 지터로 봉우리 안 낮아짐 | [보고서 M-020](11-performance-failure-report.md) |
+| 차단기 | OPEN 중 결제 즉시 `FAILED`, 기관 도달 0, 회복 뒤 3.8~3.9초 닫힘 | [보고서 M-021](11-performance-failure-report.md) |
+| 기관 TPS 상한 3종 | 고정 윈도 경계 77~82, 토큰 버킷 첫 1초 86, 슬라이딩 ≤52 | [보고서 M-022](11-performance-failure-report.md) |
+| 벌크헤드 50 | M-019 붕괴 조건에서 붕괴 없음, 조회 p95 9.5~10.2 ms | [보고서 M-023](11-performance-failure-report.md), `PgCallGuardTest`, `PgIsolationIntegrationTest` |
+| 분산락 lease 만료 (채택하지 않은 경로) | 락 변형은 소유 겹침 1,697~1,770·drift 34만~35만 원, 대조군(조건부 UPDATE)은 전부 0 | [보고서 M-024~M-028](11-performance-failure-report.md) |
 
 실험 41종이 찾은 결함은 12건이고, 실험을 **준비하다** 찾은 것이 둘(J·L)입니다. **문서와 코드를
 설계 검토로 읽어서 나온 것은 하나도 없습니다** — 둘 다 실제 요청을 보내려고 클라이언트 코드를

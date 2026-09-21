@@ -240,7 +240,7 @@ POST /api/v1/admin/payments/{paymentId}/resolve  즉시 재조회 (사유 필수
 5. **응답은 거의 언제나 200입니다.** 중복·오래된 것·모르는 키 모두 기관이 재전송할 이유가 없습니다.
    401·400은 처리를 시도조차 하지 않았다는 뜻이며 그때만 다시 보내야 합니다.
 
-실험 결과는 [reports/11](../reports/11-performance-failure-report-template.md) F-008에 있습니다.
+실험 결과는 [reports/11](../reports/11-performance-failure-report.md) F-008에 있습니다.
 
 ## 10. 대사와 보정
 
@@ -295,7 +295,7 @@ POST /api/v1/admin/payments/{paymentId}/resolve  즉시 재조회 (사유 필수
 재구축은 자동으로 돌지 않고, **한 번에 전부 맞추는 API도 없습니다.** 배경 작업이나 일괄 실행이
 조용히 맞추면 원인을 조사할 증거가 사라지며, 그 판단은 어긋난 지갑이 많다고 해서 달라지지 않습니다.
 목록 API는 찾아주기만 하고 고치지 않습니다.
-실험 결과는 [reports/11](../reports/11-performance-failure-report-template.md) F-010에 있습니다.
+실험 결과는 [reports/11](../reports/11-performance-failure-report.md) F-010에 있습니다.
 
 ## 13. 절대 금지 사항
 

@@ -2,7 +2,7 @@
 
 > **에이전트 지침**
 > - **읽는 시점**: 부하·장애 시나리오를 **실행**하려 할 때. 결과를 읽는 법은 [DOC-20](20-experiment-result-interpretation.md)입니다.
-> - **이 문서가 정하는 것**: 실험을 돌리는 절차와 명령, 사전 조건, 결과가 어디에 남는지. 실험의 목적·설계는 각 스크립트 머리말과 [reports/11](../reports/11-performance-failure-report-template.md)이 정하고, 이 문서는 그것을 **처음 보는 사람이 재실행할 수 있게** 모아 둔 것입니다.
+> - **이 문서가 정하는 것**: 실험을 돌리는 절차와 명령, 사전 조건, 결과가 어디에 남는지. 실험의 목적·설계는 각 스크립트 머리말과 [reports/11](../reports/11-performance-failure-report.md)이 정하고, 이 문서는 그것을 **처음 보는 사람이 재실행할 수 있게** 모아 둔 것입니다.
 > - **강제 규칙**: 여기 적힌 소요 시간·결과 수치는 실측된 것만 옮겼습니다. 새 실험을 추가하면 §6 카탈로그와 `load-tests/README.md` 표에 같이 적습니다.
 
 ## 1. 한 줄 답: 무엇이 자동이고 무엇이 아닌가
@@ -18,7 +18,7 @@
 | 측정 (API 폴링, DB 읽기, `/actuator/prometheus`, `pg_stat_*`, 로그 카운트) | 자동 | 실험 스크립트 |
 | 판정 (원장 1회인가, 불변조건 0인가, 증명했는가) | 자동 | 스크립트가 `PASS/FAIL`, `proved`, 기대 상태 비교를 출력 |
 | 원본 결과 파일 (`raw.json`, `summary.json`, `report.txt`, k6 JSON, 로그) | 자동 | `/tmp/<실험>/…` |
-| **보고서 문장·표·해석** ([reports/11](../reports/11-performance-failure-report-template.md), [reports/13](../reports/13-failure-scenario-matrix-report.md)) | **수동** | 사람이 원본 파일을 읽고 §7의 절차로 씀 |
+| **보고서 문장·표·해석** ([reports/11](../reports/11-performance-failure-report.md), [reports/13](../reports/13-failure-scenario-matrix-report.md)) | **수동** | 사람이 원본 파일을 읽고 §7의 절차로 씀 |
 | 보고서 생성기 | **없음** | 만들지 않았습니다. 이유는 §7 끝에 있습니다 |
 
 그러니 "시나리오를 실행하고 결과를 리포트로 받는다"는 문장에서 **"리포트"가 원본 결과 파일과 콘솔 요약이면 예,

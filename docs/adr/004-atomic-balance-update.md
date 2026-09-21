@@ -26,7 +26,7 @@
 
 ## Validation
 
-동일 지갑과 서로 다른 지갑 부하에서 비관적 잠금과 비교해 처리량, p99, 충돌률과 DB 락 대기를 측정한 뒤 Accepted 여부를 결정합니다. 결과는 [성능·장애 보고서](../../reports/11-performance-failure-report-template.md) P-002에 기록합니다.
+동일 지갑과 서로 다른 지갑 부하에서 비관적 잠금과 비교해 처리량, p99, 충돌률과 DB 락 대기를 측정한 뒤 Accepted 여부를 결정합니다. 결과는 [성능·장애 보고서](../../reports/11-performance-failure-report.md) P-002에 기록합니다.
 
 ## Outcome — 2026-09-06
 
@@ -80,7 +80,7 @@ k6로 HTTP 경로 전체를 거쳐 다시 측정했습니다. 이번에는 전�
 새 결정입니다.
 
 정확성은 이 부하에서도 유지됐습니다. 결제 21,930건 이후 불변조건 지표가 모두 0이었습니다.
-근거: [reports/11](../../reports/11-performance-failure-report-template.md) P-001·P-002
+근거: [reports/11](../../reports/11-performance-failure-report.md) P-001·P-002
 
 ### 부수적으로 발견한 것
 
@@ -110,7 +110,7 @@ k6로 HTTP 경로 전체를 거쳐 다시 측정했습니다. 이번에는 전�
 
 이것은 "어떤 잠금을 쓰는가"가 아니라 **"잠금을 얼마나 오래 쥐는가"**의 문제였고, 조건부 원자
 UPDATE든 비관적 잠금이든 똑같이 겪었을 문제입니다. 잠금 전략 비교만으로는 보이지 않았습니다.
-근거: [reports/11](../../reports/11-performance-failure-report-template.md) M-007·결함 I
+근거: [reports/11](../../reports/11-performance-failure-report.md) M-007·결함 I
 
 ### 이후 측정 (2026-09-16) — 뺀 대안을 실제로 만들어 재봄: 분산락 (M-024~M-028)
 
@@ -119,7 +119,7 @@ Alternatives에 "분산 락: DB 업데이트와 원자성이 자동 보장되지
 프로필(`apps/pay-api/.../experiment/lock/`)에서만 지갑 모듈의 `WalletBalanceRepository`를 감싸고, 기본 경로는 한
 줄도 바뀌지 않았습니다. Redis 락 안에서 "조회 → 300~500 ms 멈춤 → 계산 → 조건 없는 UPDATE"를 하는, 락이
 정합성을 지켜 준다고 믿는 구현을 일부러 만들어 같은 부하(스레드 16, 지갑 4, 60초, 각 3회)로 기본 경로와
-대조했습니다. 근거: [reports/11](../../reports/11-performance-failure-report-template.md) M-024~M-028
+대조했습니다. 근거: [reports/11](../../reports/11-performance-failure-report.md) M-024~M-028
 
 | 조건 (같은 부하, 같은 멈춤) | 소유 겹침 쌍 | drift (INV-010) | 초과 승인 (INV-003) | 처리량 |
 |---|---:|---:|---:|---:|

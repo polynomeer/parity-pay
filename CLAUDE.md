@@ -10,7 +10,7 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 
 현재 상태: **Phase 0~9 구현 완료** (2026-09-10). 백엔드 328 테스트·프론트엔드 56 테스트·E2E 7건이
 실패 없이 돕니다. 부하·장애 실험 41종을 실행해 결함 14건(A~N)을 찾아 고쳤고(M-024~M-028은 뺀 대안인 분산락을 일부러 만들어 잰 실험이라 결함이 아님), 결과는
-[reports/11](reports/11-performance-failure-report-template.md)에 있습니다.
+[reports/11](reports/11-performance-failure-report.md)에 있습니다.
 
 ## 2. 절대 규칙 (INV) — 어떤 코드도 이것을 깰 수 없습니다
 
@@ -266,5 +266,5 @@ fix(ledger): reject journal with mixed currencies (INV-007)
 
 - 요구사항을 바꾸면 영향받는 정책·상태·DB·API·이벤트·테스트·ADR을 함께 검토합니다.
 - ADR은 구현·실험으로 확인한 뒤에만 `Proposed` → `Accepted`로 바꿉니다.
-- 성능·장애 결과는 [reports/11-performance-failure-report-template.md](reports/11-performance-failure-report-template.md)에 환경·커밋 SHA·원본 결과 경로와 함께 기록합니다.
+- 성능·장애 결과는 [reports/11-performance-failure-report.md](reports/11-performance-failure-report.md)에 환경·커밋 SHA·원본 결과 경로와 함께 기록합니다.
 - 구현이 설계와 달라지면 문서를 사실로 교체합니다. 문서를 이상적인 상태로 남겨두지 않습니다.

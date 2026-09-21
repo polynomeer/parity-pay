@@ -118,5 +118,5 @@ docker run --rm -i --add-host=host.docker.internal:host-gateway \
   기계 상태 변화가 전부 B의 성과로 보입니다(M-007에서 코드와 무관한 4.8배를 그렇게 만들었습니다).
 - 실패한 요청을 빼고 지연을 계산하지 않습니다.
 - 장비·컨테이너 제한·JVM 옵션·데이터 규모를 함께 적습니다.
-- 결과는 [성능·장애 테스트 보고서](../reports/11-performance-failure-report-template.md)에 원본 파일
+- 결과는 [성능·장애 테스트 보고서](../reports/11-performance-failure-report.md)에 원본 파일
   경로와 함께 기록합니다. 근거: docs/10-test-strategy.md §7
