@@ -355,7 +355,7 @@ ADR-004는 잔액 차감에 분산락을 쓰지 않고 조건부 원자 UPDATE�
 같은 키·payload를 원 토픽에 다시 발행합니다(결함 M).
 
 운영 콘솔의 장애 시뮬레이터는 사람이 눈으로 보는 도구였는데, 2026-09-15에 시나리오 9개를 전부 각 3회
-스크립트로 돌려 수치로 남겼습니다([reports/13](13-failure-scenario-matrix-report.md), M-014). 27회 전부
+스크립트로 돌려 수치로 남겼습니다([reports/13](13-failure-scenario-matrix.md), M-014). 27회 전부
 기대한 종결 상태, 원장 정확히 1회, 불변조건 게이지 전부 0. 그러면서 로컬 스택의 기관에 웹훅 주소가
 등록되어 있지 않아 웹훅 시나리오 셋이 실제로는 알림을 받지 않고 있었다는 것이 드러났습니다 — 화면은
 "적용했습니다"를 띄우고 결제는 정상 승인되니 아무도 알 수 없었습니다. 결함 B·J와 같은 모양(시험 경로에만
@@ -399,7 +399,7 @@ ADR-004는 잔액 차감에 분산락을 쓰지 않고 조건부 원자 UPDATE�
 | 미확정 1,000건 적체 | 전부 1회 확정. 최대 확정 시간 130.6 → 42.1초, 90초 초과 450 → 0건 | [보고서 M-012](11-performance-failure-report.md) |
 | 단일 DB 포화 곡선 | VU 10~80·풀 20/40, 잠금 대기 0%, DB는 시간의 75~84%를 앱을 기다림. 첫 한계는 커넥션 풀 | [보고서 M-013](11-performance-failure-report.md) |
 | 비밀번호 재설정 메일 왕복 | 실제 SMTP → Mailpit → 링크 → 새 비밀번호 → 1회용 확인 → 로그인 | E2E `password-reset.spec` |
-| 장애 시뮬레이터 9개 × 3회 | 27회 전부 기대 종결, 원장 1회, 게이지 0. 미확정 → 확정 31~35초 / 43~44초 | [reports/13](13-failure-scenario-matrix-report.md) |
+| 장애 시뮬레이터 9개 × 3회 | 27회 전부 기대 종결, 원장 1회, 게이지 0. 미확정 → 확정 31~35초 / 43~44초 | [reports/13](13-failure-scenario-matrix.md) |
 | 소비자 커밋 전 `SIGKILL` (BATCH vs 자동 커밋) | 6회 전부 유실 0, 중복 30~1,909건 흡수 | [보고서 M-015](11-performance-failure-report.md) |
 | 발행 중 브로커 `SIGKILL` (acks) | `all` 유실 0 ×3, `1`·`0`은 100~200건 유실 | [보고서 M-016](11-performance-failure-report.md) |
 | 파티션 키 Aggregate vs 랜덤 | 랜덤은 결제 32~33% 순서 역전·3,600원씩 과지급, Aggregate는 0 | [보고서 M-017](11-performance-failure-report.md) |

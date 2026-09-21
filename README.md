@@ -157,7 +157,7 @@ PostgreSQL·Redpanda를 띄우고, 외부기관도 별도 Spring 컨텍스트로
 | 분산락 대조 | M-024~M-028 | lease 만료, Watchdog, fencing token, 조건부 UPDATE 대조군, 락 서버 단절 |
 
 **운영 콘솔의 장애 시뮬레이터** 9개 시나리오는 브라우저에서 직접 적용해 볼 수 있고, 실측은
-[reports/13](reports/13-failure-scenario-matrix-report.md)에 있습니다.
+[reports/13](reports/13-failure-scenario-matrix.md)에 있습니다.
 
 ## 기술 스택
 

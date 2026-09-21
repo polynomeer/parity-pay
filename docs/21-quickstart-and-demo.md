@@ -48,7 +48,7 @@ scripts/dev.sh down            # -v를 붙이면 볼륨까지 지웁니다
 
 운영 콘솔의 **장애 시뮬레이터**에서 시나리오를 적용하고 고객 앱에서 충전·결제를 실행하면, 미확정 거래가 복구되는
 동안 **불변조건 카드가 계속 정상으로 유지되는 것**을 볼 수 있습니다. 시나리오 9개의 실측은
-[reports/13](../reports/13-failure-scenario-matrix-report.md)에 있습니다.
+[reports/13](../reports/13-failure-scenario-matrix.md)에 있습니다.
 
 ## 3. 손으로 밟는 길
 
