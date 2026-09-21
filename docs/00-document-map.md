@@ -15,7 +15,7 @@
 
 | 목적 | 순서 | 걸리는 시간 |
 |---|---|---|
-| 프로젝트가 무엇이고 무엇을 증명했는지 | [README](../README.md) → [RPT-02 포트폴리오 기술 보고서](../reports/12-portfolio-technical-report-draft.md) | 20분 |
+| 프로젝트가 무엇이고 무엇을 증명했는지 | [README](../README.md) → [RPT-02 포트폴리오 기술 보고서](../reports/12-portfolio-technical-report.md) | 20분 |
 | 설계 결정의 근거 | [ADR 목록](adr/README.md)의 "읽는 순서" → 관심 있는 ADR의 Outcome | 30분 |
 | 실험이 실제로 무엇을 재고 무엇을 찾았는지 | [RPT-01 성능·장애 보고서](../reports/11-performance-failure-report-template.md) §7 결론 → 관심 실험 하나 → [DOC-18 §13 결함 A~N](18-technical-handbook.md) | 30분~ |
 | 코드를 읽으려면 | [DOC-17 용어](17-domain-glossary.md) → [DOC-18 기술 안내서](18-technical-handbook.md) → [DOC-05 기술 설계서](05-technical-design.md) → [DOC-09 정합성·복구](09-consistency-recovery.md) → [DOC-06](06-domain-state-design.md)·[DOC-07](07-ledger-journal-catalog.md) | 반나절 |

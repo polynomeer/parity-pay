@@ -45,7 +45,7 @@
 - 프로세스가 커밋 직후·발행 직전에 죽습니다
 
 이 프로젝트의 목표는 정상 결제를 처리하는 것이 아니라 **위 상황에서도 원장이 맞는 것**입니다.
-근거: [CLAUDE.md §1](../CLAUDE.md), [reports/12 §1](../reports/12-portfolio-technical-report-draft.md)
+근거: [CLAUDE.md §1](../CLAUDE.md), [reports/12 §1](../reports/12-portfolio-technical-report.md)
 
 ### 규제 맥락 (일반 지식)
 

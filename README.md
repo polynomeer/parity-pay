@@ -25,7 +25,7 @@ ParityPay는 플랫폼 안에 내장되는 **페이머니 서비스**(충전·�
 | 순서 | 무엇을 | 어디서 | 왜 |
 |---|---|---|---|
 | 1 | 결과 한 장 | 바로 아래 [실험이 보여 준 것](#실험이-보여-준-것) | 이 프로젝트가 무엇을 증명했는지 숫자로 |
-| 2 | 설계와 판단의 이유 | [포트폴리오 기술 보고서](reports/12-portfolio-technical-report-draft.md) | 문제 정의 → 구조 → 검증 → 회고, 한 문서 |
+| 2 | 설계와 판단의 이유 | [포트폴리오 기술 보고서](reports/12-portfolio-technical-report.md) | 문제 정의 → 구조 → 검증 → 회고, 한 문서 |
 | 3 | 실험 원본 | [성능·장애 보고서](reports/11-performance-failure-report-template.md) | 41종의 방법·표·분석·원본 경로. 틀렸던 가설도 그대로 |
 | 4 | 왜 이렇게 결정했나 | [ADR 14편](docs/adr/README.md) | 각 결정의 대안·근거·실험 결과(Outcome) |
 | 5 | 직접 띄워 보기 | `scripts/dev.sh` → [실행·데모 안내서](docs/21-quickstart-and-demo.md) | 운영 콘솔의 장애 시뮬레이터에서 직접 깨뜨려 볼 수 있습니다 |
@@ -227,7 +227,7 @@ load-tests/run-e2e.sh     # 실제 스택 E2E (약 1분)
 
 | 읽는 사람 | 경로 |
 |---|---|
-| 프로젝트를 평가하려는 분 | 이 README → [reports/12 포트폴리오 기술 보고서](reports/12-portfolio-technical-report-draft.md) → [reports/11](reports/11-performance-failure-report-template.md)에서 관심 있는 실험 하나 → 관련 [ADR](docs/adr/README.md) |
+| 프로젝트를 평가하려는 분 | 이 README → [reports/12 포트폴리오 기술 보고서](reports/12-portfolio-technical-report.md) → [reports/11](reports/11-performance-failure-report-template.md)에서 관심 있는 실험 하나 → 관련 [ADR](docs/adr/README.md) |
 | 코드를 읽으려는 분 | [도메인 용어](docs/17-domain-glossary.md) → [기술 안내서](docs/18-technical-handbook.md) → [기술 설계서](docs/05-technical-design.md) · [정합성·복구 설계서](docs/09-consistency-recovery.md) |
 | 실험을 재현하려는 분 | [실행·데모 안내서](docs/21-quickstart-and-demo.md) → [실험 실행 안내서](docs/19-experiment-runbook.md) → [결과 해석 안내서](docs/20-experiment-result-interpretation.md) |
 | AI 에이전트로 작업하려는 분 | [CLAUDE.md](CLAUDE.md) — 매 작업의 규칙과 어떤 문서를 언제 읽는지 |
@@ -274,7 +274,7 @@ the broker mid-publish, hung the external PG for 30 s, and let a distributed-loc
 14 defects, all fixed; six of them were in areas the design documents had described as "already handled".
 Every number in the reports is measured; anything unmeasured is marked as such.
 
-Start with [reports/12](reports/12-portfolio-technical-report-draft.md) (Korean), then
+Start with [reports/12](reports/12-portfolio-technical-report.md) (Korean), then
 [reports/11](reports/11-performance-failure-report-template.md) for the experiment record and
 [docs/adr](docs/adr/README.md) for the decisions. `scripts/dev.sh` brings the whole stack up locally.
 
