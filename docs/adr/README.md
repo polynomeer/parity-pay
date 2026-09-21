@@ -23,6 +23,13 @@ ADR은 중요한 기술 선택의 맥락, 대안, 결정과 결과를 기록합�
 | [ADR-013](013-local-dev-stack-script.md) | 로컬 스택을 한 스크립트로 띄우고, 잡힌 포트는 우회함 | Accepted (2026-09-14) |
 | [ADR-014](014-external-call-isolation.md) | 외부기관 호출을 타임아웃·벌크헤드·차단기로 격리함 | Accepted (2026-09-16) |
 
+### 읽는 순서
+
+처음이라면 이 넷이 나머지를 정합니다: [ADR-003](003-double-entry-ledger.md) 이중부기 원장 → [ADR-005](005-transactional-outbox.md)
+Outbox → [ADR-007](007-unknown-state.md) `UNKNOWN` → [ADR-004](004-atomic-balance-update.md) 조건부 원자 UPDATE. ADR-004는
+뺀 대안(비관적 잠금·분산락)을 **실제로 만들어 잰** 기록이 Outcome에 있어, "왜 이렇게 결정했나"를 숫자로 보여 주는 예입니다.
+운영·장애 쪽이 궁금하면 [ADR-014](014-external-call-isolation.md), 배포·보안 쪽은 [ADR-010](010-refresh-token-cookie.md)·[ADR-011](011-deployment-shape.md)입니다.
+
 각 ADR 하단의 **Outcome** 절에 무엇을 실제로 검증했고 무엇을 아직 측정하지 않았는지 적혀
 있습니다. `Accepted`는 "결정을 채택했고 그 근거를 확인했다"는 뜻이며, "모든 Validation 항목을
 측정했다"는 뜻이 아닙니다. 남은 측정은 Outcome에 명시되어 있습니다.

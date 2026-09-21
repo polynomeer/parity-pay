@@ -64,6 +64,7 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 | 다음에 할 일 | [docs/13-implementation-checklist.md](docs/13-implementation-checklist.md) |
 | 부하·장애 실험을 실행할 때 | [docs/19-experiment-runbook.md](docs/19-experiment-runbook.md) |
 | 실험 출력·시뮬레이터 화면을 읽고 판정할 때 | [docs/20-experiment-result-interpretation.md](docs/20-experiment-result-interpretation.md) |
+| 스택을 처음 띄우거나 API로 데모를 돌릴 때 | [docs/21-quickstart-and-demo.md](docs/21-quickstart-and-demo.md) |
 | 클라이언트 계약·앱 구분 | [docs/14-frontend-design.md](docs/14-frontend-design.md) |
 | 화면에 무엇을 보여줄지 | [docs/15-ui-screen-plan.md](docs/15-ui-screen-plan.md) |
 | UI 구현 순서·백엔드 격차 | [docs/16-ui-implementation-plan.md](docs/16-ui-implementation-plan.md) |
@@ -175,7 +176,7 @@ modules/wallet          지갑·잔액 스냅샷·충전·복구·거래내역 �
 modules/payment         결제·취소·구매확정
 modules/settlement      정산 계산·판매자 지급·지급 복구
 modules/reconciliation  내부·외부 대사와 보정
-apps/pay-api            조립 지점: 마이그레이션 20개, 인증, Outbox, 운영 API
+apps/pay-api            조립 지점: 마이그레이션 21개, 인증, Outbox, 운영 API, 실험 전용 프로필(experiment-*)
 apps/mock-bank          외부 은행 대역 — 별도 프로세스, 자기 데이터베이스
 apps/mock-pg            카드 PG 대역 — 별도 프로세스, 자기 데이터베이스
 
