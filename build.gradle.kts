@@ -15,7 +15,7 @@ val errorProneVersion = "2.50.0"
 // Spring Boot 4의 BOM은 Testcontainers 버전을 더 이상 관리하지 않습니다. 3.5에서는 관리해 주어
 // 버전을 적지 않았고, 판올림하자 버전이 빈 문자열로 해석되어 해석 자체가 실패했습니다.
 // 우리가 쓰는 것은 우리가 버전을 정합니다.
-val testcontainersVersion = "1.21.3"
+val testcontainersVersion = "2.0.5"
 
 allprojects {
     group = "io.parity"
