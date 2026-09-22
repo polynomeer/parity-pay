@@ -43,10 +43,10 @@ dependencies {
     // RestClient를 쓰고, 시험의 TestRestTemplate도 이 모듈의 RestTemplateBuilder를 필요로 합니다.
     // 외부기관 호출 격리 — 차단기·벌크헤드·리미터. Spring 통합 없이 라이브러리만 씁니다.
     // 근거: ADR-014
-    implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.2.0")
-    implementation("io.github.resilience4j:resilience4j-bulkhead:2.2.0")
-    implementation("io.github.resilience4j:resilience4j-ratelimiter:2.2.0")
-    implementation("io.github.resilience4j:resilience4j-retry:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.4.0")
+    implementation("io.github.resilience4j:resilience4j-bulkhead:2.4.0")
+    implementation("io.github.resilience4j:resilience4j-ratelimiter:2.4.0")
+    implementation("io.github.resilience4j:resilience4j-retry:2.4.0")
     // 분산락 실험(M-024~M-028) 전용. `experiment-lock` 프로필 없이는 연결조차 만들지 않습니다.
     // 본 설계는 분산락을 쓰지 않습니다(ADR-004). 근거: reports/11 M-024
     implementation("io.lettuce:lettuce-core")
