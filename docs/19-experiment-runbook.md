@@ -33,6 +33,7 @@ Markdown 보고서면 아니오**입니다.
 | **A. 장애 시뮬레이터** | 운영 콘솔 `https://ops.localhost:5174` → 장애 시뮬레이터 | 기관 모드를 바꾸는 버튼 9개 + 불변조건 카드 | 사람이 눈으로 | 처음 이해할 때, 시연할 때 |
 | **B. 실험 하니스** | `load-tests/*.py`, `*.sh`, `*.js` | 앱을 띄우고 장애를 만들고 부하를 걸고 세어서 파일로 남김 | 스크립트가 세고, 사람이 해석 | 수치가 필요할 때 (reports/11의 P·F·M 전부) |
 | **C. 통합 테스트** | `./gradlew test` (Testcontainers) | 경계를 흉내 낸 장애(F-003~F-011 등)를 매번 검증 | JUnit | 커밋마다. 사람이 손댈 것 없음 |
+| **B′. 모델 검사** | `formal/*.tla` + TLC | 복구 규칙의 **순서를 전부** 밟음. 부하도 스택도 없음 | TLC가 불변조건 위반과 반례 추적을 출력 | 타이밍에 달린 경로가 의심될 때 (§6.5) |
 | **D. E2E** | `load-tests/run-e2e.sh`, `apps/e2e` | 실제 스택·실제 브라우저로 Shop→결제→장애→복구 한 바퀴 | Playwright | 주간·수동, 화면 계약이 바뀌었을 때 |
 
 여기에 **관측 스택**이 걸쳐 있습니다 — `scripts/dev.sh --observability`로 띄우면 Prometheus(9090)·Grafana(3000)·
@@ -47,6 +48,7 @@ Jaeger(16686)가 함께 뜨고, `deploy/observability/rules/invariants.yml`의 �
 | Docker Desktop | PostgreSQL 17, Redpanda, mock-bank·mock-pg 컨테이너, `docker exec psql` | `docker info` |
 | k6 | HTTP 부하 (P-001~P-004, M-007, M-009, M-013, M-019~M-023) | `brew install k6; k6 version` |
 | Python 3 | 실험 하니스. **표준 라이브러리만** 씁니다 — pip 설치 없음 | `python3 --version` |
+| TLC (`formal/tla2tools.jar`) | 모델 검사(M-030). 커밋하지 않으므로 처음 한 번 받습니다 | `curl -sL -o formal/tla2tools.jar https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar` |
 | pnpm + Playwright | E2E(D 층)만 | `pnpm install; pnpm --filter @paritypay/e2e exec playwright install chromium` |
 
 모든 실험은 **한 노트북에서 부하 도구·앱·DB가 CPU를 나눠 쓰는** 구성으로 실행됐습니다(reports/11 §2). 다른 것을
@@ -189,10 +191,33 @@ F-003~F-011은 **매 커밋 `./gradlew test`에 포함**되어 있습니다. 따
 | M-027 | 대조군: 분산락 없이 조건부 UPDATE | `lock-lease-experiment.py control --jar $J --runs 3` | 위와 같음 | 60초×3 | `control-<UTC>.json` | §4 M-027 |
 | M-028 | 부하 중 Redis kill (fail-closed/open/fencing/대조군) | `lock-lease-experiment.py redisdown --jar $J --runs 3` | 위와 같음 | 변형당 60초×3 | `redisdown-<UTC>.json` | §4 M-028 |
 | M-010 | 차감 직전 명시적 flush | `transaction-timeline.py` (문장 순서로 판정) | 4.2 스택 | 초 단위 | 콘솔 | §4 M-010 |
+| M-029 | 동기화된 폭주에서 지터가 봉우리를 펼치는가 | `python3 load-tests/retry-stampede-experiment.py --jar $J --clients 150 --runs 3` | 4.1 (스크립트가 앱을 띄우고, 변형마다 mock-pg를 재시작) | 변형 3개 × 3회, 약 10분 | `/tmp/t11-retry-stampede/results.json` | §4 M-029 |
 
 `$J`는 `apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar`입니다. M-015~M-028은 **`experiment-*` 프로필과
 `EXPERIMENT_*` 환경변수로만** 기본값에서 벗어나며, 스크립트가 넣어 줍니다. 그 프로필은 실험 뒤 채택하지 않은 경로
 (재시도, 분산락, 랜덤 파티션 키)를 **일부러 만들어 대조**하는 것이라 운영 설정에 없습니다.
+
+### 6.5 모델 검사 (M-030)
+
+부하도 스택도 필요 없습니다. `formal/`의 TLA+ 명세를 TLC가 전수 탐색합니다.
+
+```bash
+cd formal
+java -cp tla2tools.jar tlc2.TLC -config MC.cfg UnknownResolution.tla            # 구현된 규칙
+java -cp tla2tools.jar tlc2.TLC -config MC-escalate.cfg UnknownResolutionEscalate.tla  # 사람에게 넘기는 갈래
+java -cp tla2tools.jar tlc2.TLC -config MC-t8.cfg UnknownResolution.tla         # 임계치 8
+java -cp tla2tools.jar tlc2.TLC -config MC-others.cfg UnknownResolution.tla     # NoFalseFailure 제외
+```
+
+| 항목 | 값 |
+|---|---|
+| 소요 | 명세당 수 초 (상태 98~502개) |
+| 결과 | 콘솔. 원본은 `reports/data/t7-model-checking/tlc-*.txt` |
+| 기록 | reports/11 §4 M-030, [docs/09 §7](09-consistency-recovery.md) |
+
+설정 파일이 임계치와 검사할 불변조건을 정합니다 — `MC.cfg`(기본, 임계치 2), `MC-t2/t3/t5/t8.cfg`(임계치별),
+`MC-others.cfg`(`NoFalseFailure`를 빼고 나머지 셋), `MC-escalate.cfg`(처치 갈래). 명세를 고치면 네 불변조건
+전부를 다시 돌립니다 — 하나만 돌리면 고치는 과정에서 다른 셋이 깨진 것을 못 봅니다.
 
 ### 6.4 E2E
 

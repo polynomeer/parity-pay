@@ -107,7 +107,11 @@ docker run --rm -i --add-host=host.docker.internal:host-gateway \
 | `kafka-failure-experiment.py` | 브로커 쪽 장애 넷: 커밋 전 죽음·브로커 kill·파티션 키·poison message | M-015~M-018 |
 | `external-isolation-experiment.py` + `external-pg-load.js` | 기관이 느릴 때의 붕괴와 그것을 막는 것: 스레드·재시도·차단기·상한·벌크헤드 | M-019~M-023 |
 | `lock-lease-experiment.py` | 분산락 lease 만료·watchdog·fencing·Redis 단절 — 채택하지 않은 경로의 대조 실험 | M-024~M-028 |
+| `retry-stampede-experiment.py` | 150건을 같은 순간에 쏴 동기화된 폭주를 만들고, 지터가 재시도 봉우리를 얼마나 펼치는지 | M-029 |
 | `run-e2e.sh` | 실제 스택으로 Shop→결제→장애 주입→복구 한 바퀴 (목 없음) | 결함 J, E2E 7건 |
+
+부하가 아니라 **순서를 전수로** 밟는 검사는 여기 없습니다 — TLA+ 명세와 TLC 설정은 [`formal/`](../formal/README.md)에
+있습니다(M-030).
 
 ## 결과를 기록할 때
 
