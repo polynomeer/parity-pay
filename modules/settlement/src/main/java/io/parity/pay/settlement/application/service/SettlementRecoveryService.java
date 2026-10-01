@@ -6,6 +6,7 @@ import io.parity.pay.settlement.application.port.out.SettlementRecoveryRepositor
 import io.parity.pay.settlement.application.port.out.SettlementRecoveryRepository.PendingPayoutRecovery;
 import io.parity.pay.settlement.application.port.out.SettlementRepository;
 import io.parity.pay.settlement.domain.Settlement;
+import io.parity.pay.shared.observability.RecoveryOutcomes;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -35,6 +36,7 @@ public class SettlementRecoveryService {
     private final MerchantPayoutPort merchantPayoutPort;
     private final SettlementPayoutTransactions transactions;
     private final SettlementProperties properties;
+    private final RecoveryOutcomes outcomes;
     private final Clock clock;
 
     public SettlementRecoveryService(
@@ -43,12 +45,14 @@ public class SettlementRecoveryService {
             MerchantPayoutPort merchantPayoutPort,
             SettlementPayoutTransactions transactions,
             SettlementProperties properties,
+            RecoveryOutcomes outcomes,
             Clock clock) {
         this.recoveryRepository = recoveryRepository;
         this.settlementRepository = settlementRepository;
         this.merchantPayoutPort = merchantPayoutPort;
         this.transactions = transactions;
         this.properties = properties;
+        this.outcomes = outcomes;
         this.clock = clock;
     }
 
@@ -122,12 +126,14 @@ public class SettlementRecoveryService {
                 transactions.completePayout(
                         item.settlementId(), item.settlementId().toString());
                 recoveryRepository.clear(item.settlementId());
+                record(item, RecoveryOutcomes.Resolution.QUERY, "PAID");
                 log.info("recovered settlement {} as PAID", item.settlementId());
                 yield true;
             }
             case FAILED -> {
                 transactions.failPayout(item.settlementId(), "EXTERNAL_PAYOUT_DECLINED");
                 recoveryRepository.clear(item.settlementId());
+                record(item, RecoveryOutcomes.Resolution.QUERY, "FAILED");
                 yield true;
             }
             case NOT_FOUND -> handleNotFound(item);
@@ -145,6 +151,12 @@ public class SettlementRecoveryService {
             // 운영자가 다시 지급을 시도할 수 있습니다.
             transactions.failPayout(item.settlementId(), "EXTERNAL_PAYOUT_RECORD_NOT_FOUND");
             recoveryRepository.clear(item.settlementId());
+            outcomes.settled(new RecoveryOutcomes.Settled(
+                    RecoveryOutcomes.Target.PAYOUT,
+                    RecoveryOutcomes.Resolution.NOT_FOUND,
+                    "FAILED",
+                    item.attemptCount() + 1,
+                    notFoundCount));
             return true;
         }
         recoveryRepository.scheduleRetry(
@@ -161,6 +173,12 @@ public class SettlementRecoveryService {
         int attemptCount = item.attemptCount() + 1;
         if (attemptCount >= properties.recoveryMaxAttempts()) {
             recoveryRepository.markManualReview(item.settlementId(), attemptCount, reason, clock.instant());
+            outcomes.settled(new RecoveryOutcomes.Settled(
+                    RecoveryOutcomes.Target.PAYOUT,
+                    RecoveryOutcomes.Resolution.MANUAL_REVIEW,
+                    "UNKNOWN",
+                    attemptCount,
+                    item.notFoundCount()));
             log.warn("settlement {} needs manual review: {}", item.settlementId(), reason);
             return;
         }
@@ -171,6 +189,15 @@ public class SettlementRecoveryService {
                 clock.instant().plus(backoffFor(attemptCount)),
                 reason,
                 clock.instant());
+    }
+
+    /**
+     * 확정된 건을 지표로 넘깁니다. 복구 행은 바로 위에서 지워졌으므로 여기서 적지 않으면 "몇 번
+     * 만에, 무엇을 근거로 끝났는가"가 로그에만 남습니다. 근거: docs/09 §7
+     */
+    private void record(PendingPayoutRecovery item, RecoveryOutcomes.Resolution resolution, String outcome) {
+        outcomes.settled(new RecoveryOutcomes.Settled(
+                RecoveryOutcomes.Target.PAYOUT, resolution, outcome, item.attemptCount() + 1, item.notFoundCount()));
     }
 
     private Duration backoffFor(int attempt) {

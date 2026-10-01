@@ -11,6 +11,7 @@ import io.parity.pay.payment.domain.PaymentCancellation;
 import io.parity.pay.shared.error.BusinessException;
 import io.parity.pay.shared.error.ErrorCode;
 import io.parity.pay.shared.id.CancellationId;
+import io.parity.pay.shared.observability.RecoveryOutcomes;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -41,6 +42,7 @@ public class CancellationRecoveryService {
     private final PgRefundPort pgRefundPort;
     private final CancellationTransactions transactions;
     private final CancellationRecoveryProperties properties;
+    private final RecoveryOutcomes outcomes;
     private final Clock clock;
 
     public CancellationRecoveryService(
@@ -50,6 +52,7 @@ public class CancellationRecoveryService {
             PgRefundPort pgRefundPort,
             CancellationTransactions transactions,
             CancellationRecoveryProperties properties,
+            RecoveryOutcomes outcomes,
             Clock clock) {
         this.recoveryRepository = recoveryRepository;
         this.cancellationRepository = cancellationRepository;
@@ -57,6 +60,7 @@ public class CancellationRecoveryService {
         this.pgRefundPort = pgRefundPort;
         this.transactions = transactions;
         this.properties = properties;
+        this.outcomes = outcomes;
         this.clock = clock;
     }
 
@@ -149,12 +153,14 @@ public class CancellationRecoveryService {
                 transactions.completeRefunded(
                         payment.memberId(), cancellation, payment, cancellation.externalReferenceId());
                 recoveryRepository.clear(cancellation.id());
+                record(item, RecoveryOutcomes.Resolution.QUERY, "COMPLETED");
                 log.info("recovered cancellation {} as COMPLETED", cancellation.id());
                 yield true;
             }
             case DECLINED -> {
                 transactions.completeDeclined(payment.memberId(), cancellation, payment, "EXTERNAL_DECLINED");
                 recoveryRepository.clear(cancellation.id());
+                record(item, RecoveryOutcomes.Resolution.QUERY, "FAILED");
                 log.info("recovered cancellation {} as FAILED", cancellation.id());
                 yield true;
             }
@@ -177,6 +183,12 @@ public class CancellationRecoveryService {
         if (notFoundCount >= properties.notFoundConfirmThreshold()) {
             transactions.completeDeclined(payment.memberId(), cancellation, payment, "EXTERNAL_RECORD_NOT_FOUND");
             recoveryRepository.clear(cancellation.id());
+            outcomes.settled(new RecoveryOutcomes.Settled(
+                    RecoveryOutcomes.Target.CANCELLATION,
+                    RecoveryOutcomes.Resolution.NOT_FOUND,
+                    "FAILED",
+                    item.attemptCount() + 1,
+                    notFoundCount));
             log.info(
                     "settled cancellation {} as FAILED after {} consecutive not-found results",
                     cancellation.id(),
@@ -198,6 +210,12 @@ public class CancellationRecoveryService {
         int attemptCount = item.attemptCount() + 1;
         if (attemptCount >= properties.maxAttempts()) {
             recoveryRepository.markManualReview(item.cancellationId(), attemptCount, reason, clock.instant());
+            outcomes.settled(new RecoveryOutcomes.Settled(
+                    RecoveryOutcomes.Target.CANCELLATION,
+                    RecoveryOutcomes.Resolution.MANUAL_REVIEW,
+                    "UNKNOWN",
+                    attemptCount,
+                    item.notFoundCount()));
             log.warn(
                     "cancellation {} needs manual review after {} attempts: {}",
                     item.cancellationId(),
@@ -212,6 +230,19 @@ public class CancellationRecoveryService {
                 clock.instant().plus(backoffFor(attemptCount)),
                 reason,
                 clock.instant());
+    }
+
+    /**
+     * 확정된 건을 지표로 넘깁니다. 복구 행은 바로 위에서 지워졌으므로 여기서 적지 않으면 "몇 번
+     * 만에, 무엇을 근거로 끝났는가"가 로그에만 남습니다. 근거: docs/09 §7
+     */
+    private void record(PendingRecovery item, RecoveryOutcomes.Resolution resolution, String outcome) {
+        outcomes.settled(new RecoveryOutcomes.Settled(
+                RecoveryOutcomes.Target.CANCELLATION,
+                resolution,
+                outcome,
+                item.attemptCount() + 1,
+                item.notFoundCount()));
     }
 
     private Duration backoffFor(int attempt) {

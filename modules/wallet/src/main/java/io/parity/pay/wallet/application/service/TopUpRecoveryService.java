@@ -4,6 +4,7 @@ import io.parity.pay.shared.error.BusinessException;
 import io.parity.pay.shared.error.ErrorCode;
 import io.parity.pay.shared.id.MemberId;
 import io.parity.pay.shared.id.TopUpId;
+import io.parity.pay.shared.observability.RecoveryOutcomes;
 import io.parity.pay.wallet.application.port.out.BankWithdrawalPort;
 import io.parity.pay.wallet.application.port.out.BankWithdrawalPort.WithdrawalStatus;
 import io.parity.pay.wallet.application.port.out.TopUpRecoveryRepository;
@@ -51,6 +52,7 @@ public class TopUpRecoveryService {
     private final BankWithdrawalPort bankWithdrawalPort;
     private final TopUpTransactions transactions;
     private final TopUpRecoveryProperties properties;
+    private final RecoveryOutcomes outcomes;
     private final Clock clock;
 
     public TopUpRecoveryService(
@@ -60,6 +62,7 @@ public class TopUpRecoveryService {
             BankWithdrawalPort bankWithdrawalPort,
             TopUpTransactions transactions,
             TopUpRecoveryProperties properties,
+            RecoveryOutcomes outcomes,
             Clock clock) {
         this.recoveryRepository = recoveryRepository;
         this.topUpRepository = topUpRepository;
@@ -67,6 +70,7 @@ public class TopUpRecoveryService {
         this.bankWithdrawalPort = bankWithdrawalPort;
         this.transactions = transactions;
         this.properties = properties;
+        this.outcomes = outcomes;
         this.clock = clock;
     }
 
@@ -162,12 +166,14 @@ public class TopUpRecoveryService {
             case SUCCEEDED -> {
                 transactions.completeSucceeded(memberId, topUp, topUp.id().toString());
                 recoveryRepository.clear(topUp.id());
+                record(item, RecoveryOutcomes.Resolution.QUERY, "SUCCEEDED");
                 log.info("recovered top-up {} as SUCCEEDED", topUp.id());
                 yield true;
             }
             case FAILED -> {
                 transactions.completeFailed(memberId, topUp, "EXTERNAL_DECLINED");
                 recoveryRepository.clear(topUp.id());
+                record(item, RecoveryOutcomes.Resolution.QUERY, "FAILED");
                 log.info("recovered top-up {} as FAILED", topUp.id());
                 yield true;
             }
@@ -191,6 +197,12 @@ public class TopUpRecoveryService {
         if (notFoundCount >= properties.notFoundConfirmThreshold()) {
             transactions.completeFailed(memberId, topUp, "EXTERNAL_RECORD_NOT_FOUND");
             recoveryRepository.clear(topUp.id());
+            outcomes.settled(new RecoveryOutcomes.Settled(
+                    RecoveryOutcomes.Target.TOP_UP,
+                    RecoveryOutcomes.Resolution.NOT_FOUND,
+                    "FAILED",
+                    item.attemptCount() + 1,
+                    notFoundCount));
             log.info("settled top-up {} as FAILED after {} consecutive not-found results", topUp.id(), notFoundCount);
             return true;
         }
@@ -210,6 +222,12 @@ public class TopUpRecoveryService {
         if (attemptCount >= properties.maxAttempts()) {
             // 자동으로 안전하게 확정할 수 없습니다. 계속 외부를 두드리는 대신 사람에게 넘깁니다.
             recoveryRepository.markManualReview(item.topUpId(), attemptCount, reason, clock.instant());
+            outcomes.settled(new RecoveryOutcomes.Settled(
+                    RecoveryOutcomes.Target.TOP_UP,
+                    RecoveryOutcomes.Resolution.MANUAL_REVIEW,
+                    "UNKNOWN",
+                    attemptCount,
+                    item.notFoundCount()));
             log.warn("top-up {} needs manual review after {} attempts: {}", item.topUpId(), attemptCount, reason);
             return;
         }
@@ -220,6 +238,15 @@ public class TopUpRecoveryService {
                 clock.instant().plus(backoffFor(attemptCount)),
                 reason,
                 clock.instant());
+    }
+
+    /**
+     * 확정된 건을 지표로 넘깁니다. 복구 행은 바로 위에서 지워졌으므로 여기서 적지 않으면 "몇 번
+     * 만에, 무엇을 근거로 끝났는가"가 로그에만 남습니다. 근거: docs/09 §7
+     */
+    private void record(PendingRecovery item, RecoveryOutcomes.Resolution resolution, String outcome) {
+        outcomes.settled(new RecoveryOutcomes.Settled(
+                RecoveryOutcomes.Target.TOP_UP, resolution, outcome, item.attemptCount() + 1, item.notFoundCount()));
     }
 
     /** 지수 백오프에 jitter를 더합니다. 여러 인스턴스가 같은 시각에 외부를 두드리지 않게 합니다. */

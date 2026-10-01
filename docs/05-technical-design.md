@@ -353,6 +353,9 @@ Spring Boot 3.5에서 4.1로 올렸습니다. 판올림 자체보다 **드러난
 - Outbox 미발행 수, 최고 지연과 재시도
 - 소비 지연과 중복 차단
 - 소비자가 포기해 DLT로 보낸 레코드 수와 운영자 대기 건수 (`paritypay.consumer.dead_letters*`, 결함 M)
+- 복구가 끝낸 건수와 그 근거, 확정까지의 조회 횟수 분포 (`paritypay.recovery.settled`·`attempts`·
+  `not_found_confirmations`). 복구 행은 확정과 함께 지워지므로 그 순간에 적지 않으면 남지 않습니다
+  (docs/09 §7, reports/13 발견 3)
 - 외부 PG 차단기 상태·실패율, 진행 중 호출 수, 거절 사유별 건수 (`paritypay.pg.*`, ADR-014)
 - 정산 실패·대사 불일치 건수·금액
 - DB 잠금 대기, 커넥션 풀과 쿼리 지연

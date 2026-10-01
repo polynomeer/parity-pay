@@ -17,7 +17,7 @@
 의도를 **한 로컬 트랜잭션**으로 묶고(ADR-005), 브로커의 at-least-once를 멱등 소비자로 흡수하며(ADR-006),
 외부 결과를 모를 때는 `UNKNOWN`으로 보존하고 조회로만 확정합니다(ADR-007).
 
-**상태 (2026-09-17)**: Phase 0~9 구현 완료. 백엔드 테스트 328 · 프론트엔드 56 · E2E 7, 실패 0. 부하·장애
+**상태 (2026-10-01)**: Phase 0~9 구현 완료. 백엔드 테스트 331 · 프론트엔드 56 · E2E 7, 실패 0. 부하·장애
 실험 42종이 결함 14건(A~N)을 찾았고 전부 고쳤습니다(M-024~M-028은 분산락을 일부러 만들어 ADR-004를 재확인한 실험, 결함 아님). 여기에 모델 검사 1건(M-030)이 `UNKNOWN` 해소 규칙에서 실험이 못 밟는 경로를 찾아 열린 판단 하나를 남겼습니다([docs/09 §7](09-consistency-recovery.md)). 근거: [reports/12](../reports/12-portfolio-technical-report.md)
 
 ## 2. 저장소 지도
@@ -351,6 +351,7 @@ TanStack Query의 기본 재시도(쿼리 3회)를 끄고 명시적으로 통제
   (INV-001)·`negative_wallet_balances`(INV-003)·`over_cancelled_payments`(INV-005)·`balance_snapshot_drift`
   (INV-010), 30초 캐시(결함 G 이후), `refresh_age_seconds`로 캐시가 멈춘 것을 드러냄
 - **외부·소비자 지표**: `paritypay.pg.in_flight`·`circuit_state`·`circuit_failure_rate`·`rejected`(사유별)·`retries`(ADR-014, 결함 N), `paritypay.consumer.dead_letters`·`dead_letters_open`(결함 M)
+- **복구 지표**: `paritypay.recovery.settled{target,resolution,outcome}`·`attempts`·`not_found_confirmations`. 복구 행은 확정과 함께 지워지므로 확정 순간에 적습니다. `resolution="NOT_FOUND"`가 M-030이 찾은 경로를 지나간 건수입니다([docs/09 §7](09-consistency-recovery.md))
 - **경보**: 불변조건은 임계치 없이 0이 아니면 즉시(`deploy/observability/rules/invariants.yml`)
 - **트레이스**: OTLP → Jaeger. 로컬은 `scripts/dev.sh --observability`
 - **DB**: `pg_stat_statements`·`pg_stat_activity` 10ms 샘플링을 실험 하니스가 읽음(M-007·M-013)
@@ -361,7 +362,7 @@ TanStack Query의 기본 재시도(쿼리 3회)를 끄고 명시적으로 통제
 
 | 층 | 무엇 | 수 (2026-09-17) |
 |---|---|---|
-| 백엔드 단위·통합·속성·아키텍처 | JUnit 5 + Testcontainers(PostgreSQL·Redpanda 실물) + jqwik + ArchUnit | 328 |
+| 백엔드 단위·통합·속성·아키텍처 | JUnit 5 + Testcontainers(PostgreSQL·Redpanda 실물) + jqwik + ArchUnit | 331 |
 | 프론트 단위 | Vitest + Testing Library + MSW (API 목) | 56 |
 | E2E | Playwright, 목 없음, 실제 스택 전부 | 7 (주간·수동) |
 | 부하·장애 실험 | k6 + 파이썬 하니스 23개, 결과는 reports/11·13. 실행법 [DOC-19](19-experiment-runbook.md), 해석 [DOC-20](20-experiment-result-interpretation.md) | 42종 |

@@ -9,6 +9,7 @@ import io.parity.pay.payment.domain.Payment;
 import io.parity.pay.shared.error.BusinessException;
 import io.parity.pay.shared.error.ErrorCode;
 import io.parity.pay.shared.id.PaymentId;
+import io.parity.pay.shared.observability.RecoveryOutcomes;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -46,6 +47,7 @@ public class PaymentRecoveryService {
     private final PgApprovalPort pgApprovalPort;
     private final PaymentTransactions transactions;
     private final PaymentRecoveryProperties properties;
+    private final RecoveryOutcomes outcomes;
     private final Clock clock;
 
     public PaymentRecoveryService(
@@ -54,12 +56,14 @@ public class PaymentRecoveryService {
             PgApprovalPort pgApprovalPort,
             PaymentTransactions transactions,
             PaymentRecoveryProperties properties,
+            RecoveryOutcomes outcomes,
             Clock clock) {
         this.recoveryRepository = recoveryRepository;
         this.paymentRepository = paymentRepository;
         this.pgApprovalPort = pgApprovalPort;
         this.transactions = transactions;
         this.properties = properties;
+        this.outcomes = outcomes;
         this.clock = clock;
     }
 
@@ -153,12 +157,14 @@ public class PaymentRecoveryService {
                 transactions.completeApproved(
                         payment.memberId(), payment, payment.id().toString());
                 recoveryRepository.clear(payment.id());
+                record(item, RecoveryOutcomes.Resolution.QUERY, "APPROVED");
                 log.info("recovered payment {} as APPROVED", payment.id());
                 yield true;
             }
             case DECLINED -> {
                 transactions.completeDeclined(payment.memberId(), payment, "EXTERNAL_DECLINED");
                 recoveryRepository.clear(payment.id());
+                record(item, RecoveryOutcomes.Resolution.QUERY, "FAILED");
                 log.info("recovered payment {} as FAILED", payment.id());
                 yield true;
             }
@@ -181,6 +187,12 @@ public class PaymentRecoveryService {
         if (notFoundCount >= properties.notFoundConfirmThreshold()) {
             transactions.completeDeclined(payment.memberId(), payment, "EXTERNAL_RECORD_NOT_FOUND");
             recoveryRepository.clear(payment.id());
+            outcomes.settled(new RecoveryOutcomes.Settled(
+                    RecoveryOutcomes.Target.PAYMENT,
+                    RecoveryOutcomes.Resolution.NOT_FOUND,
+                    "FAILED",
+                    item.attemptCount() + 1,
+                    notFoundCount));
             log.info(
                     "settled payment {} as FAILED after {} consecutive not-found results", payment.id(), notFoundCount);
             return true;
@@ -201,6 +213,12 @@ public class PaymentRecoveryService {
         if (attemptCount >= properties.maxAttempts()) {
             // 자동으로 안전하게 확정할 수 없습니다. 외부를 계속 두드리는 대신 사람에게 넘깁니다.
             recoveryRepository.markManualReview(item.paymentId(), attemptCount, reason, clock.instant());
+            outcomes.settled(new RecoveryOutcomes.Settled(
+                    RecoveryOutcomes.Target.PAYMENT,
+                    RecoveryOutcomes.Resolution.MANUAL_REVIEW,
+                    "UNKNOWN",
+                    attemptCount,
+                    item.notFoundCount()));
             log.warn("payment {} needs manual review after {} attempts: {}", item.paymentId(), attemptCount, reason);
             return;
         }
@@ -211,6 +229,15 @@ public class PaymentRecoveryService {
                 clock.instant().plus(backoffFor(attemptCount)),
                 reason,
                 clock.instant());
+    }
+
+    /**
+     * 확정된 건을 지표로 넘깁니다. 복구 행은 바로 위에서 지워졌으므로 여기서 적지 않으면 "몇 번
+     * 만에, 무엇을 근거로 끝났는가"가 로그에만 남습니다. 근거: docs/09 §7
+     */
+    private void record(PendingRecovery item, RecoveryOutcomes.Resolution resolution, String outcome) {
+        outcomes.settled(new RecoveryOutcomes.Settled(
+                RecoveryOutcomes.Target.PAYMENT, resolution, outcome, item.attemptCount() + 1, item.notFoundCount()));
     }
 
     /** 지수 백오프에 jitter를 더합니다. 여러 인스턴스가 같은 시각에 외부를 두드리지 않게 합니다. */

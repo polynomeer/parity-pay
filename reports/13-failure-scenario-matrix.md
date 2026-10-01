@@ -138,6 +138,12 @@ compose에 넣고, `dev.sh`가 우회한 API 포트를 `PARITYPAY_PORT`로 넘�
 results`). 이 실험도 시도 횟수를 로그에서 셌습니다. 지표(`UNKNOWN` 체류 시간·복구 시도 분포)를 남기려면
 확정 시점에 감사 로그나 카운터로 옮겨 적어야 합니다. 지금은 **미측정 항목**으로 둡니다.
 
+**2026-10-01 추가:** 카운터 쪽으로 닫았습니다. 복구가 한 건을 끝내는 순간 `RecoveryOutcomes` 포트로 넘기고
+조립 지점이 `paritypay_recovery_settled{target,resolution,outcome}`·`attempts`·`not_found_confirmations`로
+적습니다([docs/09 §7](../docs/09-consistency-recovery.md)). 이 실행의 수치는 그때 기록이 없었으므로 바뀌지
+않습니다 — 위 표의 "시도 횟수"는 여전히 로그에서 센 값입니다. **분포 자체는 아직 미측정입니다.** 계측이
+생겼을 뿐이고, 값은 다시 돌려야 나옵니다.
+
 ### 그 밖에 적어 둘 것
 
 - 은행이 명시적으로 거절하면 응답은 **200 FAILED**입니다(201도 4xx도 아님). 요청은 정상 처리됐고 결과가

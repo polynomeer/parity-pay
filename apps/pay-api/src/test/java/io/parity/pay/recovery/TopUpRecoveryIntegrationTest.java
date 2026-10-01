@@ -2,6 +2,8 @@ package io.parity.pay.recovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.parity.pay.api.mockbank.MockBankBehavior;
 import io.parity.pay.api.mockbank.MockBankClient;
 import io.parity.pay.api.onboarding.OnboardingService;
@@ -68,6 +70,9 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private MeterRegistry meterRegistry;
 
     private MemberId memberId;
     private WalletId walletId;
@@ -237,6 +242,67 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("조회로 확정한 건은 확정 근거와 시도 횟수를 지표에 남긴다")
+    void settlingByQueryIsRecorded() {
+        double settledBefore = settledCount("TOP_UP", "QUERY", "SUCCEEDED");
+        long attemptsBefore = attemptSamples("TOP_UP", "QUERY");
+
+        mockBankBehavior.setMode(MockBankBehavior.Mode.TIMEOUT_AFTER_WITHDRAWAL);
+        TopUpView view = topUp("recovery-key-00010", 100_000);
+        mockBankBehavior.reset();
+
+        assertThat(recoveryService.resolveDue()).isEqualTo(1);
+        assertThat(topUpStatus(view.topUpId())).isEqualTo("SUCCEEDED");
+
+        // 복구 행은 확정과 함께 지워집니다. 여기서 적지 않으면 "몇 번 만에 됐는가"가 사라집니다.
+        assertThat(recoveryRowCount()).isZero();
+        assertThat(settledCount("TOP_UP", "QUERY", "SUCCEEDED")).isEqualTo(settledBefore + 1);
+        assertThat(attemptSamples("TOP_UP", "QUERY")).isEqualTo(attemptsBefore + 1);
+    }
+
+    @Test
+    @DisplayName("연속 '없음'으로 확정한 건은 그 근거와 확인 횟수를 따로 센다 (M-030)")
+    void settlingAfterConsecutiveNotFoundIsRecordedSeparately() {
+        double settledBefore = settledCount("TOP_UP", "NOT_FOUND", "FAILED");
+        long confirmationsBefore = notFoundSamples("TOP_UP");
+
+        mockBankBehavior.setMode(MockBankBehavior.Mode.TIMEOUT_BEFORE_WITHDRAWAL);
+        TopUpView view = topUp("recovery-key-00011", 100_000);
+        mockBankBehavior.reset();
+
+        assertThat(recoveryService.resolveDue()).isZero();
+        assertThat(recoveryService.resolveDue()).isEqualTo(1);
+        assertThat(topUpStatus(view.topUpId())).isEqualTo("FAILED");
+
+        // 이 경로만 따로 셉니다. 모델 검사가 찾은 경로(M-030)가 실제로 얼마나 지나가는지이고,
+        // 사람에게 넘기기로 하면 그만큼이 운영자 대기열로 갑니다. 근거: docs/09 §7
+        assertThat(settledCount("TOP_UP", "NOT_FOUND", "FAILED")).isEqualTo(settledBefore + 1);
+        assertThat(notFoundSamples("TOP_UP")).isEqualTo(confirmationsBefore + 1);
+        assertThat(lastNotFoundConfirmations("TOP_UP")).isEqualTo(recoveryProperties.notFoundConfirmThreshold());
+    }
+
+    @Test
+    @DisplayName("사람에게 넘긴 건은 업무 상태가 아직 UNKNOWN인 채로 기록된다")
+    void escalationIsRecordedWithUnknownOutcome() {
+        double before = settledCount("TOP_UP", "MANUAL_REVIEW", "UNKNOWN");
+
+        mockBankBehavior.setMode(MockBankBehavior.Mode.TIMEOUT_AFTER_WITHDRAWAL);
+        TopUpView view = topUp("recovery-key-00012", 100_000);
+        mockBankBehavior.setMode(MockBankBehavior.Mode.NORMAL);
+        mockBankBehavior.setStatusQueryAvailable(false);
+
+        for (int i = 0; i < 3; i++) {
+            recoveryService.resolveDue();
+            jdbcTemplate.update("UPDATE top_up_recovery SET next_check_at = now() - interval '1 minute'"
+                    + " WHERE requires_manual_review = false");
+        }
+
+        assertThat(requiresManualReview(view.topUpId())).isTrue();
+        assertThat(topUpStatus(view.topUpId())).isEqualTo("UNKNOWN");
+        assertThat(settledCount("TOP_UP", "MANUAL_REVIEW", "UNKNOWN")).isEqualTo(before + 1);
+    }
+
+    @Test
     @DisplayName("재시작으로 PROCESSING에 남은 충전도 복구 대상이다")
     void abandonedProcessingTopUpIsRecovered() {
         // 외부 호출 직전에 프로세스가 죽어 PROCESSING으로 남은 상태를 만듭니다.
@@ -276,6 +342,41 @@ class TopUpRecoveryIntegrationTest extends AbstractIntegrationTest {
 
     private int attemptCount(TopUpId topUpId) {
         return recoveryRow(topUpId) == null ? 0 : ((Number) recoveryRow(topUpId).get("attempt_count")).intValue();
+    }
+
+    /**
+     * 지표는 컨텍스트와 함께 살아 있어 테스트 사이에 누적됩니다. 절대값이 아니라 증분을 봅니다.
+     */
+    private double settledCount(String target, String resolution, String outcome) {
+        io.micrometer.core.instrument.Counter counter = meterRegistry
+                .find("paritypay.recovery.settled")
+                .tags("target", target, "resolution", resolution, "outcome", outcome)
+                .counter();
+        return counter == null ? 0.0 : counter.count();
+    }
+
+    private long attemptSamples(String target, String resolution) {
+        DistributionSummary summary = meterRegistry
+                .find("paritypay.recovery.attempts")
+                .tags("target", target, "resolution", resolution)
+                .summary();
+        return summary == null ? 0L : summary.count();
+    }
+
+    private long notFoundSamples(String target) {
+        DistributionSummary summary = meterRegistry
+                .find("paritypay.recovery.not_found_confirmations")
+                .tags("target", target, "resolution", "NOT_FOUND")
+                .summary();
+        return summary == null ? 0L : summary.count();
+    }
+
+    private int lastNotFoundConfirmations(String target) {
+        DistributionSummary summary = meterRegistry
+                .find("paritypay.recovery.not_found_confirmations")
+                .tags("target", target, "resolution", "NOT_FOUND")
+                .summary();
+        return summary == null ? 0 : (int) summary.max();
     }
 
     private int notFoundCount(TopUpId topUpId) {

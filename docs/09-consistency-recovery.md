@@ -195,8 +195,20 @@ TLA+ 모델 검사가 이 규칙에서 `NoFalseFailure`를 깨는 경로를 **5�
   유지됩니다. 대가는 운영자가 볼 건수이고, 그 값은 모델이 재지 않습니다.
 
 **판단은 열어 둡니다.** 어느 쪽도 이 문서의 규칙을 어기지 않으므로 코드를 바꾸지 않았습니다. 바꾸기로
-하면 네 서비스를 함께 바꾸고, `GET /api/v1/admin/payments?status=UNKNOWN`에 쌓이는 건수를 먼저 재야
-합니다(reports/13 §6의 미측정 항목).
+하면 네 서비스를 함께 바꿔야 하고, 그전에 **이 경로가 실제로 얼마나 지나가는지**를 알아야 합니다 — 사람에게
+넘기기로 하면 그 건수가 그대로 운영자 대기열이 됩니다.
+
+그 값을 세기 시작했습니다(2026-10-01). 복구가 한 건을 끝내는 순간 `RecoveryOutcomes` 포트로 넘기고,
+조립 지점이 지표로 적습니다. 복구 행은 확정과 함께 지워지므로 그 순간이 마지막 기회입니다.
+
+| 지표 | 무엇 |
+|---|---|
+| `paritypay_recovery_settled{target,resolution,outcome}` | 복구가 끝낸 건수. `resolution`은 `QUERY`(외부 조회가 답함) · `NOT_FOUND`(연속 "없음"으로 확정) · `MANUAL_REVIEW`(사람에게 넘김) |
+| `paritypay_recovery_attempts{target,resolution}` | 확정까지 외부를 조회한 횟수의 분포 |
+| `paritypay_recovery_not_found_confirmations{target}` | 연속 "없음"으로 확인된 횟수의 분포 |
+
+`resolution="NOT_FOUND"`의 건수가 곧 위 경로를 지나간 건수이고, 사람에게 넘기는 갈래를 택했을 때 운영자가
+볼 건수입니다. 식별자는 태그에 넣지 않습니다 — 지표가 사실상 지워지지 않는 로그가 됩니다.
 
 ## 8. 복구 작업 설계
 
