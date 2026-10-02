@@ -103,7 +103,7 @@ docker run --rm -i --add-host=host.docker.internal:host-gateway \
 | `recovery-latency-experiment.py` | 미확정 한 건이 확정되기까지의 시간 (충전·카드 결제) | M-011 |
 | `recovery-backlog-experiment.py` | 미확정 수백 건이 쌓였을 때의 확정 지연 (충전·결제·취소) | M-012 |
 | `db-saturation-experiment.py` | VU·풀 크기를 올리며 단일 DB가 어디에서 먼저 막히는지 | M-013 |
-| `scenario-matrix.py` | 장애 시뮬레이터 시나리오 9개 전부를 스크립트로 실행하고 수치로 남김 | M-014 (reports/13) |
+| `scenario-matrix.py` | 장애 시뮬레이터 시나리오 9개 전부를 스크립트로 실행하고 수치로 남김. 시나리오별 `paritypay_recovery_*` 차이도 함께 | M-014 (reports/13) · M-031 |
 | `kafka-failure-experiment.py` | 브로커 쪽 장애 넷: 커밋 전 죽음·브로커 kill·파티션 키·poison message | M-015~M-018 |
 | `external-isolation-experiment.py` + `external-pg-load.js` | 기관이 느릴 때의 붕괴와 그것을 막는 것: 스레드·재시도·차단기·상한·벌크헤드 | M-019~M-023 |
 | `lock-lease-experiment.py` | 분산락 lease 만료·watchdog·fencing·Redis 단절 — 채택하지 않은 경로의 대조 실험 | M-024~M-028 |

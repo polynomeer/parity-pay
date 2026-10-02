@@ -18,7 +18,7 @@
 외부 결과를 모를 때는 `UNKNOWN`으로 보존하고 조회로만 확정합니다(ADR-007).
 
 **상태 (2026-10-01)**: Phase 0~9 구현 완료. 백엔드 테스트 331 · 프론트엔드 56 · E2E 7, 실패 0. 부하·장애
-실험 42종이 결함 14건(A~N)을 찾았고 전부 고쳤습니다(M-024~M-028은 분산락을 일부러 만들어 ADR-004를 재확인한 실험, 결함 아님). 여기에 모델 검사 1건(M-030)이 `UNKNOWN` 해소 규칙에서 실험이 못 밟는 경로를 찾아 열린 판단 하나를 남겼습니다([docs/09 §7](09-consistency-recovery.md)). 근거: [reports/12](../reports/12-portfolio-technical-report.md)
+실험 43종이 결함 14건(A~N)을 찾았고 전부 고쳤습니다(M-024~M-028은 분산락을 일부러 만들어 ADR-004를 재확인한 실험, 결함 아님). 여기에 모델 검사 1건(M-030)이 `UNKNOWN` 해소 규칙에서 실험이 못 밟는 경로를 찾아 열린 판단 하나를 남겼습니다([docs/09 §7](09-consistency-recovery.md)). 근거: [reports/12](../reports/12-portfolio-technical-report.md)
 
 ## 2. 저장소 지도
 
@@ -365,7 +365,7 @@ TanStack Query의 기본 재시도(쿼리 3회)를 끄고 명시적으로 통제
 | 백엔드 단위·통합·속성·아키텍처 | JUnit 5 + Testcontainers(PostgreSQL·Redpanda 실물) + jqwik + ArchUnit | 331 |
 | 프론트 단위 | Vitest + Testing Library + MSW (API 목) | 56 |
 | E2E | Playwright, 목 없음, 실제 스택 전부 | 7 (주간·수동) |
-| 부하·장애 실험 | k6 + 파이썬 하니스 23개, 결과는 reports/11·13. 실행법 [DOC-19](19-experiment-runbook.md), 해석 [DOC-20](20-experiment-result-interpretation.md) | 42종 |
+| 부하·장애 실험 | k6 + 파이썬 하니스 23개, 결과는 reports/11·13. 실행법 [DOC-19](19-experiment-runbook.md), 해석 [DOC-20](20-experiment-result-interpretation.md) | 43종 |
 | 모델 검사 | TLA+ · TLC, `formal/`. `PaymentRecoveryService.resolveOne`의 규칙을 전수 검사 | 명세 2편 (M-030) |
 
 원칙: 커버리지보다 **금융 분기·상태 전이 전수 검증**. 속성 테스트는 seed를 출력하고 반례는 회귀 테스트로

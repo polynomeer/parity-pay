@@ -192,6 +192,7 @@ F-003~F-011은 **매 커밋 `./gradlew test`에 포함**되어 있습니다. 따
 | M-028 | 부하 중 Redis kill (fail-closed/open/fencing/대조군) | `lock-lease-experiment.py redisdown --jar $J --runs 3` | 위와 같음 | 변형당 60초×3 | `redisdown-<UTC>.json` | §4 M-028 |
 | M-010 | 차감 직전 명시적 flush | `transaction-timeline.py` (문장 순서로 판정) | 4.2 스택 | 초 단위 | 콘솔 | §4 M-010 |
 | M-029 | 동기화된 폭주에서 지터가 봉우리를 펼치는가 | `python3 load-tests/retry-stampede-experiment.py --jar $J --clients 150 --runs 3` | 4.1 (스크립트가 앱을 띄우고, 변형마다 mock-pg를 재시작) | 변형 3개 × 3회, 약 10분 | `/tmp/t11-retry-stampede/results.json` | §4 M-029 |
+| M-031 | 복구가 무엇을 근거로 끝나는가 (조회 / 연속 "없음" / 사람) | `python3 load-tests/scenario-matrix.py --only normal,bank-timeout-before,bank-timeout-after,pg-timeout-after --runs 3 --pg-base http://localhost:<mock-pg>` | **4.2 스택**, 빈 데이터베이스 (`scripts/dev.sh down -v && scripts/dev.sh up`) | 약 6분 | `/tmp/scenario-matrix/<UTC>/summary.json`의 `recoveryMeters` | §4 M-031 |
 
 `$J`는 `apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar`입니다. M-015~M-028은 **`experiment-*` 프로필과
 `EXPERIMENT_*` 환경변수로만** 기본값에서 벗어나며, 스크립트가 넣어 줍니다. 그 프로필은 실험 뒤 채택하지 않은 경로
@@ -218,6 +219,14 @@ java -cp tla2tools.jar tlc2.TLC -config MC-others.cfg UnknownResolution.tla     
 설정 파일이 임계치와 검사할 불변조건을 정합니다 — `MC.cfg`(기본, 임계치 2), `MC-t2/t3/t5/t8.cfg`(임계치별),
 `MC-others.cfg`(`NoFalseFailure`를 빼고 나머지 셋), `MC-escalate.cfg`(처치 갈래). 명세를 고치면 네 불변조건
 전부를 다시 돌립니다 — 하나만 돌리면 고치는 과정에서 다른 셋이 깨진 것을 못 봅니다.
+
+> **M-014·M-031을 돌릴 때는 빈 데이터베이스로 시작합니다.** 앞선 실행이 남긴 미확정 건이 있으면 복구가 그것까지
+> 확정하면서 `paritypay_recovery_*` 차이에 섞입니다. 실제로 그렇게 섞인 적이 있습니다 — 스택을 올린 직후 지표에
+> `NOT_FOUND` 10건·조회 10회가 이미 들어 있었고, 전부 이전 세션이 남긴 결제였습니다.
+>
+> **PG 장애 시나리오를 연속으로 돌리면 3회차부터 차단기가 막습니다**(ADR-014). 기관에 나가지 않으므로 미확정이
+> 아니라 `FAILED(CIRCUIT_OPEN)`입니다. reports/13의 수치를 재현하려면 실행 사이에 차단기가 닫히기를 기다려야
+> 합니다(reports/13 §5-b).
 
 ### 6.4 E2E
 

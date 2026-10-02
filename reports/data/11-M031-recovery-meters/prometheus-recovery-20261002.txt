@@ -1,0 +1,16 @@
+paritypay_recovery_attempts_count{resolution="NOT_FOUND",target="TOP_UP"} 6
+paritypay_recovery_attempts_count{resolution="QUERY",target="PAYMENT"} 5
+paritypay_recovery_attempts_count{resolution="QUERY",target="TOP_UP"} 6
+paritypay_recovery_attempts_max{resolution="NOT_FOUND",target="TOP_UP"} 0.0
+paritypay_recovery_attempts_max{resolution="QUERY",target="PAYMENT"} 1.0
+paritypay_recovery_attempts_max{resolution="QUERY",target="TOP_UP"} 1.0
+paritypay_recovery_attempts_sum{resolution="NOT_FOUND",target="TOP_UP"} 18.0
+paritypay_recovery_attempts_sum{resolution="QUERY",target="PAYMENT"} 5.0
+paritypay_recovery_attempts_sum{resolution="QUERY",target="TOP_UP"} 6.0
+paritypay_recovery_manual_review 0.0
+paritypay_recovery_not_found_confirmations_count{resolution="NOT_FOUND",target="TOP_UP"} 6
+paritypay_recovery_not_found_confirmations_max{resolution="NOT_FOUND",target="TOP_UP"} 0.0
+paritypay_recovery_not_found_confirmations_sum{resolution="NOT_FOUND",target="TOP_UP"} 18.0
+paritypay_recovery_settled_total{outcome="APPROVED",resolution="QUERY",target="PAYMENT"} 5.0
+paritypay_recovery_settled_total{outcome="FAILED",resolution="NOT_FOUND",target="TOP_UP"} 6.0
+paritypay_recovery_settled_total{outcome="SUCCEEDED",resolution="QUERY",target="TOP_UP"} 6.0

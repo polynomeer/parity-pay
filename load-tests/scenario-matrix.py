@@ -217,6 +217,37 @@ def invariant_gauges(base):
     return values
 
 
+def recovery_meters(base):
+    """`paritypay_recovery_*` 전부를 라벨까지 살려서 긁습니다.
+
+    복구 행은 확정과 함께 지워지므로 이 지표가 "몇 번 만에, 무엇을 근거로 끝났는가"의 유일한 기록입니다
+    (docs/09 §7). 게이지와 달리 단조 증가하는 카운터·분포라 **시나리오 전후의 차이**를 봐야 합니다.
+    """
+    values = {}
+    for line in text(base, "/actuator/prometheus").splitlines():
+        if line.startswith("paritypay_recovery_settled") or line.startswith("paritypay_recovery_attempts") \
+                or line.startswith("paritypay_recovery_not_found_confirmations"):
+            name, _, value = line.rpartition(" ")
+            values[name] = float(value)
+    return values
+
+
+def meter_delta(before, after):
+    """시나리오가 더한 몫만 남깁니다. 0이 된 항목은 버립니다.
+
+    `_max`는 뺍니다. Micrometer의 분포 max는 누적값이 아니라 **시간이 지나면 내려가는 게이지**라
+    차이를 내면 음수가 나옵니다(실제로 -3.0을 한 번 적었습니다). 누적인 것은 `_count`와 `_sum`뿐입니다.
+    """
+    delta = {}
+    for key, value in after.items():
+        if "_max" in key:
+            continue
+        diff = value - before.get(key, 0.0)
+        if abs(diff) > 1e-9:
+            delta[key] = round(diff, 3)
+    return delta
+
+
 def wallet_available(base, access):
     _, view = call(base, "GET", "/api/v1/wallets/me", token=access)
     return view.get("available")
@@ -374,6 +405,9 @@ def main():
     for scenario in selected:
         print(f"\n## {scenario['label']} ({scenario['id']})", flush=True)
         rows = []
+        # 복구 지표는 단조 증가하므로 시나리오 앞뒤 차이를 봅니다. 한 시나리오가 무엇을 근거로
+        # 끝났는지(조회·연속 없음·사람)를 셀 수 있는 유일한 기록입니다. 근거: docs/09 §7
+        meters_before = recovery_meters(args.base)
         for index in range(args.runs):
             if scenario["target"] == "bank":
                 row = run_top_up(args.base, ops, args.container, scenario, index, args.poll, args.deadline)
@@ -390,8 +424,10 @@ def main():
             reset_institutions(args.base, ops)
             (out / "results.json").write_text(json.dumps(results, ensure_ascii=False, indent=2))
         gauges = invariant_gauges(args.base)
-        per_scenario[scenario["id"]] = {"rows": rows, "gaugesAfter": gauges}
+        recovery = meter_delta(meters_before, recovery_meters(args.base))
+        per_scenario[scenario["id"]] = {"rows": rows, "gaugesAfter": gauges, "recoveryMeters": recovery}
         print(f"   불변조건 게이지: {gauges}", flush=True)
+        print(f"   복구 지표(이 시나리오 몫): {recovery or '없음'}", flush=True)
 
     summary = {
         "commit": commit,
@@ -399,7 +435,8 @@ def main():
         "runs": args.runs,
         "gaugesBefore": gauges_before,
         "scenarios": [{"id": s["id"], "label": s["label"], "expect": s["expect"], "note": s["note"],
-                       "gaugesAfter": per_scenario[s["id"]]["gaugesAfter"]} for s in selected],
+                       "gaugesAfter": per_scenario[s["id"]]["gaugesAfter"],
+                       "recoveryMeters": per_scenario[s["id"]]["recoveryMeters"]} for s in selected],
         "results": results,
     }
     (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2))

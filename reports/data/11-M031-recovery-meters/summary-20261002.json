@@ -1,0 +1,285 @@
+{
+  "commit": "68ef07b",
+  "startedAt": "20261001T235448Z",
+  "runs": 3,
+  "gaugesBefore": {
+    "paritypay_invariant_balance_snapshot_drift": 0.0,
+    "paritypay_invariant_negative_wallet_balances": 0.0,
+    "paritypay_invariant_over_cancelled_payments": 0.0,
+    "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+  },
+  "scenarios": [
+    {
+      "id": "normal",
+      "label": "정상 처리",
+      "expect": "SUCCEEDED",
+      "note": "기준선",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      },
+      "recoveryMeters": {}
+    },
+    {
+      "id": "bank-timeout-before",
+      "label": "은행이 출금 전에 응답을 끊음",
+      "expect": "FAILED",
+      "note": "외부 기록 없음 → 연속 확인 뒤 FAILED",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      },
+      "recoveryMeters": {
+        "paritypay_recovery_attempts_count{resolution=\"NOT_FOUND\",target=\"TOP_UP\"}": 3.0,
+        "paritypay_recovery_attempts_sum{resolution=\"NOT_FOUND\",target=\"TOP_UP\"}": 9.0,
+        "paritypay_recovery_not_found_confirmations_count{resolution=\"NOT_FOUND\",target=\"TOP_UP\"}": 3.0,
+        "paritypay_recovery_not_found_confirmations_sum{resolution=\"NOT_FOUND\",target=\"TOP_UP\"}": 9.0,
+        "paritypay_recovery_settled_total{outcome=\"FAILED\",resolution=\"NOT_FOUND\",target=\"TOP_UP\"}": 3.0
+      }
+    },
+    {
+      "id": "bank-timeout-after",
+      "label": "은행이 출금 뒤에 응답을 끊음",
+      "expect": "SUCCEEDED",
+      "note": "돈은 움직였고 응답만 유실 → 조회로 SUCCEEDED",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      },
+      "recoveryMeters": {
+        "paritypay_recovery_attempts_count{resolution=\"QUERY\",target=\"TOP_UP\"}": 3.0,
+        "paritypay_recovery_attempts_sum{resolution=\"QUERY\",target=\"TOP_UP\"}": 3.0,
+        "paritypay_recovery_settled_total{outcome=\"SUCCEEDED\",resolution=\"QUERY\",target=\"TOP_UP\"}": 3.0
+      }
+    },
+    {
+      "id": "pg-timeout-after",
+      "label": "카드 PG가 승인 뒤에 응답을 끊음",
+      "expect": "APPROVED",
+      "note": "UNKNOWN으로 보존 → 조회로 APPROVED",
+      "gaugesAfter": {
+        "paritypay_invariant_balance_snapshot_drift": 0.0,
+        "paritypay_invariant_negative_wallet_balances": 0.0,
+        "paritypay_invariant_over_cancelled_payments": 0.0,
+        "paritypay_invariant_unbalanced_ledger_transactions": 0.0
+      },
+      "recoveryMeters": {
+        "paritypay_recovery_attempts_count{resolution=\"QUERY\",target=\"PAYMENT\"}": 2.0,
+        "paritypay_recovery_attempts_sum{resolution=\"QUERY\",target=\"PAYMENT\"}": 2.0,
+        "paritypay_recovery_settled_total{outcome=\"APPROVED\",resolution=\"QUERY\",target=\"PAYMENT\"}": 2.0
+      }
+    }
+  ],
+  "results": [
+    {
+      "scenario": "normal",
+      "index": 0,
+      "kind": "top-up",
+      "httpStatus": 201,
+      "firstStatus": "SUCCEEDED",
+      "terminal": "SUCCEEDED",
+      "seconds": 0.05589600000530481,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0f9e4-5f87-7000-9b46-3f7f5eddff1e"
+    },
+    {
+      "scenario": "normal",
+      "index": 1,
+      "kind": "top-up",
+      "httpStatus": 201,
+      "firstStatus": "SUCCEEDED",
+      "terminal": "SUCCEEDED",
+      "seconds": 0.039875540998764336,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0f9e4-6555-7000-ae87-d65353bc76e2"
+    },
+    {
+      "scenario": "normal",
+      "index": 2,
+      "kind": "top-up",
+      "httpStatus": 201,
+      "firstStatus": "SUCCEEDED",
+      "terminal": "SUCCEEDED",
+      "seconds": 0.038052708958275616,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0f9e4-6bad-7000-9e6c-cb83e5f5c3fe"
+    },
+    {
+      "scenario": "bank-timeout-before",
+      "index": 0,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "FAILED",
+      "seconds": 42.618645957962144,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 0,
+      "balanceDelta": 0,
+      "referenceId": "01a0f9e4-7198-7000-b570-332e1bac3278"
+    },
+    {
+      "scenario": "bank-timeout-before",
+      "index": 1,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "FAILED",
+      "seconds": 43.759668790968135,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 0,
+      "balanceDelta": 0,
+      "referenceId": "01a0f9e5-201e-7000-99e9-75eda34255d9"
+    },
+    {
+      "scenario": "bank-timeout-before",
+      "index": 2,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "FAILED",
+      "seconds": 43.4840526250191,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 0,
+      "balanceDelta": 0,
+      "referenceId": "01a0f9e5-d079-7000-a382-5e45beef4370"
+    },
+    {
+      "scenario": "bank-timeout-after",
+      "index": 0,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "SUCCEEDED",
+      "seconds": 33.42131883301772,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0f9e6-80a4-7000-8cf2-91b242e2a49e"
+    },
+    {
+      "scenario": "bank-timeout-after",
+      "index": 1,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "SUCCEEDED",
+      "seconds": 33.38753058301518,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0f9e7-0895-7000-8d32-2c815e08e64c"
+    },
+    {
+      "scenario": "bank-timeout-after",
+      "index": 2,
+      "kind": "top-up",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "SUCCEEDED",
+      "seconds": 34.498743000032846,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 10000,
+      "referenceId": "01a0f9e7-90b2-7000-860f-018b7df076c1"
+    },
+    {
+      "scenario": "pg-timeout-after",
+      "index": 0,
+      "kind": "payment",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "APPROVED",
+      "seconds": 33.33675691700773,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0f9e8-1d0c-7000-aed9-697886f2fb5f"
+    },
+    {
+      "scenario": "pg-timeout-after",
+      "index": 1,
+      "kind": "payment",
+      "httpStatus": 202,
+      "firstStatus": "UNKNOWN",
+      "terminal": "APPROVED",
+      "seconds": 31.428776042012032,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 1,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0f9e8-ad15-7000-b05b-0ace0a561cb4"
+    },
+    {
+      "scenario": "pg-timeout-after",
+      "index": 2,
+      "kind": "payment",
+      "httpStatus": 201,
+      "firstStatus": "FAILED",
+      "terminal": "FAILED",
+      "seconds": 0.02535208297194913,
+      "attempts": null,
+      "notFound": null,
+      "manualReview": null,
+      "ledgerPosted": 0,
+      "balanceDelta": 0,
+      "webhookReceipts": {
+        "accepted": 0,
+        "cursor": null
+      },
+      "webhookLog": {
+        "duplicate": 0,
+        "stale": 0
+      },
+      "referenceId": "01a0f9e9-35d1-7000-83d0-ad29305abb99"
+    }
+  ]
+}
