@@ -76,6 +76,7 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 | "기관에 기록이 없음"을 실패로 확정하는 조건 | [docs/adr/016-not-found-settlement-window.md](docs/adr/016-not-found-settlement-window.md) |
 | 화면 스타일·상태 색·메뉴 규칙 | [docs/adr/012-frontend-design-system.md](docs/adr/012-frontend-design-system.md) |
 | 로컬 스택 기동·포트 우회 | [docs/adr/013-local-dev-stack-script.md](docs/adr/013-local-dev-stack-script.md) |
+| APM 도구를 바꿔 끼울 때 | [docs/adr/017-swappable-apm-backend.md](docs/adr/017-swappable-apm-backend.md) |
 | 왜 이렇게 결정했는지 | [docs/adr/README.md](docs/adr/README.md) |
 
 전체 문서 관계는 [docs/00-document-map.md](docs/00-document-map.md)에 있습니다.
@@ -154,6 +155,7 @@ pnpm typecheck
 pnpm --filter @paritypay/web-customer dev    # 고객 앱 (5173)
 pnpm --filter @paritypay/web-ops dev         # 운영 콘솔 (5174)
 scripts/dev.sh [up|down|status|logs] # 로컬 스택 전부 (컨테이너·기관·pay-api·앱 둘). 잡힌 포트는 우회합니다
+scripts/apm.sh up <name>             # APM 백엔드 교체 (jaeger·tempo·signoz·skywalking·pinpoint·datadog·none). ADR-017
 load-tests/run-e2e.sh                # 실제 스택 E2E. 스택을 띄우고 돌리고 정리합니다 (약 1분)
 deploy/run.sh                        # 배포 형태로 띄웁니다 (이미지 빌드 포함). down으로 정리
 ```

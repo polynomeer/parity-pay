@@ -57,3 +57,6 @@ deploy/certs/
 
 # importlib로 M-011 스크립트를 불러오면 생깁니다
 __pycache__/
+
+# APM 실험이 내려받는 에이전트 jar와 활성 설정입니다. 커밋하지 않습니다 (ADR-017).
+.apm/

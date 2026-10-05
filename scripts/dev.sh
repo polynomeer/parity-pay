@@ -22,6 +22,9 @@
 #
 # 선택:
 #   --observability                  prometheus·grafana·jaeger까지 띄웁니다
+#
+# APM 비교 실험(ADR-017): scripts/apm.sh up <name> 을 먼저 돌리면 .apm/env 가 생기고, 이 스크립트가
+# 그것을 읽어 pay-api 에 넘깁니다. 앱은 어떤 APM인지 알지 못합니다.
 #   --no-build                       jar를 다시 빌드하지 않습니다 (코드가 안 바뀌었을 때)
 #   PARITYPAY_*_PORT=<n>             특정 서비스의 시작 포트를 바꿉니다 (그것도 잡혀 있으면 우회합니다)
 #
@@ -245,6 +248,15 @@ cmd_up() {
   else
     # 트레이스 백엔드가 없으면 내보내기 실패 로그만 쌓입니다.
     api_env+=(PARITYPAY_TRACE_SAMPLING=0)
+  fi
+  # APM 실험이 켜져 있으면 그 설정이 위를 덮습니다. 어느 APM인지는 scripts/apm.sh 가 정하고
+  # 이 스크립트는 읽기만 합니다 — 앱도, 이 스크립트도 도구 이름을 모릅니다 (ADR-017).
+  if [ -f .apm/env ]; then
+    echo "== APM: $(cat .apm/active 2>/dev/null || echo '?') (.apm/env 적용)"
+    while IFS= read -r line; do
+      case "$line" in ''|\#*) continue ;; esac
+      api_env+=("$line")
+    done < .apm/env
   fi
   env "${api_env[@]}" "$JAVA_HOME/bin/java" -jar apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar \
     > "$OUT/api.log" 2>&1 &

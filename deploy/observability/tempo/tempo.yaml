@@ -1,0 +1,26 @@
+# 단일 노드 Tempo. 실험용이므로 로컬 디스크에 담고 보관 기간을 짧게 둡니다.
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    # 실험 기본값. 도구별 기본 보관 기간 비교는 reports 쪽에 적습니다.
+    block_retention: 24h
+
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /var/tempo/wal
+    local:
+      path: /var/tempo/blocks

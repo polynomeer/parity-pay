@@ -9,3 +9,9 @@ datasources:
     type: jaeger
     access: proxy
     url: http://jaeger:16686
+  # APM 비교 실험에서 Tempo 프로필을 켤 때만 응답합니다(ADR-017). 꺼져 있으면 이 데이터소스만
+  # 오류를 내고 나머지 화면은 그대로 동작합니다 — 도구를 바꿔도 Grafana 설정을 손대지 않으려는 것입니다.
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200

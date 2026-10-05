@@ -1,0 +1,44 @@
+# APM 비교 실험용 백엔드입니다. 애플리케이션은 이 파일의 어떤 서비스도 알지 못합니다 —
+# 언제나 OTLP 한 자리로만 보내고, 어디로 가는지는 컬렉터가 정합니다. 근거: ADR-017
+#
+# 직접 쓰지 말고 scripts/apm.sh 로 띄웁니다. 프로필마다 필요한 컨테이너가 다르고, 자체 에이전트를
+# 쓰는 도구는 앱 쪽 환경변수까지 바꿔야 하기 때문입니다.
+services:
+  # ---------- OTLP를 받는 도구 공용 ----------
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.119.0
+    container_name: paritypay-otel-collector
+    profiles: ["apm-jaeger", "apm-tempo", "apm-signoz", "apm-datadog"]
+    # 설정 파일만 바꿔 끼웁니다. 이것이 "APM을 바꾸는 한 곳"입니다.
+    command: ["--config=/etc/otel/collector-${PARITYPAY_APM:-jaeger}.yaml"]
+    volumes:
+      - ./deploy/observability/otel:/etc/otel:ro
+    ports:
+      - "${PARITYPAY_OTLP_GRPC_PORT:-4317}:4317"
+      - "${PARITYPAY_OTLP_HTTP_PORT:-4318}:4318"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ---------- Jaeger ----------
+  # 기준선입니다. 기본 compose 에서는 앱이 Jaeger 의 OTLP 포트로 직접 보내지만, APM 실험에서는
+  # 컬렉터가 그 자리(4317/4318)를 가져갑니다. 그래서 여기서는 UI 포트만 남깁니다 —
+  # 같은 호스트 포트를 두 컨테이너가 쓸 수 없고, "앱이 보내는 자리는 늘 컬렉터"여야 합니다.
+  jaeger:
+    profiles: ["apm-jaeger"]
+    ports: !override
+      - "${PARITYPAY_JAEGER_UI_PORT:-16686}:16686"
+
+  # ---------- Grafana Tempo ----------
+  tempo:
+    image: grafana/tempo:2.7.0
+    container_name: paritypay-tempo
+    profiles: ["apm-tempo"]
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./deploy/observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "${PARITYPAY_TEMPO_PORT:-3200}:3200"
+
+volumes:
+  tempo-data:
