@@ -45,6 +45,7 @@ paritypay:
     recovery-max-backoff: 10ms
     recovery-max-attempts: 3
     recovery-not-found-confirm-threshold: 2
+    recovery-not-found-settle-after: 0s
   recovery:
     cancellation:
       enabled: false
@@ -54,6 +55,8 @@ paritypay:
       max-backoff: 10ms
       max-attempts: 3
       not-found-confirm-threshold: 2
+      # 시험 대역은 요청 안에서 기록하거나 영원히 기록하지 않습니다. 기다릴 창이 없습니다(ADR-016).
+      not-found-settle-after: 0s
     payment:
       # 배경 스케줄러가 돌면 UNKNOWN 상태를 관찰할 수 없습니다. 테스트가 직접 호출합니다.
       enabled: false
@@ -63,6 +66,8 @@ paritypay:
       max-backoff: 10ms
       max-attempts: 3
       not-found-confirm-threshold: 2
+      # 시험 대역은 요청 안에서 기록하거나 영원히 기록하지 않습니다. 기다릴 창이 없습니다(ADR-016).
+      not-found-settle-after: 0s
     top-up:
       # 복구 시점도 테스트가 직접 통제합니다. 배경 스케줄러가 돌면 UNKNOWN 상태를 관찰할 수 없습니다.
       enabled: false
@@ -72,6 +77,8 @@ paritypay:
       max-backoff: 10ms
       max-attempts: 3
       not-found-confirm-threshold: 2
+      # 시험 대역은 요청 안에서 기록하거나 영원히 기록하지 않습니다. 기다릴 창이 없습니다(ADR-016).
+      not-found-settle-after: 0s
   events:
     # 테스트는 발행 시점을 직접 통제합니다. 스케줄러가 배경에서 돌면 "커밋 후 발행 전" 같은
     # 중간 상태를 관찰할 수 없습니다. 필요한 테스트는 OutboxPublisher를 직접 호출합니다.

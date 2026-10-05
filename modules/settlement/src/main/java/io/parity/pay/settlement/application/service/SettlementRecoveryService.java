@@ -136,7 +136,7 @@ public class SettlementRecoveryService {
                 record(item, RecoveryOutcomes.Resolution.QUERY, "FAILED");
                 yield true;
             }
-            case NOT_FOUND -> handleNotFound(item);
+            case NOT_FOUND -> handleNotFound(item, loaded.get());
             case UNAVAILABLE -> {
                 scheduleRetryOrEscalate(item, "payout status query unavailable");
                 yield false;
@@ -144,8 +144,27 @@ public class SettlementRecoveryService {
         };
     }
 
-    private boolean handleNotFound(PendingPayoutRecovery item) {
+    private boolean handleNotFound(PendingPayoutRecovery item, Settlement settlement) {
         int notFoundCount = item.notFoundCount() + 1;
+        if (notFoundCount >= properties.recoveryNotFoundConfirmThreshold()
+                && !settleWindowClosed(settlement.updatedAt())) {
+            if (properties.recoveryNotFoundSettleAfter() == null) {
+                recoveryRepository.markManualReview(
+                        item.settlementId(), item.attemptCount() + 1, "no declared processing window", clock.instant());
+                outcomes.settled(new RecoveryOutcomes.Settled(
+                        RecoveryOutcomes.Target.PAYOUT,
+                        RecoveryOutcomes.Resolution.MANUAL_REVIEW,
+                        "UNKNOWN",
+                        item.attemptCount() + 1,
+                        notFoundCount));
+                log.warn(
+                        "settlement {} needs manual review: payout record not found and no declared window",
+                        item.settlementId());
+                return false;
+            }
+            scheduleNotFoundRetry(item, notFoundCount, "payout record not found, still within window");
+            return false;
+        }
         if (notFoundCount >= properties.recoveryNotFoundConfirmThreshold()) {
             // 외부에 지급 기록이 반복 확인되지 않았습니다. 돈이 나가지 않았다고 보고 실패로 확정하면
             // 운영자가 다시 지급을 시도할 수 있습니다.
@@ -159,14 +178,27 @@ public class SettlementRecoveryService {
                     notFoundCount));
             return true;
         }
+        scheduleNotFoundRetry(item, notFoundCount, "payout record not found");
+        return false;
+    }
+
+    private void scheduleNotFoundRetry(PendingPayoutRecovery item, int notFoundCount, String reason) {
         recoveryRepository.scheduleRetry(
                 item.settlementId(),
                 item.attemptCount() + 1,
                 notFoundCount,
                 clock.instant().plus(backoffFor(item.attemptCount() + 1)),
-                "payout record not found",
+                reason,
                 clock.instant());
-        return false;
+    }
+
+    /**
+     * "없음"을 실패로 바꿀 수 있는 순간인지 판단합니다. 기준 시각은 지급 요청을 보낸 때
+     * (상태가 {@code PAYING}으로 바뀐 때)입니다. 근거: ADR-016, M-030
+     */
+    private boolean settleWindowClosed(Instant sentAt) {
+        Duration window = properties.recoveryNotFoundSettleAfter();
+        return window != null && !clock.instant().isBefore(sentAt.plus(window));
     }
 
     private void scheduleRetryOrEscalate(PendingPayoutRecovery item, String reason) {

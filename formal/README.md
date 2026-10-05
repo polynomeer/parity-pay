@@ -30,6 +30,23 @@ curl -sL -o formal/tla2tools.jar \
   https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar
 ```
 
+## 창을 넣은 변주 (`UnknownResolutionWindow.tla`, ADR-016)
+
+구현된 규칙에서 `NoFalseFailure`가 깨지는 이유는 하나입니다 — 기관이 요청을 받아 둔 채 **언제까지고** 기록할
+수 있기 때문입니다. 임계치를 올려도 그 경로는 남습니다. `UnknownResolutionWindow.tla`는 기관이 계약으로 창을
+선언한 경우를 모델에 넣습니다: 창이 닫히면 기관은 더 이상 기록하지 않고, 복구는 **창이 닫힌 뒤에만** 연속
+"없음"을 확정합니다.
+
+```bash
+java -cp tla2tools.jar tlc2.TLC -config MC-window.cfg UnknownResolutionWindow.tla     # 임계치 2
+java -cp tla2tools.jar tlc2.TLC -config MC-window-t3.cfg UnknownResolutionWindow.tla  # 임계치 3
+```
+
+네 불변조건이 전부 성립합니다(임계치 2에서 256 상태, 3에서 364 상태). **증명된 것은 "구현이 안전하다"가 아니라
+"기관이 창을 지키면 규칙이 안전하다"입니다.** 창은 가정이고 모델은 가정을 검증하지 못합니다 — 바뀐 것은 그
+가정이 임계치 숫자 안에 숨어 있다가 설정과 계약으로 나왔다는 점입니다. 결정과 근거는
+[ADR-016](../docs/adr/016-not-found-settlement-window.md)에 있습니다.
+
 ## 결과 요약
 
 구현된 규칙에서 `NoFalseFailure`가 **5단계 만에** 깨집니다. 임계치를 2 → 3 → 5 → 8로 올려도 깨지고,

@@ -208,6 +208,7 @@ java -cp tla2tools.jar tlc2.TLC -config MC.cfg UnknownResolution.tla            
 java -cp tla2tools.jar tlc2.TLC -config MC-escalate.cfg UnknownResolutionEscalate.tla  # 사람에게 넘기는 갈래
 java -cp tla2tools.jar tlc2.TLC -config MC-t8.cfg UnknownResolution.tla         # 임계치 8
 java -cp tla2tools.jar tlc2.TLC -config MC-others.cfg UnknownResolution.tla     # NoFalseFailure 제외
+java -cp tla2tools.jar tlc2.TLC -config MC-window.cfg UnknownResolutionWindow.tla  # 창을 넣은 변주 (ADR-016)
 ```
 
 | 항목 | 값 |

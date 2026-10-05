@@ -23,6 +23,7 @@ ADR은 중요한 기술 선택의 맥락, 대안, 결정과 결과를 기록합�
 | [ADR-013](013-local-dev-stack-script.md) | 로컬 스택을 한 스크립트로 띄우고, 잡힌 포트는 우회함 | Accepted (2026-09-14) |
 | [ADR-014](014-external-call-isolation.md) | 외부기관 호출을 타임아웃·벌크헤드·차단기로 격리함 | Accepted (2026-09-16) |
 | [ADR-015](015-initial-technology-stack.md) | 초기 기술 스택을 고른 이유를 초기 커밋에서 재구성함 | Accepted (2026-10-05) |
+| [ADR-016](016-not-found-settlement-window.md) | "기관에 기록이 없음"은 기관이 보장한 창이 닫힌 뒤에만 실패로 확정함 | Accepted (2026-10-05, 모델 검사 + 공개 기술자료 근거) |
 
 ### 읽는 순서
 

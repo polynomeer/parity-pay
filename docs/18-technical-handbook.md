@@ -17,7 +17,7 @@
 의도를 **한 로컬 트랜잭션**으로 묶고(ADR-005), 브로커의 at-least-once를 멱등 소비자로 흡수하며(ADR-006),
 외부 결과를 모를 때는 `UNKNOWN`으로 보존하고 조회로만 확정합니다(ADR-007).
 
-**상태 (2026-10-01)**: Phase 0~9 구현 완료. 백엔드 테스트 331 · 프론트엔드 56 · E2E 7, 실패 0. 부하·장애
+**상태 (2026-10-01)**: Phase 0~9 구현 완료. 백엔드 테스트 334 · 프론트엔드 56 · E2E 7, 실패 0. 부하·장애
 실험 43종이 결함 14건(A~N)을 찾았고 전부 고쳤습니다(M-024~M-028은 분산락을 일부러 만들어 ADR-004를 재확인한 실험, 결함 아님). 여기에 모델 검사 1건(M-030)이 `UNKNOWN` 해소 규칙에서 실험이 못 밟는 경로를 찾아 열린 판단 하나를 남겼습니다([docs/09 §7](09-consistency-recovery.md)). 근거: [reports/12](../reports/12-portfolio-technical-report.md)
 
 ## 2. 저장소 지도
@@ -362,11 +362,11 @@ TanStack Query의 기본 재시도(쿼리 3회)를 끄고 명시적으로 통제
 
 | 층 | 무엇 | 수 (2026-09-17) |
 |---|---|---|
-| 백엔드 단위·통합·속성·아키텍처 | JUnit 5 + Testcontainers(PostgreSQL·Redpanda 실물) + jqwik + ArchUnit | 331 |
+| 백엔드 단위·통합·속성·아키텍처 | JUnit 5 + Testcontainers(PostgreSQL·Redpanda 실물) + jqwik + ArchUnit | 334 |
 | 프론트 단위 | Vitest + Testing Library + MSW (API 목) | 56 |
 | E2E | Playwright, 목 없음, 실제 스택 전부 | 7 (주간·수동) |
 | 부하·장애 실험 | k6 + 파이썬 하니스 23개, 결과는 reports/11·13. 실행법 [DOC-19](19-experiment-runbook.md), 해석 [DOC-20](20-experiment-result-interpretation.md) | 43종 |
-| 모델 검사 | TLA+ · TLC, `formal/`. `PaymentRecoveryService.resolveOne`의 규칙을 전수 검사 | 명세 2편 (M-030) |
+| 모델 검사 | TLA+ · TLC, `formal/`. `PaymentRecoveryService.resolveOne`의 규칙을 전수 검사 | 명세 3편 (M-030, ADR-016) |
 
 원칙: 커버리지보다 **금융 분기·상태 전이 전수 검증**. 속성 테스트는 seed를 출력하고 반례는 회귀 테스트로
 승격. 실패 테스트를 `@Disabled`로 덮지 않음. `FROM-CACHE`는 실행이 아님 — `--rerun-tasks --no-build-cache`.
@@ -439,5 +439,5 @@ deploy/run.sh                        # 배포 형태 (nginx·TLS·이미지 빌�
 - 화면의 명도 대비(WCAG)는 측정하지 않았습니다.
 - Prometheus 스크레이프 대상이 `host.docker.internal:8080`으로 고정되어 있어 `pay-api` 포트를 우회하면 지표가 끊깁니다(ADR-013).
 - Redis는 compose에 떠 있지만 운영 경로에서 쓰는 곳이 없습니다. `experiment-lock` 프로필(M-024~M-028)만 씁니다.
-- **연속 "없음"을 `FAILED`로 확정하는 규칙에는 모델 검사가 찾은 경로가 남아 있습니다**(M-030). 임계치는 확률을 낮추지만 경로를 없애지 못합니다. 확정과 사람에게 넘김 중 어느 쪽을 택할지는 열린 판단입니다([docs/09 §7](09-consistency-recovery.md)).
+- 연속 "없음"을 `FAILED`로 확정하는 규칙은 **기관이 보장한 창이 닫힌 뒤에만** 동작합니다([ADR-016](adr/016-not-found-settlement-window.md), 2026-10-05). 창을 선언하지 않은 기관의 "없음"은 확정하지 않고 사람에게 갑니다. 창 자체는 **계약이고 우리가 검증할 수 없습니다** — 기관이 창을 어기면 M-030의 반례가 돌아옵니다.
 - 모델 검사는 결제 하나·시간 없는 모델이고 명세는 손으로 옮긴 것입니다. 검사한 것은 분기 구조이지 트랜잭션 경계·잠금·DB 제약이 아닙니다(reports/11 M-030 한계).

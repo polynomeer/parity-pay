@@ -11,7 +11,7 @@ ParityPay는 플랫폼 안에 내장되는 **페이머니 서비스**(충전·�
 > **중복 요청, 동시 잔액 차감, 외부 승인 후 응답 유실, 이벤트 중복 전달, 프로세스 재시작 — 이런 일이 실제로
 > 일어난 뒤에도 돈의 기록이 정확한가?**
 
-그 질문에 문서가 아니라 **실행으로** 답했습니다. 자동화 테스트 394건(백엔드 331 · 프론트엔드 56 · E2E 7)이
+그 질문에 문서가 아니라 **실행으로** 답했습니다. 자동화 테스트 397건(백엔드 334 · 프론트엔드 56 · E2E 7)이
 매 커밋마다 돌고, 부하·장애 실험 43종이 프로세스를 죽이고, 브로커를 죽이고, 외부기관을 멈추고, 락 서버를
 뺏어 가면서 결함 14건을 찾아냈으며 전부 고쳤습니다. 실험이 우연에 기대서만 밟는 경로는 TLA+ 모델 검사가
 전수로 밟았고(M-030), 거기서 나온 판단 하나는 열려 있습니다. 수치는 전부 실측값이고, 재지 못한 것은 재지 못했다고
@@ -168,7 +168,7 @@ flowchart LR
 
 ## 검증
 
-**자동화 테스트** — 백엔드 331 · 프론트엔드 56 · E2E 7, 실패 0 (2026-10-01). 통합 테스트는 Testcontainers로 실제
+**자동화 테스트** — 백엔드 334 · 프론트엔드 56 · E2E 7, 실패 0 (2026-10-05). 통합 테스트는 Testcontainers로 실제
 PostgreSQL·Redpanda를 띄우고, 외부기관도 별도 Spring 컨텍스트로 실제로 띄웁니다. 인메모리 DB나 목 기관은 쓰지 않습니다 —
 타임아웃은 진짜 읽기 타임아웃이어야 하기 때문입니다. 테스트 이름은 요구사항 ID(`INV-`, `FR-`, `F-`)를 달고 있고,
 [CI](.github/workflows/ci.yml)가 불변조건 추적·문서 링크·비밀값·생성 타입 드리프트까지 검사합니다.
@@ -301,7 +301,7 @@ business state, ledger, snapshot and outbox intent are written in **one local tr
 at-least-once delivery is absorbed by idempotent consumers; an unknown external outcome is preserved as `UNKNOWN`
 and resolved only by inquiry, never by blind retry.
 
-Evidence: 394 automated tests (331 backend with Testcontainers PostgreSQL/Redpanda and real institution stand-ins,
+Evidence: 397 automated tests (334 backend with Testcontainers PostgreSQL/Redpanda and real institution stand-ins,
 56 frontend, 7 Playwright E2E), **43 load/failure experiments** that killed the process mid-transaction, killed
 the broker mid-publish, hung the external PG for 30 s, and let a distributed-lock lease expire under load, and a TLA+
 model check of the recovery rules. They found 14 defects, all fixed; six of them were in areas the design documents

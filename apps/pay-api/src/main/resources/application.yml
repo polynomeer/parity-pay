@@ -122,6 +122,8 @@ paritypay:
     recovery-max-backoff: 10m
     recovery-max-attempts: 8
     recovery-not-found-confirm-threshold: 3
+    # 지급 요청을 보낸 뒤 기관이 "더 이상 기록되지 않는다"고 보장하는 창입니다(ADR-016, M-030).
+    recovery-not-found-settle-after: 60s
     # 지급도 같은 구조입니다. 근거: M-012
     recovery-max-rounds-per-tick: 20
   recovery:
@@ -135,6 +137,10 @@ paritypay:
       max-backoff: 10m
       max-attempts: 8
       not-found-confirm-threshold: 3
+      # 기관이 "이 요청은 더 이상 기록되지 않는다"고 보장하는 창입니다. 지나기 전에는 "없음"을 실패로
+      # 확정하지 않습니다 — 받아 두고 기록하기 전인 창에서 확정하면 청구된 건을 실패로 알립니다
+      # (reports/11 M-030). 비워 두면 확정하지 않고 사람에게 넘깁니다. 근거: ADR-016
+      not-found-settle-after: 60s
       batch-size: 50
       # 배치가 가득 찼으면 다음 틱을 기다리지 않고 이어서 처리합니다. 50 × 20 = 틱당 최대 1,000건.
       # 틱당 한 배치면 초당 10건이 상한이라 적체 600건부터 클라이언트가 90초 안에 답을 못 받습니다(M-012).
@@ -149,6 +155,10 @@ paritypay:
       max-backoff: 10m
       max-attempts: 8
       not-found-confirm-threshold: 3
+      # 기관이 "이 요청은 더 이상 기록되지 않는다"고 보장하는 창입니다. 지나기 전에는 "없음"을 실패로
+      # 확정하지 않습니다 — 받아 두고 기록하기 전인 창에서 확정하면 청구된 건을 실패로 알립니다
+      # (reports/11 M-030). 비워 두면 확정하지 않고 사람에게 넘깁니다. 근거: ADR-016
+      not-found-settle-after: 60s
       batch-size: 50
       # 배치가 가득 찼으면 다음 틱을 기다리지 않고 이어서 처리합니다. 50 × 20 = 틱당 최대 1,000건.
       # 틱당 한 배치면 초당 10건이 상한이라 적체 600건부터 클라이언트가 90초 안에 답을 못 받습니다(M-012).
@@ -164,6 +174,10 @@ paritypay:
       max-attempts: 8
       # 외부에 기록이 "없음"으로 연속 확인되어야 하는 횟수입니다.
       not-found-confirm-threshold: 3
+      # 기관이 "이 요청은 더 이상 기록되지 않는다"고 보장하는 창입니다. 지나기 전에는 "없음"을 실패로
+      # 확정하지 않습니다 — 받아 두고 기록하기 전인 창에서 확정하면 청구된 건을 실패로 알립니다
+      # (reports/11 M-030). 비워 두면 확정하지 않고 사람에게 넘깁니다. 근거: ADR-016
+      not-found-settle-after: 60s
       batch-size: 50
       # 배치가 가득 찼으면 다음 틱을 기다리지 않고 이어서 처리합니다. 50 × 20 = 틱당 최대 1,000건.
       # 틱당 한 배치면 초당 10건이 상한이라 적체 600건부터 클라이언트가 90초 안에 답을 못 받습니다(M-012).

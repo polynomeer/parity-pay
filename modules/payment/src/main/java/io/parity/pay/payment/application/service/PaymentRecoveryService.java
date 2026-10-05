@@ -184,6 +184,24 @@ public class PaymentRecoveryService {
      */
     private boolean handleNotFound(PendingRecovery item, Payment payment) {
         int notFoundCount = item.notFoundCount() + 1;
+        if (notFoundCount >= properties.notFoundConfirmThreshold() && !settleWindowClosed(payment.createdAt())) {
+            if (properties.notFoundSettleAfter() == null) {
+                recoveryRepository.markManualReview(
+                        payment.id(), item.attemptCount() + 1, "no declared processing window", clock.instant());
+                outcomes.settled(new RecoveryOutcomes.Settled(
+                        RecoveryOutcomes.Target.PAYMENT,
+                        RecoveryOutcomes.Resolution.MANUAL_REVIEW,
+                        "UNKNOWN",
+                        item.attemptCount() + 1,
+                        notFoundCount));
+                log.warn(
+                        "payment {} needs manual review: external record not found and no declared window",
+                        payment.id());
+                return false;
+            }
+            scheduleNotFoundRetry(item, payment, notFoundCount, "external record not found, still within window");
+            return false;
+        }
         if (notFoundCount >= properties.notFoundConfirmThreshold()) {
             transactions.completeDeclined(payment.memberId(), payment, "EXTERNAL_RECORD_NOT_FOUND");
             recoveryRepository.clear(payment.id());
@@ -197,15 +215,33 @@ public class PaymentRecoveryService {
                     "settled payment {} as FAILED after {} consecutive not-found results", payment.id(), notFoundCount);
             return true;
         }
+        scheduleNotFoundRetry(item, payment, notFoundCount, "external record not found");
+        return false;
+    }
+
+    private void scheduleNotFoundRetry(PendingRecovery item, Payment payment, int notFoundCount, String reason) {
         int attemptCount = item.attemptCount() + 1;
         recoveryRepository.scheduleRetry(
                 payment.id(),
                 attemptCount,
                 notFoundCount,
                 clock.instant().plus(backoffFor(attemptCount)),
-                "external record not found",
+                reason,
                 clock.instant());
-        return false;
+    }
+
+    /**
+     * "없음"을 실패로 바꿀 수 있는 순간인지 판단합니다.
+     *
+     * <p>연속 확인 횟수만으로는 부족합니다. 기관이 요청을 받아 두고 아직 기록하지 않은 창이 열려 있는
+     * 동안에는 몇 번을 물어도 "없음"이고, 그 사이에 확정하면 청구된 결제를 실패로 알립니다(M-030의
+     * 반례). 기관이 "이 요청은 더 이상 기록되지 않는다"고 보장하는 창이 지난 뒤에만 확정합니다.
+     *
+     * <p>근거: ADR-016, docs/09-consistency-recovery.md §7
+     */
+    private boolean settleWindowClosed(Instant requestedAt) {
+        Duration window = properties.notFoundSettleAfter();
+        return window != null && !clock.instant().isBefore(requestedAt.plus(window));
     }
 
     private void scheduleRetryOrEscalate(PendingRecovery item, String reason) {

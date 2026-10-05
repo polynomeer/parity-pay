@@ -180,6 +180,24 @@ public class CancellationRecoveryService {
      */
     private boolean handleNotFound(PendingRecovery item, PaymentCancellation cancellation, Payment payment) {
         int notFoundCount = item.notFoundCount() + 1;
+        if (notFoundCount >= properties.notFoundConfirmThreshold() && !settleWindowClosed(cancellation.requestedAt())) {
+            if (properties.notFoundSettleAfter() == null) {
+                recoveryRepository.markManualReview(
+                        cancellation.id(), item.attemptCount() + 1, "no declared processing window", clock.instant());
+                outcomes.settled(new RecoveryOutcomes.Settled(
+                        RecoveryOutcomes.Target.CANCELLATION,
+                        RecoveryOutcomes.Resolution.MANUAL_REVIEW,
+                        "UNKNOWN",
+                        item.attemptCount() + 1,
+                        notFoundCount));
+                log.warn(
+                        "cancellation {} needs manual review: external refund record not found and no declared window",
+                        cancellation.id());
+                return false;
+            }
+            scheduleNotFoundRetry(item, cancellation, notFoundCount, "refund record not found, still within window");
+            return false;
+        }
         if (notFoundCount >= properties.notFoundConfirmThreshold()) {
             transactions.completeDeclined(payment.memberId(), cancellation, payment, "EXTERNAL_RECORD_NOT_FOUND");
             recoveryRepository.clear(cancellation.id());
@@ -195,15 +213,34 @@ public class CancellationRecoveryService {
                     notFoundCount);
             return true;
         }
+        scheduleNotFoundRetry(item, cancellation, notFoundCount, "external refund record not found");
+        return false;
+    }
+
+    private void scheduleNotFoundRetry(
+            PendingRecovery item, PaymentCancellation cancellation, int notFoundCount, String reason) {
         int attemptCount = item.attemptCount() + 1;
         recoveryRepository.scheduleRetry(
                 cancellation.id(),
                 attemptCount,
                 notFoundCount,
                 clock.instant().plus(backoffFor(attemptCount)),
-                "external refund record not found",
+                reason,
                 clock.instant());
-        return false;
+    }
+
+    /**
+     * "없음"을 실패로 바꿀 수 있는 순간인지 판단합니다.
+     *
+     * <p>연속 확인 횟수만으로는 부족합니다. 기관이 요청을 받아 두고 아직 기록하지 않은 창이 열려 있는
+     * 동안에는 몇 번을 물어도 "없음"이고, 그 사이에 확정하면 나간 환불을 실패로 적습니다(M-030의
+     * 반례와 같은 모양). 기관이 보장하는 창이 지난 뒤에만 확정합니다.
+     *
+     * <p>근거: ADR-016, docs/09-consistency-recovery.md §7
+     */
+    private boolean settleWindowClosed(Instant requestedAt) {
+        Duration window = properties.notFoundSettleAfter();
+        return window != null && !clock.instant().isBefore(requestedAt.plus(window));
     }
 
     private void scheduleRetryOrEscalate(PendingRecovery item, String reason) {
