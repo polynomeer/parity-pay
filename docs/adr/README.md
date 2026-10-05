@@ -22,6 +22,7 @@ ADR은 중요한 기술 선택의 맥락, 대안, 결정과 결과를 기록합�
 | [ADR-012](012-frontend-design-system.md) | 순수 CSS 토큰 패키지로 두 앱의 디자인을 만듦 | Accepted (2026-09-14) |
 | [ADR-013](013-local-dev-stack-script.md) | 로컬 스택을 한 스크립트로 띄우고, 잡힌 포트는 우회함 | Accepted (2026-09-14) |
 | [ADR-014](014-external-call-isolation.md) | 외부기관 호출을 타임아웃·벌크헤드·차단기로 격리함 | Accepted (2026-09-16) |
+| [ADR-015](015-initial-technology-stack.md) | 초기 기술 스택을 고른 이유를 초기 커밋에서 재구성함 | Accepted (2026-10-05) |
 
 ### 읽는 순서
 
