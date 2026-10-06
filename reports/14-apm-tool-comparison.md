@@ -142,18 +142,27 @@ Mock PG가 승인 전에 2.5초를 붙잡는 조건에서 결제 3 rps + 잔액 
 
 **부수 효과 하나.** SkyWalking은 자체 에이전트가 의존성까지 토폴로지에 올립니다 — `listServices`에
 `pay-api` 외에 `localhost:5435`(PostgreSQL)와 `localhost:9092`(Kafka)가 서비스로 잡혔습니다. OTel 에이전트 +
-Jaeger 조합에서는 서비스가 `pay-api` 하나입니다. **같은 요청을 보는 방식 자체가 다릅니다.**
+Jaeger 조합에서는 PostgreSQL·Kafka가 별도 서비스로 올라오지 않습니다(DB 호출은 `pay-api` 안의 스팬입니다).
+**같은 요청을 보는 방식 자체가 다릅니다.** 다만 Jaeger UI의 서비스 선택기는 `Service (2)`로 두 개를 셉니다 —
+두 번째가 무엇인지(Jaeger 자신일 가능성이 큽니다)는 확인하지 않았습니다.
+
+**부수 효과 둘.** SkyWalking 대시보드의 "Endpoint Avg Response Time" 상위는 결제 엔드포인트가 아니라
+`SpringScheduled/…OutboxPublisher`(63,608 ms)와 `…InvariantMe…`(27,577 ms)입니다. 스케줄 작업 한 번이
+엔드포인트 한 건으로 집계되기 때문입니다. **느린 요청을 찾으러 와서 처음 보는 것이 배치 작업입니다.**
 
 ### 화면 캡처
 
 | 파일 | 무엇 |
 |---|---|
-| `apm-lab-jaeger-search.png` | 트레이스 목록 — 2.52~2.53초가 20건, 산점도 |
-| `apm-lab-jaeger-trace.png` | 트레이스 상세 — 외부 호출 스팬이 전체 구간을 차지 |
-| `apm-lab-skywalking-services.png`·`-topology.png` | SkyWalking 대시보드(서비스·엔드포인트 지표) |
-| `apm-lab-skywalking-trace.png` | **트레이스 화면이 아닙니다** — 해시 라우트가 대시보드로 되돌아가 캡처하지 못했고, 같은 대시보드가 찍혔습니다 |
+| `apm-lab-jaeger-search.png` | 트레이스 목록 — `POST /api/v1/payments` 20건이 2.52~2.53초, 트레이스당 20~21 스팬, 산점도 |
+| `apm-lab-jaeger-trace.png` | 트레이스 상세 — Duration 2.52 s, Depth 4, Total Spans 20. 외부 호출 `POST` 스팬이 전체 구간을 차지하고 DB 스팬은 µs |
+| `apm-lab-skywalking-dashboard.png` | SkyWalking `General-Root` 서비스 대시보드 — Apdex 0.757, 평균 응답 804 ms, 7,569 calls/min, 엔드포인트별 지표 |
 
 캡처는 블로그 저장소 `assets/img/posts/`에 두었습니다. 화면에 API 키·개인정보가 없는지 확인했습니다.
+
+**찍었다가 버린 것 둘.** SkyWalking 트레이스 화면은 해시 라우트가 대시보드로 되돌아가 열지 못했고, 같은
+대시보드가 한 번 더 찍혔습니다. 다른 한 장은 위젯이 비어 있는 빈 대시보드(`Please add widgets.`)였습니다.
+둘 다 보여 주는 것이 없어 지웠습니다. SkyWalking 트레이스 화면은 **미캡처**로 남습니다.
 
 ## 7. 기본 샘플링과 보관
 
