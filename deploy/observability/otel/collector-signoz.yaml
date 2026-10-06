@@ -1,0 +1,36 @@
+# 앱 → 컬렉터 → SigNoz(자체 OTLP 수집기).
+#
+# 컬렉터를 사이에 두는 이유는 하나입니다 — APM을 바꿀 때 애플리케이션을 건드리지 않기 위해서입니다.
+# 앱은 언제나 같은 자리(OTLP 4317/4318)로만 보냅니다. 근거: ADR-017
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # 실험은 전량 샘플링입니다. 도구별 기본 샘플링을 비교하려면 우리 쪽에서 먼저 버리지 않아야 합니다.
+  batch:
+    timeout: 1s
+
+exporters:
+  otlp/signoz:
+    # SigNoz 는 자기 compose 네트워크에 있습니다. 네트워크를 엮는 대신 호스트를 지나 갑니다 —
+    # 엮으면 SigNoz 쪽 생성 파일을 고쳐야 하고, 그 파일은 다음 forge 에 덮입니다.
+    endpoint: host.docker.internal:${env:PARITYPAY_SIGNOZ_OTLP_GRPC_PORT}
+    tls:
+      insecure: true
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/signoz]
+  telemetry:
+    metrics:
+      level: basic

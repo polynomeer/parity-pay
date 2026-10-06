@@ -1,0 +1,122 @@
+[
+ {
+  "approved": 64499,
+  "p50Ms": 17.615,
+  "p95Ms": 28.528099999999995,
+  "maxMs": 111.965,
+  "httpReqRate": 674.3204137254475,
+  "failed": 0,
+  "arm": "none",
+  "run": 1,
+  "commit": "3e4a547",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-otel-collector": "100.9MiB",
+   "paritypay-tempo": "315.1MiB",
+   "paritypay-skywalking-banyandb": "19.62MiB",
+   "paritypay-skywalking-ui": "145.3MiB",
+   "monticker-jaeger": "16.57MiB"
+  },
+  "at": "2026-10-05T17:15:30.564536+00:00"
+ },
+ {
+  "approved": 39954,
+  "p50Ms": 21.619,
+  "p95Ms": 42.426,
+  "maxMs": 10890.699,
+  "httpReqRate": 417.2591409223407,
+  "failed": 0,
+  "arm": "jaeger",
+  "run": 1,
+  "commit": "3e4a547",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/opentelemetry-javaagent-2.12.0.jar",
+  "containerMemory": {
+   "paritypay-otel-collector": "833.4MiB",
+   "paritypay-tempo": "769.8MiB",
+   "paritypay-skywalking-banyandb": "26.49MiB",
+   "paritypay-skywalking-ui": "151.8MiB",
+   "monticker-jaeger": "25.57MiB"
+  },
+  "at": "2026-10-05T17:17:55.208532+00:00"
+ },
+ {
+  "approved": 60868,
+  "p50Ms": 18.622,
+  "p95Ms": 30.211,
+  "maxMs": 116.277,
+  "httpReqRate": 636.5264301624314,
+  "failed": 0,
+  "arm": "none",
+  "run": 2,
+  "commit": "3e4a547",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-otel-collector": "836.1MiB",
+   "paritypay-tempo": "453.4MiB",
+   "paritypay-skywalking-banyandb": "29.73MiB",
+   "paritypay-skywalking-ui": "152.4MiB",
+   "monticker-jaeger": "28MiB"
+  },
+  "at": "2026-10-05T17:19:53.648025+00:00"
+ },
+ {
+  "approved": 55754,
+  "p50Ms": 20.284,
+  "p95Ms": 32.84435,
+  "maxMs": 4257.022,
+  "httpReqRate": 565.1453072922709,
+  "failed": 0,
+  "arm": "jaeger",
+  "run": 2,
+  "commit": "3e4a547",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/opentelemetry-javaagent-2.12.0.jar",
+  "containerMemory": {
+   "paritypay-jaeger": "132.7MiB",
+   "paritypay-tempo": "87.31MiB",
+   "paritypay-skywalking-banyandb": "10MiB",
+   "paritypay-skywalking-ui": "147MiB",
+   "monticker-jaeger": "24.22MiB"
+  },
+  "at": "2026-10-05T17:21:58.455029+00:00"
+ },
+ {
+  "approved": 62580,
+  "p50Ms": 18.248,
+  "p95Ms": 28.991,
+  "maxMs": 114.332,
+  "httpReqRate": 653.8466935447819,
+  "failed": 0,
+  "arm": "none",
+  "run": 3,
+  "commit": "3e4a547",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-jaeger": "132.9MiB",
+   "paritypay-tempo": "870MiB",
+   "paritypay-skywalking-banyandb": "29.57MiB",
+   "paritypay-skywalking-ui": "150MiB",
+   "monticker-jaeger": "26.63MiB"
+  },
+  "at": "2026-10-05T17:23:57.074753+00:00"
+ },
+ {
+  "approved": 50897,
+  "p50Ms": 20.98,
+  "p95Ms": 38.334999999999994,
+  "maxMs": 1604.44,
+  "httpReqRate": 531.1897640193979,
+  "failed": 0,
+  "arm": "jaeger",
+  "run": 3,
+  "commit": "3e4a547",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/opentelemetry-javaagent-2.12.0.jar",
+  "containerMemory": {
+   "paritypay-otel-collector": "1.367GiB",
+   "paritypay-tempo": "752MiB",
+   "paritypay-skywalking-banyandb": "11.02MiB",
+   "paritypay-skywalking-ui": "135.1MiB",
+   "monticker-jaeger": "21.35MiB"
+  },
+  "at": "2026-10-05T17:26:00.754919+00:00"
+ }
+]

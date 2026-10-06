@@ -11,6 +11,10 @@ services:
     profiles: ["apm-jaeger", "apm-tempo", "apm-signoz", "apm-datadog"]
     # 설정 파일만 바꿔 끼웁니다. 이것이 "APM을 바꾸는 한 곳"입니다.
     command: ["--config=/etc/otel/collector-${PARITYPAY_APM:-jaeger}.yaml"]
+    # 설정 파일이 참조하는 값만 넘깁니다. 컬렉터는 백엔드 주소를 환경변수로 받고, 어떤 도구인지는
+    # 모릅니다 — 그 선택은 어느 설정 파일을 읽느냐 하나로 끝납니다.
+    environment:
+      PARITYPAY_SIGNOZ_OTLP_GRPC_PORT: "${PARITYPAY_SIGNOZ_OTLP_GRPC_PORT:-4327}"
     volumes:
       - ./deploy/observability/otel:/etc/otel:ro
     ports:
@@ -25,6 +29,12 @@ services:
   # 같은 호스트 포트를 두 컨테이너가 쓸 수 없고, "앱이 보내는 자리는 늘 컬렉터"여야 합니다.
   jaeger:
     profiles: ["apm-jaeger"]
+    # 메모리 저장소는 상한이 없으면 전량 샘플링 부하에서 계속 자라고, 컨테이너가 OOM 으로 죽습니다
+    # (실제로 Exited 137 을 두 번 봤습니다). 실험에 필요한 만큼만 들고 있게 합니다.
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      MEMORY_MAX_TRACES: "20000"
+    mem_limit: 1g
     ports: !override
       - "${PARITYPAY_JAEGER_UI_PORT:-16686}:16686"
 
@@ -40,5 +50,50 @@ services:
     ports:
       - "${PARITYPAY_TEMPO_PORT:-3200}:3200"
 
+  # ---------- Apache SkyWalking ----------
+  # OTLP 가 아니라 **자체 Java 에이전트**로 받습니다(OAP gRPC 11800). 비교의 다른 축입니다 —
+  # 에이전트가 다르면 같은 요청에서 보이는 스팬의 모양도 다릅니다.
+  #
+  # **10.x 에는 메모리 저장소(H2)가 없습니다.** `SW_STORAGE=h2` 로 띄우면 "no provider found for
+  # module storage" 로 죽습니다 — 이미지의 oap-libs 에 들어 있는 저장소 플러그인은 BanyanDB 뿐입니다.
+  # 그래서 저장소 컨테이너가 필수이고, 이것이 "컨테이너 하나로 끝나지 않는" 첫 번째 이유입니다.
+  # 버전을 "latest" 로 두면 안 됩니다. OAP 10.4 는 BanyanDB **API 0.10** 만 받습니다 —
+  # 0.11.1 로 띄웠더니 "Incompatible BanyanDB server API version: 0.11. But accepted versions: 0.10"
+  # 으로 OAP 가 죽었습니다. 저장소를 따로 두는 도구는 그 둘의 버전까지 맞춰야 합니다.
+  skywalking-banyandb:
+    image: apache/skywalking-banyandb:0.10.3
+    container_name: paritypay-skywalking-banyandb
+    profiles: ["apm-skywalking"]
+    command: ["standalone"]
+    volumes:
+      - skywalking-banyandb-data:/tmp
+
+  skywalking-oap:
+    image: apache/skywalking-oap-server:10.4.0-java21
+    container_name: paritypay-skywalking-oap
+    profiles: ["apm-skywalking"]
+    environment:
+      SW_STORAGE: banyandb
+      SW_STORAGE_BANYANDB_TARGETS: skywalking-banyandb:17912
+      SW_HEALTH_CHECKER: default
+      JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "${PARITYPAY_SKYWALKING_GRPC_PORT:-11800}:11800"
+      - "${PARITYPAY_SKYWALKING_REST_PORT:-12800}:12800"
+    depends_on:
+      - skywalking-banyandb
+
+  skywalking-ui:
+    image: apache/skywalking-ui:10.4.0-java21
+    container_name: paritypay-skywalking-ui
+    profiles: ["apm-skywalking"]
+    environment:
+      SW_OAP_ADDRESS: http://skywalking-oap:12800
+    ports:
+      - "${PARITYPAY_SKYWALKING_UI_PORT:-18080}:8080"
+    depends_on:
+      - skywalking-oap
+
 volumes:
   tempo-data:
+  skywalking-banyandb-data:

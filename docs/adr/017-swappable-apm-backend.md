@@ -79,7 +79,7 @@ pay-api ──(OTLP 4317)──▶ Collector ─┼─ collector-tempo.yaml   �
 - `apm.sh`가 `dev.sh`의 컨테이너를 내리지 않는다
 - 포트가 잡혀 있으면 비어 있는 포트로 옮긴다
 
-## Outcome — 2026-10-05
+## Outcome — 2026-10-05 (측정은 reports/14)
 
 | 항목 | 결과 |
 |---|---|
@@ -87,7 +87,9 @@ pay-api ──(OTLP 4317)──▶ Collector ─┼─ collector-tempo.yaml   �
 | Tempo 경로 | `apm.sh up tempo` → **앱 재시작 없이** Tempo `/api/search`에서 같은 트레이스 5건 조회 |
 | 포트 우회 | 이 호스트에서 `16686`·`4318`이 다른 프로젝트 Jaeger에 잡혀 있어 `16687`·`4319`로 옮겨 떴습니다 |
 | 격리 | `apm.sh`가 띄우고 내린 것은 컬렉터·백엔드뿐. `dev.sh`의 postgres·기관 대역은 그대로 |
-| 남은 백엔드 | SigNoz·SkyWalking·Pinpoint·Datadog은 프로필과 전환 경로만 잡아 두었고 **아직 띄워 보지 않았습니다**(reports/14에서 하나씩) |
+| SigNoz | 띄웠습니다(컨테이너 6개). 전용 설치기가 compose 를 생성하므로 프로필에 적지 않고 생성 결과를 띄웁니다. **트레이스 수신은 확인하지 못했습니다** — reports/14 §4 |
+| SkyWalking | 띄웠습니다(OAP·UI·BanyanDB). 자체 에이전트 경로가 동작하고 서비스·엔드포인트 지표가 보입니다. 기동까지 세 번 막혔습니다 — reports/14 §4 |
+| 남은 백엔드 | Pinpoint·Datadog은 프로필과 전환 경로만 있고 **아직 띄워 보지 않았습니다**(reports/14 §9) |
 
 **처음에 두 번 틀렸습니다.** ① 프로필만 주고 `docker compose up`을 해서 기본 파일의 모든 서비스를 함께
 띄웠고, 포트 충돌로 멈췄습니다 — 서비스 이름을 지정하게 고쳤습니다. ② 포트를 고르고 나서 앞선 백엔드를

@@ -1,0 +1,122 @@
+[
+ {
+  "approved": 42769,
+  "p50Ms": 24.791,
+  "p95Ms": 54.18519999999999,
+  "maxMs": 307.431,
+  "httpReqRate": 444.1369661576979,
+  "failed": 0,
+  "arm": "none",
+  "run": 1,
+  "commit": "3e4a547",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-skywalking-oap": "884.4MiB",
+   "paritypay-skywalking-banyandb": "142.5MiB",
+   "paritypay-tempo": "82.36MiB",
+   "paritypay-skywalking-ui": "185.8MiB",
+   "monticker-jaeger": "15.76MiB"
+  },
+  "at": "2026-10-06T01:36:53.787521+00:00"
+ },
+ {
+  "approved": 24503,
+  "p50Ms": 41.826,
+  "p95Ms": 96.90609999999998,
+  "maxMs": 481.077,
+  "httpReqRate": 253.75880029483687,
+  "failed": 0,
+  "arm": "skywalking",
+  "run": 1,
+  "commit": "3e4a547",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/skywalking-agent-9.7.0/skywalking-agent.jar",
+  "containerMemory": {
+   "paritypay-skywalking-oap": "945.3MiB",
+   "paritypay-skywalking-banyandb": "560.5MiB",
+   "paritypay-tempo": "82.39MiB",
+   "paritypay-skywalking-ui": "188.4MiB",
+   "monticker-jaeger": "16.81MiB"
+  },
+  "at": "2026-10-06T01:39:09.703948+00:00"
+ },
+ {
+  "approved": 33757,
+  "p50Ms": 30.472,
+  "p95Ms": 69.76819999999998,
+  "maxMs": 291.895,
+  "httpReqRate": 352.24142785015596,
+  "failed": 0,
+  "arm": "none",
+  "run": 2,
+  "commit": "3e4a547",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-skywalking-oap": "920.9MiB",
+   "paritypay-skywalking-banyandb": "266.8MiB",
+   "paritypay-tempo": "82.47MiB",
+   "paritypay-skywalking-ui": "185.5MiB",
+   "monticker-jaeger": "15.04MiB"
+  },
+  "at": "2026-10-06T01:41:41.116117+00:00"
+ },
+ {
+  "approved": 32551,
+  "p50Ms": 31.861,
+  "p95Ms": 70.983,
+  "maxMs": 342.789,
+  "httpReqRate": 338.52755643658196,
+  "failed": 0,
+  "arm": "skywalking",
+  "run": 2,
+  "commit": "3e4a547",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/skywalking-agent-9.7.0/skywalking-agent.jar",
+  "containerMemory": {
+   "paritypay-skywalking-oap": "1.003GiB",
+   "paritypay-skywalking-banyandb": "654.6MiB",
+   "paritypay-tempo": "82.86MiB",
+   "paritypay-skywalking-ui": "188.9MiB",
+   "monticker-jaeger": "15.44MiB"
+  },
+  "at": "2026-10-06T01:43:53.174426+00:00"
+ },
+ {
+  "approved": 49625,
+  "p50Ms": 21.978,
+  "p95Ms": 40.7098,
+  "maxMs": 187.793,
+  "httpReqRate": 518.5637304363105,
+  "failed": 0,
+  "arm": "none",
+  "run": 3,
+  "commit": "3e4a547",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-skywalking-oap": "989.2MiB",
+   "paritypay-skywalking-banyandb": "634.1MiB",
+   "paritypay-tempo": "82.89MiB",
+   "paritypay-skywalking-ui": "189.2MiB",
+   "monticker-jaeger": "15.44MiB"
+  },
+  "at": "2026-10-06T01:45:52.926198+00:00"
+ },
+ {
+  "approved": 23183,
+  "p50Ms": 41.107,
+  "p95Ms": 112.82519999999998,
+  "maxMs": 642.276,
+  "httpReqRate": 241.09062916305382,
+  "failed": 0,
+  "arm": "skywalking",
+  "run": 3,
+  "commit": "3e4a547",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/skywalking-agent-9.7.0/skywalking-agent.jar",
+  "containerMemory": {
+   "paritypay-skywalking-oap": "984.9MiB",
+   "paritypay-skywalking-banyandb": "546.6MiB",
+   "paritypay-tempo": "81.27MiB",
+   "paritypay-skywalking-ui": "184.1MiB",
+   "monticker-jaeger": "15.31MiB"
+  },
+  "at": "2026-10-06T01:48:29.925732+00:00"
+ }
+]

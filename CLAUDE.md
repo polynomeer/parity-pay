@@ -15,6 +15,9 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 [ADR-016](docs/adr/016-not-found-settlement-window.md)으로 닫았습니다: "없음"은 **기관이 보장한 창이 닫힌
 뒤에만** 실패가 됩니다.
 
+APM 도구는 백엔드만 바꿔 끼울 수 있게 해 두었고(ADR-017, `scripts/apm.sh`), 도구별 설치 비용·에이전트
+오버헤드·같은 장애에서 보이는 것은 [reports/14](reports/14-apm-tool-comparison.md)에 있습니다.
+
 ## 2. 절대 규칙 (INV) — 어떤 코드도 이것을 깰 수 없습니다
 
 | ID | 불변조건 |
