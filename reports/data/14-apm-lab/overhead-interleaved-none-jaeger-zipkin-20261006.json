@@ -1,0 +1,146 @@
+[
+ {
+  "approved": 53403,
+  "p50Ms": 19.994,
+  "p95Ms": 41.73429999999998,
+  "maxMs": 197.367,
+  "httpReqRate": 556.5413616140476,
+  "failed": 0,
+  "arm": "none",
+  "run": 1,
+  "commit": "77c74c3",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-otel-collector": "47.62MiB"
+  },
+  "at": "2026-10-06T12:15:53.438975+00:00"
+ },
+ {
+  "approved": 50898,
+  "p50Ms": 21.7255,
+  "p95Ms": 41.09259999999999,
+  "maxMs": 136.475,
+  "httpReqRate": 531.7497293149851,
+  "failed": 0,
+  "arm": "jaeger",
+  "run": 1,
+  "commit": "77c74c3",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/opentelemetry-javaagent-2.12.0.jar",
+  "containerMemory": {
+   "paritypay-otel-collector": "1.659GiB"
+  },
+  "at": "2026-10-06T12:18:01.173045+00:00"
+ },
+ {
+  "approved": 47063,
+  "p50Ms": 22.553,
+  "p95Ms": 47.00679999999999,
+  "maxMs": 304.646,
+  "httpReqRate": 491.2649180372069,
+  "failed": 0,
+  "arm": "zipkin",
+  "run": 1,
+  "commit": "77c74c3",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/opentelemetry-javaagent-2.12.0.jar",
+  "containerMemory": {
+   "paritypay-otel-collector": "2.582GiB"
+  },
+  "at": "2026-10-06T12:20:11.649951+00:00"
+ },
+ {
+  "approved": 53518,
+  "p50Ms": 19.866,
+  "p95Ms": 38.49859999999999,
+  "maxMs": 356.091,
+  "httpReqRate": 559.695409602922,
+  "failed": 0,
+  "arm": "none",
+  "run": 2,
+  "commit": "77c74c3",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-otel-collector": "3.705GiB"
+  },
+  "at": "2026-10-06T12:22:09.689747+00:00"
+ },
+ {
+  "approved": 46207,
+  "p50Ms": 22.251,
+  "p95Ms": 49.217899999999986,
+  "maxMs": 543.66,
+  "httpReqRate": 482.13185441382035,
+  "failed": 0,
+  "arm": "jaeger",
+  "run": 2,
+  "commit": "77c74c3",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/opentelemetry-javaagent-2.12.0.jar",
+  "containerMemory": {
+   "paritypay-otel-collector": "1.318GiB"
+  },
+  "at": "2026-10-06T12:24:25.624689+00:00"
+ },
+ {
+  "approved": 48645,
+  "p50Ms": 21.745,
+  "p95Ms": 44.517399999999995,
+  "maxMs": 288.713,
+  "httpReqRate": 507.84340733927246,
+  "failed": 0,
+  "arm": "zipkin",
+  "run": 2,
+  "commit": "77c74c3",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/opentelemetry-javaagent-2.12.0.jar",
+  "containerMemory": {
+   "paritypay-otel-collector": "2.628GiB"
+  },
+  "at": "2026-10-06T12:26:33.479034+00:00"
+ },
+ {
+  "approved": 55909,
+  "p50Ms": 18.7,
+  "p95Ms": 35.0278,
+  "maxMs": 568.328,
+  "httpReqRate": 584.7314089978345,
+  "failed": 0,
+  "arm": "none",
+  "run": 3,
+  "commit": "77c74c3",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-otel-collector": "3.834GiB"
+  },
+  "at": "2026-10-06T12:28:31.409458+00:00"
+ },
+ {
+  "approved": 48587,
+  "p50Ms": 21.993,
+  "p95Ms": 41.69619999999999,
+  "maxMs": 497.813,
+  "httpReqRate": 506.8281661775435,
+  "failed": 0,
+  "arm": "jaeger",
+  "run": 3,
+  "commit": "77c74c3",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/opentelemetry-javaagent-2.12.0.jar",
+  "containerMemory": {
+   "paritypay-otel-collector": "1.666GiB"
+  },
+  "at": "2026-10-06T12:30:45.714982+00:00"
+ },
+ {
+  "approved": 45083,
+  "p50Ms": 24.908,
+  "p95Ms": 45.461,
+  "maxMs": 173.22,
+  "httpReqRate": 470.43931190208644,
+  "failed": 0,
+  "arm": "zipkin",
+  "run": 3,
+  "commit": "77c74c3",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/opentelemetry-javaagent-2.12.0.jar",
+  "containerMemory": {
+   "paritypay-otel-collector": "2.371GiB"
+  },
+  "at": "2026-10-06T12:32:54.668465+00:00"
+ }
+]
