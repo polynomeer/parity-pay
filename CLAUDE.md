@@ -17,6 +17,8 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 
 APM 도구는 백엔드만 바꿔 끼울 수 있게 해 두었고(ADR-017, `scripts/apm.sh`), 도구별 설치 비용·에이전트
 오버헤드·같은 장애에서 보이는 것은 [reports/14](reports/14-apm-tool-comparison.md)에 있습니다.
+Jaeger·Zipkin·Tempo·SkyWalking은 떴고, SigNoz는 트레이스를 받지 못했으며 Pinpoint는 저장소가 뜨지
+않았습니다 — **어느 쪽도 애플리케이션 코드를 바꾸지 않았습니다.**
 
 ## 2. 절대 규칙 (INV) — 어떤 코드도 이것을 깰 수 없습니다
 
@@ -158,7 +160,7 @@ pnpm typecheck
 pnpm --filter @paritypay/web-customer dev    # 고객 앱 (5173)
 pnpm --filter @paritypay/web-ops dev         # 운영 콘솔 (5174)
 scripts/dev.sh [up|down|status|logs] # 로컬 스택 전부 (컨테이너·기관·pay-api·앱 둘). 잡힌 포트는 우회합니다
-scripts/apm.sh up <name>             # APM 백엔드 교체 (jaeger·tempo·signoz·skywalking·pinpoint·datadog·none). ADR-017
+scripts/apm.sh up <name>             # APM 백엔드 교체 (jaeger·zipkin·tempo·signoz·skywalking·pinpoint·datadog·none). ADR-017
 load-tests/run-e2e.sh                # 실제 스택 E2E. 스택을 띄우고 돌리고 정리합니다 (약 1분)
 deploy/run.sh                        # 배포 형태로 띄웁니다 (이미지 빌드 포함). down으로 정리
 ```

@@ -1,0 +1,35 @@
+# 앱 → 컬렉터 → Zipkin.
+#
+# Zipkin 은 OTLP 를 받지 않습니다 — 자기 형식(POST /api/v2/spans)만 받습니다. 그래서 여기서만
+# exporter 가 otlp 가 아닌 zipkin 입니다. 앱 쪽은 이 사실을 모릅니다. 바뀌는 것은 이 파일 하나이고,
+# 그것이 ADR-017 이 지키려던 성질입니다.
+#
+# Zipkin 은 2012년 트위터가 Dapper 논문을 Thrift 용으로 구현한 것에서 시작했고(APLv2 공개),
+# 지금 쓰는 분산 추적 도구 대부분의 조상에 해당합니다. 비교에 넣는 이유가 그것입니다.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+
+exporters:
+  zipkin:
+    endpoint: http://zipkin:9411/api/v2/spans
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [zipkin]
+  telemetry:
+    metrics:
+      level: basic

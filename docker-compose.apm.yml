@@ -8,7 +8,7 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.119.0
     container_name: paritypay-otel-collector
-    profiles: ["apm-jaeger", "apm-tempo", "apm-signoz", "apm-datadog"]
+    profiles: ["apm-jaeger", "apm-tempo", "apm-zipkin", "apm-signoz", "apm-datadog"]
     # 설정 파일만 바꿔 끼웁니다. 이것이 "APM을 바꾸는 한 곳"입니다.
     command: ["--config=/etc/otel/collector-${PARITYPAY_APM:-jaeger}.yaml"]
     # 설정 파일이 참조하는 값만 넘깁니다. 컬렉터는 백엔드 주소를 환경변수로 받고, 어떤 도구인지는
@@ -94,6 +94,141 @@ services:
     depends_on:
       - skywalking-oap
 
+  # ---------- Zipkin ----------
+  # 2012년 트위터가 Dapper 논문을 Thrift 용으로 구현해 공개한 것이고, 지금 쓰는 추적 도구 대부분의
+  # 조상입니다. **OTLP 를 받지 않습니다** — 자기 형식만 받으므로 컬렉터의 exporter 가 zipkin 입니다.
+  # 저장소는 기본값이 메모리이며, Jaeger 와 같은 이유로 상한을 둡니다.
+  zipkin:
+    image: openzipkin/zipkin:3.6.1
+    container_name: paritypay-zipkin
+    profiles: ["apm-zipkin"]
+    environment:
+      STORAGE_TYPE: mem
+      # 메모리 저장소가 들고 있을 스팬 수입니다. 두지 않으면 전량 샘플링 부하에서 계속 자랍니다.
+      MEM_MAX_SPANS: "500000"
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    mem_limit: 1g
+    ports:
+      - "${PARITYPAY_ZIPKIN_PORT:-9411}:9411"
+
+  # ---------- Pinpoint ----------
+  # SkyWalking 과 같은 자체 에이전트 계열이고, 저장소가 **HBase** 입니다. 컨테이너 수가 가장 많은
+  # 쪽이라 "설치 비용"의 반대쪽 끝을 보여 줍니다. 구성은 공식 pinpoint-docker 의 최소 집합입니다
+  # (web·collector·hbase·mysql·redis). flink·batch·quickstart 는 뺐습니다 — 각각 통계 집계·알람·
+  # 예제 앱이고 트레이스 수집에는 필요하지 않습니다.
+  #
+  # **ZooKeeper 는 이름이 `zoo1` 이어야 합니다.** pinpoint-hbase 이미지의 hbase-site.xml 에
+  # `<value>zoo1,zoo2,zoo3</value>` 가 **박혀 있습니다**(이미지 안에서 확인). 그래서 컨테이너를
+  # 다른 이름으로 띄우면 HBase 가 "zoo1: Name or service not known" 으로 테이블조차 만들지 못하고,
+  # collector·web 은 그 뒤에 "NoNode for /hbase/hbaseid" 로 죽습니다. 공식 compose 가 zoo1~zoo3 을
+  # 띄우는 이유이며, 여기서는 한 컨테이너에 세 별칭을 달아 ZooKeeper 하나로 끝냅니다.
+  # collector 의 `hbase.client.host=${pinpoint.zookeeper.address}` 도 같은 주소를 씁니다 —
+  # HBase 접속과 클러스터 조정이 **한 변수를 공유합니다**.
+  pinpoint-hbase:
+    image: pinpointdocker/pinpoint-hbase:3.1.1
+    container_name: paritypay-pinpoint-hbase
+    profiles: ["apm-pinpoint"]
+    depends_on:
+      - pinpoint-zookeeper
+    volumes:
+      - pinpoint-hbase-data:/home/pinpoint/hbase
+      # 세션 시간만 늘린 설정입니다. 파일 안에 이유를 적어 뒀습니다.
+      - ./deploy/observability/pinpoint/hbase-site.xml:/opt/hbase/hbase-2.2.6/conf/hbase-site.xml:ro
+
+  pinpoint-zookeeper:
+    image: zookeeper:3.4.13
+    container_name: paritypay-pinpoint-zookeeper
+    profiles: ["apm-pinpoint"]
+    environment:
+      ZOO_MY_ID: "1"
+      ZOO_SERVERS: server.1=0.0.0.0:2888:3888
+      # HBase 가 요청하는 긴 세션을 ZooKeeper 가 깎지 않게 합니다 (hbase-site.xml 의 주석 참고).
+      ZOO_MAX_SESSION_TIMEOUT: "900000"
+    networks:
+      default:
+        # 세 별칭이 모두 이 컨테이너를 가리킵니다 (위 주석 참고).
+        aliases: [zoo1, zoo2, zoo3]
+
+  pinpoint-mysql:
+    image: mysql:8.0
+    container_name: paritypay-pinpoint-mysql
+    profiles: ["apm-pinpoint"]
+    # 비밀값에 기본값을 두지 않습니다(ADR-011). apm.sh 가 설치할 때 한 번 만들어
+    # .apm/pinpoint-mysql-password 에 적고, 없으면 compose 가 뜨지 않습니다.
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PARITYPAY_PINPOINT_MYSQL_PASSWORD:?apm.sh up pinpoint 으로 띄우십시오}
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: ${PARITYPAY_PINPOINT_MYSQL_PASSWORD:?apm.sh up pinpoint 으로 띄우십시오}
+      MYSQL_DATABASE: pinpoint
+    volumes:
+      - pinpoint-mysql-data:/var/lib/mysql
+
+  pinpoint-redis:
+    image: redis:7.4-alpine
+    container_name: paritypay-pinpoint-redis
+    profiles: ["apm-pinpoint"]
+
+  pinpoint-collector:
+    image: pinpointdocker/pinpoint-collector:3.1.1
+    container_name: paritypay-pinpoint-collector
+    profiles: ["apm-pinpoint"]
+    # HBase 는 처음 뜰 때 테이블을 만드는 데 2분 넘게 걸리고, 그동안 collector 와 web 은
+    # "NoNode for /hbase/hbaseid" 로 **죽습니다**. depends_on 은 "컨테이너가 떴다"까지만 보장하므로
+    # 소용이 없습니다. 공식 pinpoint-docker 도 같은 이유로 restart 에 맡깁니다.
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: release
+      PINPOINT_ZOOKEEPER_ADDRESS: zoo1
+      CLUSTER_ENABLE: "true"
+      FLINK_CLUSTER_ENABLE: "false"
+      SPRING_DATA_REDIS_HOST: pinpoint-redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      LOGGING_LEVEL_ROOT: WARN
+    ports:
+      # 에이전트가 호스트에서 돌므로 gRPC 세 자리를 내보냅니다 (agent·stat·span).
+      - "${PARITYPAY_PINPOINT_AGENT_PORT:-9991}:9991"
+      - "${PARITYPAY_PINPOINT_STAT_PORT:-9992}:9992"
+      - "${PARITYPAY_PINPOINT_SPAN_PORT:-9993}:9993"
+    depends_on:
+      - pinpoint-hbase
+      - pinpoint-zookeeper
+      - pinpoint-redis
+
+  pinpoint-web:
+    image: pinpointdocker/pinpoint-web:3.1.1
+    container_name: paritypay-pinpoint-web
+    profiles: ["apm-pinpoint"]
+    # HBase 는 처음 뜰 때 테이블을 만드는 데 2분 넘게 걸리고, 그동안 collector 와 web 은
+    # "NoNode for /hbase/hbaseid" 로 **죽습니다**. depends_on 은 "컨테이너가 떴다"까지만 보장하므로
+    # 소용이 없습니다. 공식 pinpoint-docker 도 같은 이유로 restart 에 맡깁니다.
+    restart: unless-stopped
+    environment:
+      WEB_SERVER_PORT: "8080"
+      SPRING_PROFILES_ACTIVE: release
+      PINPOINT_ZOOKEEPER_ADDRESS: zoo1
+      CLUSTER_ENABLE: "true"
+      CONFIG_SENDUSAGE: "false"
+      CONFIG_SHOW_APPLICATIONSTAT: "true"
+      LOGGING_LEVEL_ROOT: WARN
+      JDBC_DRIVERCLASSNAME: com.mysql.jdbc.Driver
+      SPRING_DATASOURCE_HIKARI_JDBCURL: jdbc:mysql://pinpoint-mysql:3306/pinpoint?characterEncoding=UTF-8
+      SPRING_DATASOURCE_HIKARI_USERNAME: admin
+      SPRING_DATASOURCE_HIKARI_PASSWORD: ${PARITYPAY_PINPOINT_MYSQL_PASSWORD:?apm.sh up pinpoint 으로 띄우십시오}
+      SPRING_METADATASOURCE_HIKARI_JDBCURL: jdbc:mysql://pinpoint-mysql:3306/pinpoint?characterEncoding=UTF-8
+      SPRING_METADATASOURCE_HIKARI_USERNAME: admin
+      SPRING_METADATASOURCE_HIKARI_PASSWORD: ${PARITYPAY_PINPOINT_MYSQL_PASSWORD:?apm.sh up pinpoint 으로 띄우십시오}
+      SPRING_DATA_REDIS_HOST: pinpoint-redis
+      SPRING_DATA_REDIS_PORT: "6379"
+    ports:
+      - "${PARITYPAY_PINPOINT_WEB_PORT:-8081}:8080"
+    depends_on:
+      - pinpoint-hbase
+      - pinpoint-mysql
+      - pinpoint-zookeeper
+      - pinpoint-redis
+
 volumes:
   tempo-data:
   skywalking-banyandb-data:
+  pinpoint-hbase-data:
+  pinpoint-mysql-data:

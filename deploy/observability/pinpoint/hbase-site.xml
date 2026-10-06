@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!--
+  pinpointdocker/pinpoint-hbase 이미지의 설정을 그대로 복사하고 **ZooKeeper 세션 시간만** 늘립니다.
+
+  이유: 이 이미지는 amd64 단일 아키텍처입니다(collector·web 과 달리 arm64 빌드가 없습니다).
+  Apple Silicon 에서는 에뮬레이션으로 돌고, 그러면 테이블 하나를 16개 리전으로 미리 쪼개 만드는
+  동안(SqlMetaData_Ver2) 파일 레이아웃 쓰기가 기본 세션 시간을 넘깁니다. 그 순간
+  "KeeperErrorCode = Session expired for /hbase/master" 로 **HBase 마스터가 스스로 죽고**,
+  테이블 30여 개 중 6개만 만들어진 채 멈춥니다. 그 뒤 Pinpoint web 은
+  "TableNotFoundException: Application" 을 돌려줍니다.
+
+  바꾼 것은 아래 두 값뿐이고 나머지는 이미지의 원본과 같습니다.
+-->
+<configuration>
+    <property>
+        <name>hbase.rootdir</name>
+        <value>file:///home/pinpoint/hbase</value>
+    </property>
+    <property>
+        <name>hbase.cluster.distributed</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>zookeeper.znode.parent</name>
+        <value>/hbase</value>
+    </property>
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>zoo1,zoo2,zoo3</value>
+    </property>
+    <property>
+        <name>hbase.zookeeper.property.clientPort</name>
+        <value>2181</value>
+    </property>
+    <property>
+        <name>hbase.master.port</name>
+        <value>60000</value>
+    </property>
+    <property>
+        <name>hbase.regionserver.port</name>
+        <value>60020</value>
+    </property>
+
+    <!-- 기본 90초. 에뮬레이션에서 리전 생성이 그 안에 안 끝납니다. -->
+    <property>
+        <name>zookeeper.session.timeout</name>
+        <value>600000</value>
+    </property>
+    <!-- 서버 쪽 최대 세션 시간도 함께 올려야 ZooKeeper 가 요청을 깎지 않습니다. -->
+    <property>
+        <name>hbase.zookeeper.property.maxSessionTimeout</name>
+        <value>900000</value>
+    </property>
+</configuration>
