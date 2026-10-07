@@ -17,8 +17,9 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 
 APM 도구는 백엔드만 바꿔 끼울 수 있게 해 두었고(ADR-017, `scripts/apm.sh`), 도구별 설치 비용·에이전트
 오버헤드·같은 장애에서 보이는 것은 [reports/14](reports/14-apm-tool-comparison.md)에 있습니다.
-Jaeger·Zipkin·Tempo·SkyWalking은 떴고, SigNoz는 트레이스를 받지 못했으며 Pinpoint는 저장소가 뜨지
-않았습니다 — **어느 쪽도 애플리케이션 코드를 바꾸지 않았습니다.**
+Jaeger·Zipkin·Tempo·SkyWalking·Pinpoint가 떴고, SigNoz는 **첫 관리자 계정을 만들기 전까지 수집
+자체가 열리지 않습니다**(사용자 몫). 여섯 도구 모두 **애플리케이션 코드를 한 줄도 바꾸지
+않았습니다.** 띄우면서 막힌 지점과 원인은 [DOC-22](docs/22-apm-troubleshooting-log.md)에 있습니다.
 
 ## 2. 절대 규칙 (INV) — 어떤 코드도 이것을 깰 수 없습니다
 
@@ -82,6 +83,7 @@ Jaeger·Zipkin·Tempo·SkyWalking은 떴고, SigNoz는 트레이스를 받지 �
 | 화면 스타일·상태 색·메뉴 규칙 | [docs/adr/012-frontend-design-system.md](docs/adr/012-frontend-design-system.md) |
 | 로컬 스택 기동·포트 우회 | [docs/adr/013-local-dev-stack-script.md](docs/adr/013-local-dev-stack-script.md) |
 | APM 도구를 바꿔 끼울 때 | [docs/adr/017-swappable-apm-backend.md](docs/adr/017-swappable-apm-backend.md) |
+| APM 백엔드를 띄웠는데 화면이 비어 있을 때 | [docs/22-apm-troubleshooting-log.md](docs/22-apm-troubleshooting-log.md) |
 | 왜 이렇게 결정했는지 | [docs/adr/README.md](docs/adr/README.md) |
 
 전체 문서 관계는 [docs/00-document-map.md](docs/00-document-map.md)에 있습니다.
