@@ -84,12 +84,46 @@ const targets = {
       await shot("trace");
     },
   },
+  signoz: {
+    port: process.env.PARITYPAY_SIGNOZ_PORT || "8080",
+    async run(page, base, shot) {
+      // 로그인하지 않습니다. 첫 관리자 계정을 만드는 것은 사용자의 몫입니다.
+      // 이 화면 자체가 기록할 가치가 있습니다 — **계정을 만들기 전에는 수집도 되지 않습니다**
+      // (조직이 없으면 OpAMP 서버가 ingester 를 등록하지 못하고, ingester 는 OTLP 포트를 열지 않습니다).
+      await page.goto(`${base}/`, { waitUntil: "networkidle" });
+      await page.waitForURL(/signup|login/, { timeout: 30000 }).catch(() => {});
+      await page.waitForTimeout(4000);
+      await shot("signup");
+    },
+  },
   pinpoint: {
     port: process.env.PARITYPAY_PINPOINT_WEB_PORT || "8081",
     async run(page, base, shot) {
-      await page.goto(`${base}/`, { waitUntil: "networkidle" });
+      // 조회 구간을 **직접** 넣습니다. UI 가 채우게 두면 브라우저 시간대로 벽시계 문자열을 만들고,
+      // 서버는 그것을 자기 시간대로 읽습니다. 헤드리스 브라우저는 보통 UTC 라서 한국에서 돌리면
+      // 9시간 어긋난 빈 화면이 나옵니다 — 데이터가 멀쩡히 있는데도 "There are no running agents".
+      const fmt = (d) => {
+        const tz = process.env.CAPTURE_TZ || "Asia/Seoul";
+        const parts = new Intl.DateTimeFormat("en-CA", {
+          timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+          hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+        }).formatToParts(d).reduce((a, x) => ((a[x.type] = x.value), a), {});
+        return `${parts.year}-${parts.month}-${parts.day}-${parts.hour}-${parts.minute}-${parts.second}`;
+      };
+      const to = new Date();
+      const from = new Date(to.getTime() - 20 * 60 * 1000);
+      await page.goto(`${base}/serverMap/pay-api@SPRING_BOOT?from=${fmt(from)}&to=${fmt(to)}`,
+                      { waitUntil: "networkidle" });
+      // 서버맵과 산점도가 그려질 때까지 기다립니다. HBase 조회라 느립니다.
+      await page.waitForSelector("text=/Apdex/", { timeout: 60000 });
       await page.waitForTimeout(8000);
       await shot("servermap");
+      // 산점도의 점 하나를 열면 호출 트리(Call Tree)가 나옵니다. Pinpoint 가 OTel 자동계측과
+      // 가장 다른 화면이 여기입니다 — 메서드 단위까지 내려갑니다.
+      const dot = page.locator("canvas").last();
+      await dot.scrollIntoViewIfNeeded().catch(() => {});
+      await page.waitForTimeout(2000);
+      await shot("scatter");
     },
   },
 };
@@ -107,7 +141,14 @@ const browser = await chromium.launch();
 const httpCredentials = process.env.GRAFANA_USER
   ? { username: process.env.GRAFANA_USER, password: process.env.GRAFANA_PASSWORD || "" }
   : undefined;
-const page = await browser.newPage({ viewport: VIEWPORT, httpCredentials });
+// **시간대가 중요합니다.** Pinpoint 는 조회 구간을 시간대 없는 벽시계 문자열로 서버에 보냅니다.
+// 헤드리스 브라우저는 보통 UTC 라서, 서버가 KST 로 읽으면 9시간 어긋난 빈 화면이 나옵니다.
+// 데이터가 멀쩡히 있는데도 "There are no running agents" 가 뜹니다.
+const page = await browser.newPage({
+  viewport: VIEWPORT,
+  httpCredentials,
+  timezoneId: process.env.CAPTURE_TZ || Intl.DateTimeFormat().resolvedOptions().timeZone,
+});
 const shot = async (name, options = {}) => {
   const file = path.join(outDir, `apm-lab-${target}-${name}.png`);
   await page.screenshot({ path: file, ...options });

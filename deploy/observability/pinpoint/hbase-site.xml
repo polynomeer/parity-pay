@@ -41,14 +41,16 @@
         <value>60020</value>
     </property>
 
-    <!-- 기본 90초. 에뮬레이션에서 리전 생성이 그 안에 안 끝납니다. -->
+    <!--
+      기본 90초. 에뮬레이션에서 리전을 열다 이 시간을 넘기면 마스터와 리전서버가 **스스로 죽습니다**
+      ("Session expired for /hbase/master", ".../hbase/rs/..."). 300초로 올립니다.
+
+      **여기 값만 올리면 소용이 없습니다.** 세션 시간의 상한은 ZooKeeper 서버가 쥐고 있고,
+      기본값이 20 × tickTime 입니다. 그래서 compose 의 ZooKeeper 쪽 tickTime 을 15초로 올려
+      상한을 300초로 맞춰 둡니다. 둘 중 하나만 바꾸면 조용히 깎입니다.
+    -->
     <property>
         <name>zookeeper.session.timeout</name>
-        <value>600000</value>
-    </property>
-    <!-- 서버 쪽 최대 세션 시간도 함께 올려야 ZooKeeper 가 요청을 깎지 않습니다. -->
-    <property>
-        <name>hbase.zookeeper.property.maxSessionTimeout</name>
-        <value>900000</value>
+        <value>300000</value>
     </property>
 </configuration>

@@ -1,0 +1,56 @@
+# Pinpoint 3.1.1 의 hbase-create.hbase 에서 **미리 쪼개는 리전 수만** 줄인 것입니다.
+#
+# 원본은 운영 HBase 클러스터를 전제로 테이블 7개를 NUMREGIONS => 256 으로 만들고, 9개에 명시적
+# SPLITS 를 줍니다. 합치면 1,900개가 넘는 리전입니다. 노드가 여럿일 때는 그래야 쓰기가 흩어지지만,
+# **한 노드짜리 실험 스택에서는 흩어질 곳이 없습니다.**
+#
+# 그리고 pinpoint-hbase 이미지는 amd64 단일 아키텍처입니다(collector·web 은 arm64 빌드가 있습니다).
+# Apple Silicon 에서는 에뮬레이션으로 도는데, 그 속도로 리전 1,900개를 만들면 테이블 4~6개를 만든
+# 뒤 멈춥니다 — 처음에는 ZooKeeper 세션이 만료되어 마스터가 죽었고("Session expired for
+# /hbase/master"), 세션 시간을 늘리자 죽지 않고 조용히 매달렸습니다. 그동안 Pinpoint Web 은
+# "TableNotFoundException: Application" 을 돌려줍니다.
+#
+# 바꾼 것은 둘뿐입니다.
+#   NUMREGIONS => 256  ->  NUMREGIONS => 4
+#   명시적 {SPLITS=>[...]} 제거 (리전 1개로 시작, HBase 가 필요하면 스스로 쪼갭니다)
+# 테이블 이름·컬럼 패밀리·TTL·인코딩은 원본 그대로입니다. 성능을 재는 데 쓰지 마십시오 —
+# 이 파일은 **한 노드 실험 스택을 띄우기 위한 것**입니다.
+#
+# 원본: docker run --rm --entrypoint cat pinpointdocker/pinpoint-hbase:3.1.1 /opt/hbase/hbase-create.hbase
+
+create 'AgentInfo', { NAME => 'Info', TTL => 31536000, DATA_BLOCK_ENCODING => 'PREFIX' }
+
+create 'ApplicationIndex', { NAME => 'Agents', TTL => 31536000 }
+create 'AgentLifeCycle', { NAME => 'S', TTL => 5184000, DATA_BLOCK_ENCODING => 'PREFIX' }
+create 'AgentEvent', { NAME => 'E', TTL => 5184000, DATA_BLOCK_ENCODING => 'PREFIX' }
+
+create 'StringMetaData', { NAME => 'Str', TTL => 15552000, DATA_BLOCK_ENCODING => 'PREFIX' }
+create 'ApiMetaData', { NAME => 'Api', TTL => 31536000, DATA_BLOCK_ENCODING => 'PREFIX' }
+
+create 'SqlMetaData_Ver2', { NAME => 'Sql', TTL => 15552000, DATA_BLOCK_ENCODING => 'PREFIX' }
+create 'SqlUidMetaData', { NAME => 'Sql', TTL => 15552000, DATA_BLOCK_ENCODING => 'PREFIX' }
+
+create 'TraceV2', { NAME => 'S', TTL => 5184000, DATA_BLOCK_ENCODING => 'PREFIX' }, {NUMREGIONS => 4, SPLITALGO => 'UniformSplit'}
+
+create 'ApplicationTraceIndex', { NAME => 'I', TTL => 5184000, DATA_BLOCK_ENCODING => 'PREFIX' }, { NAME => 'M', TTL => 5184000, DATA_BLOCK_ENCODING => 'PREFIX' }
+
+create 'ApplicationMapStatisticsCaller_Ver2', { NAME => 'C', TTL => 5184000, VERSIONS => 1, DATA_BLOCK_ENCODING => 'PREFIX' }
+create 'ApplicationMapStatisticsCallee_Ver2', { NAME => 'C', TTL => 5184000, VERSIONS => 1, DATA_BLOCK_ENCODING => 'PREFIX' }
+create 'ApplicationMapStatisticsSelf_Ver2', { NAME => 'C', TTL => 5184000, VERSIONS => 1, DATA_BLOCK_ENCODING => 'PREFIX' }
+
+create 'HostApplicationMap_Ver2', { NAME => 'M', TTL => 5184000, VERSIONS => 1, DATA_BLOCK_ENCODING => 'PREFIX' }
+
+create 'MapAppSelf',   { NAME => 'C', TTL => 5184000, VERSIONS => 1, DATA_BLOCK_ENCODING => 'PREFIX' }, {NUMREGIONS => 4, SPLITALGO => 'UniformSplit'}
+create 'MapAgentSelf', { NAME => 'C', TTL => 5184000, VERSIONS => 1, DATA_BLOCK_ENCODING => 'PREFIX' }, {NUMREGIONS => 4, SPLITALGO => 'UniformSplit'}
+create 'MapAppOut',    { NAME => 'C', TTL => 5184000, VERSIONS => 1, DATA_BLOCK_ENCODING => 'PREFIX' }, {NUMREGIONS => 4, SPLITALGO => 'UniformSplit'}
+create 'MapAppIn',     { NAME => 'C', TTL => 5184000, VERSIONS => 1, DATA_BLOCK_ENCODING => 'PREFIX' }, {NUMREGIONS => 4, SPLITALGO => 'UniformSplit'}
+create 'MapAppHost',   { NAME => 'C', TTL => 5184000, VERSIONS => 1, DATA_BLOCK_ENCODING => 'PREFIX' }, {NUMREGIONS => 4, SPLITALGO => 'UniformSplit'}
+
+create 'TraceIndex', { NAME => 'I', TTL => 5184000, DATA_BLOCK_ENCODING => 'PREFIX' }, { NAME => 'M', TTL => 5184000, DATA_BLOCK_ENCODING => 'PREFIX' }, {NUMREGIONS => 4, SPLITALGO => 'UniformSplit'}
+
+create 'Application', { NAME => 'A',  TTL => 31536000 }
+create 'AgentId', { NAME => 'A', TTL => 5184000 }
+
+list
+
+exit

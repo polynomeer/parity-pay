@@ -134,6 +134,17 @@ services:
       - pinpoint-hbase-data:/home/pinpoint/hbase
       # 세션 시간만 늘린 설정입니다. 파일 안에 이유를 적어 뒀습니다.
       - ./deploy/observability/pinpoint/hbase-site.xml:/opt/hbase/hbase-2.2.6/conf/hbase-site.xml:ro
+      # 미리 쪼개는 리전 수만 줄인 스키마입니다. 원본은 1,900개가 넘고, 한 노드 에뮬레이션에서는
+      # 그걸 만들다 멈춥니다. 자세한 이유는 파일 안에.
+      - ./deploy/observability/pinpoint/hbase-create.hbase:/opt/pinpoint/hbase-create.hbase:ro
+    # 이미지의 초기화 스크립트가 `sed -i` 로 hbase-create.hbase 를 고치므로 그 자리에 직접
+    # 마운트할 수 없습니다(바인드 마운트된 파일은 rename 이 막힙니다). 그래서 다른 자리에 두고
+    # 복사한 뒤 원래 순서대로 띄웁니다.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - cp /opt/pinpoint/hbase-create.hbase /opt/hbase/hbase-create.hbase &&
+        /usr/local/bin/initialize-hbase.sh && tail -f /dev/null
 
   pinpoint-zookeeper:
     image: zookeeper:3.4.13
@@ -142,8 +153,12 @@ services:
     environment:
       ZOO_MY_ID: "1"
       ZOO_SERVERS: server.1=0.0.0.0:2888:3888
-      # HBase 가 요청하는 긴 세션을 ZooKeeper 가 깎지 않게 합니다 (hbase-site.xml 의 주석 참고).
-      ZOO_MAX_SESSION_TIMEOUT: "900000"
+      # **ZooKeeper 서버가 세션 시간의 상한을 쥐고 있습니다.** 클라이언트(HBase)가 10분을 달라고 해도
+      # 서버의 maxSessionTimeout 을 넘으면 조용히 깎입니다. 그리고 이 이미지에는
+      # ZOO_MAX_SESSION_TIMEOUT 같은 변수가 **없습니다**(지원 변수는 ZOO_TICK_TIME·ZOO_INIT_LIMIT 등).
+      # maxSessionTimeout 의 기본값이 20 × tickTime 이므로 tick 을 올려서 상한을 올립니다.
+      # 15초 × 20 = 300초. 에뮬레이션에서 리전을 여는 동안 세션이 끊기지 않을 만큼입니다.
+      ZOO_TICK_TIME: "15000"
     networks:
       default:
         # 세 별칭이 모두 이 컨테이너를 가리킵니다 (위 주석 참고).
