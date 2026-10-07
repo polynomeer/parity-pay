@@ -1,0 +1,128 @@
+[
+ {
+  "approved": 43232,
+  "p50Ms": 24.42,
+  "p95Ms": 49.21949999999998,
+  "maxMs": 480.748,
+  "httpReqRate": 449.62677366159335,
+  "failed": 0,
+  "arm": "none",
+  "run": 1,
+  "commit": "9076586",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-pinpoint-web": "545.6MiB",
+   "paritypay-pinpoint-hbase": "1019MiB",
+   "paritypay-pinpoint-zookeeper": "45.19MiB",
+   "paritypay-pinpoint-collector": "680.5MiB",
+   "paritypay-pinpoint-redis": "3.508MiB",
+   "paritypay-pinpoint-mysql": "348.3MiB"
+  },
+  "at": "2026-10-07T06:40:36.020073+00:00"
+ },
+ {
+  "approved": 13519,
+  "p50Ms": 61.955,
+  "p95Ms": 227.05929999999998,
+  "maxMs": 1723.272,
+  "httpReqRate": 141.63528598558648,
+  "failed": 0,
+  "arm": "pinpoint",
+  "run": 1,
+  "commit": "9076586",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/pinpoint-agent-3.1.1/pinpoint-bootstrap.jar -Dpinpoint.agentId=pay-api-01 -Dpinpoint.applicationName=pay-api -Dprofiler.transport.grpc.collector.ip=127.0.0.1 -Dprofiler.transport.grpc.agent.collector.port=9991 -Dprofiler.transport.grpc.stat.collector.port=9992 -Dprofiler.transport.grpc.span.collector.port=9993 -Dprofiler.sampling.counting.sampling-rate=1",
+  "containerMemory": {
+   "paritypay-pinpoint-web": "545.7MiB",
+   "paritypay-pinpoint-hbase": "1.1GiB",
+   "paritypay-pinpoint-zookeeper": "41.09MiB",
+   "paritypay-pinpoint-collector": "726MiB",
+   "paritypay-pinpoint-redis": "3.77MiB",
+   "paritypay-pinpoint-mysql": "348.3MiB"
+  },
+  "at": "2026-10-07T06:42:55.320232+00:00"
+ },
+ {
+  "approved": 25397,
+  "p50Ms": 38.741,
+  "p95Ms": 95.53199999999998,
+  "maxMs": 510.605,
+  "httpReqRate": 262.9797379936038,
+  "failed": 0,
+  "arm": "none",
+  "run": 2,
+  "commit": "9076586",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-pinpoint-web": "546.5MiB",
+   "paritypay-pinpoint-hbase": "1.105GiB",
+   "paritypay-pinpoint-zookeeper": "41.04MiB",
+   "paritypay-pinpoint-collector": "726.2MiB",
+   "paritypay-pinpoint-redis": "3.551MiB",
+   "paritypay-pinpoint-mysql": "348.8MiB"
+  },
+  "at": "2026-10-07T06:45:03.688493+00:00"
+ },
+ {
+  "approved": 10019,
+  "p50Ms": 84.189,
+  "p95Ms": 332.4435999999999,
+  "maxMs": 1264.282,
+  "httpReqRate": 104.7704609347985,
+  "failed": 0,
+  "arm": "pinpoint",
+  "run": 2,
+  "commit": "9076586",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/pinpoint-agent-3.1.1/pinpoint-bootstrap.jar -Dpinpoint.agentId=pay-api-01 -Dpinpoint.applicationName=pay-api -Dprofiler.transport.grpc.collector.ip=127.0.0.1 -Dprofiler.transport.grpc.agent.collector.port=9991 -Dprofiler.transport.grpc.stat.collector.port=9992 -Dprofiler.transport.grpc.span.collector.port=9993 -Dprofiler.sampling.counting.sampling-rate=1",
+  "containerMemory": {
+   "paritypay-pinpoint-web": "545.6MiB",
+   "paritypay-pinpoint-hbase": "1.146GiB",
+   "paritypay-pinpoint-zookeeper": "40.79MiB",
+   "paritypay-pinpoint-collector": "729.8MiB",
+   "paritypay-pinpoint-redis": "3.508MiB",
+   "paritypay-pinpoint-mysql": "348.9MiB"
+  },
+  "at": "2026-10-07T06:47:49.374018+00:00"
+ },
+ {
+  "approved": 9265,
+  "p50Ms": 91.873,
+  "p95Ms": 341.1979999999999,
+  "maxMs": 1007.8,
+  "httpReqRate": 91.30700429135113,
+  "failed": 0,
+  "arm": "none",
+  "run": 3,
+  "commit": "9076586",
+  "agent": "(없음)",
+  "containerMemory": {
+   "paritypay-pinpoint-web": "547.4MiB",
+   "paritypay-pinpoint-hbase": "1.153GiB",
+   "paritypay-pinpoint-zookeeper": "41.48MiB",
+   "paritypay-pinpoint-collector": "728.2MiB",
+   "paritypay-pinpoint-redis": "3.875MiB",
+   "paritypay-pinpoint-mysql": "351.9MiB"
+  },
+  "at": "2026-10-07T06:50:19.381333+00:00"
+ },
+ {
+  "approved": 7801,
+  "p50Ms": 43.987,
+  "p95Ms": 335.296,
+  "maxMs": 21804.328,
+  "httpReqRate": 66.85102179072281,
+  "failed": 0,
+  "arm": "pinpoint",
+  "run": 3,
+  "commit": "9076586",
+  "agent": "-javaagent:/Users/hammac/Projects/parity-pay/.apm/agents/pinpoint-agent-3.1.1/pinpoint-bootstrap.jar -Dpinpoint.agentId=pay-api-01 -Dpinpoint.applicationName=pay-api -Dprofiler.transport.grpc.collector.ip=127.0.0.1 -Dprofiler.transport.grpc.agent.collector.port=9991 -Dprofiler.transport.grpc.stat.collector.port=9992 -Dprofiler.transport.grpc.span.collector.port=9993 -Dprofiler.sampling.counting.sampling-rate=1",
+  "containerMemory": {
+   "paritypay-pinpoint-web": "551.7MiB",
+   "paritypay-pinpoint-hbase": "1.188GiB",
+   "paritypay-pinpoint-zookeeper": "41.41MiB",
+   "paritypay-pinpoint-collector": "490MiB",
+   "paritypay-pinpoint-redis": "3.746MiB",
+   "paritypay-pinpoint-mysql": "360.2MiB"
+  },
+  "at": "2026-10-07T06:54:10.799876+00:00"
+ }
+]

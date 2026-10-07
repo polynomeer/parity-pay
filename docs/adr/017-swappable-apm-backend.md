@@ -79,7 +79,7 @@ pay-api ──(OTLP 4317)──▶ Collector ─┼─ collector-tempo.yaml   �
 - `apm.sh`가 `dev.sh`의 컨테이너를 내리지 않는다
 - 포트가 잡혀 있으면 비어 있는 포트로 옮긴다
 
-## Outcome — 2026-10-05 ~ 2026-10-06 (측정은 reports/14)
+## Outcome — 2026-10-05 ~ 2026-10-07 (측정은 reports/14, 과정은 DOC-22)
 
 | 항목 | 결과 |
 |---|---|
@@ -91,12 +91,18 @@ pay-api ──(OTLP 4317)──▶ Collector ─┼─ collector-tempo.yaml   �
 | SkyWalking | 띄웠습니다(OAP·UI·BanyanDB). 자체 에이전트 경로가 동작하고 서비스·엔드포인트 지표가 보입니다. 기동까지 세 번 막혔습니다 — reports/14 §4 |
 | Zipkin 경로 | `apm.sh up zipkin` → 같은 에이전트, **exporter만** `zipkin`. Zipkin은 OTLP를 받지 않지만 **앱은 바뀌지 않았습니다** — 형식 변환이 컬렉터 안에서 끝났습니다. 이 구조가 노린 것이 정확히 이것입니다 |
 | Tempo 화면 | Tempo에는 UI가 없습니다. Grafana Explore에서 TraceQL로 같은 트레이스를 봤습니다(캡처 있음). **백엔드를 바꾸는 비용에 "그 백엔드를 볼 도구"가 들어갈 수 있습니다** |
-| Pinpoint 경로 | 프로필·에이전트·전환 경로를 모두 만들었고 **에이전트는 붙습니다**(`pinpoint agent started normally`). 그러나 저장소(HBase)가 뜨지 않아 **쓸 수 있는 상태까지 가지 못했습니다** — reports/14 §4의 다섯 가지 |
+| Pinpoint 경로 | **떴습니다.** 자체 에이전트 + HBase 계열이고 컨테이너가 여섯입니다. 일곱 군데에서 막혔고 전부 뚫었습니다 — [DOC-22 §3.5](../22-apm-troubleshooting-log.md) |
+| SigNoz 경로 | 스택은 뜨고 스키마도 2분 안에 끝납니다. 그러나 **첫 관리자 계정이 없으면 ingester가 OTLP 포트를 열지 않습니다**(조직이 없어 OpAMP 등록이 실패). 계정 생성은 사용자 몫이라 여기서 멈춥니다 |
 | 남은 백엔드 | Datadog은 프로필과 전환 경로만 있고 **아직 띄워 보지 않았습니다**(체험판 계정 필요, reports/14 §9) |
 
-**이 ADR이 실제로 값을 한 자리.** Zipkin은 OTLP를 받지 않는 유일한 백엔드였고, SkyWalking·Pinpoint는
-에이전트 자체가 다릅니다. 그런데도 `apps/`와 `modules/` 아래 자바 코드는 **한 줄도 바뀌지 않았습니다.**
-바뀐 것은 컬렉터 설정 파일 하나(`collector-zipkin.yaml`)와 `.apm/env`의 `-javaagent` 한 줄뿐입니다.
+**이 ADR이 실제로 값을 한 자리.** Zipkin은 OTLP를 받지 않는 유일한 백엔드였고, SkyWalking과 Pinpoint는
+에이전트 자체가 다릅니다. Pinpoint는 HBase·ZooKeeper·MySQL·Redis까지 끌고 들어왔습니다. 그런데도
+`apps/`와 `modules/` 아래 자바 코드는 **한 줄도 바뀌지 않았습니다.** 바뀐 것은 컬렉터 설정 파일
+하나(`collector-zipkin.yaml`)와 `.apm/env`의 `-javaagent` 한 줄뿐입니다.
+
+**대신 비용이 어디로 갔는지도 분명해졌습니다.** 애플리케이션이 치르지 않는 비용을 `docker-compose.apm.yml`과
+`scripts/apm.sh`가 대신 칩니다 — 포트 배정, 버전 맞추기, 기동 순서, 스키마, 비밀값 생성입니다.
+교체가 싸진 것이 아니라 **교체 비용이 한곳에 모인 것**입니다.
 
 **처음에 두 번 틀렸습니다.** ① 프로필만 주고 `docker compose up`을 해서 기본 파일의 모든 서비스를 함께
 띄웠고, 포트 충돌로 멈췄습니다 — 서비스 이름을 지정하게 고쳤습니다. ② 포트를 고르고 나서 앞선 백엔드를

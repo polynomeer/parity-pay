@@ -24,18 +24,22 @@
   1차의 −18.7%와 **합쳐 읽으면 안 됩니다** — 다른 날 다른 묶음입니다(§5.4).
 - **아무도 세지 않는 비용이 하나 있습니다.** OTel Collector 자신이 전량 샘플링 70초에 **1.3~2.6 GiB**까지
   자랍니다. 상한을 두지 않았고, 팔을 바꿔도 다시 띄우지 않으므로 3.8 GiB까지 누적됐습니다(§5.5).
-- **Pinpoint는 끝내 뜨지 않았습니다.** 막은 것 다섯 개를 하나씩 뚫었고 마지막에서 멈췄습니다 —
-  `pinpoint-hbase` 이미지가 **amd64 단일 아키텍처**라 Apple Silicon에서는 에뮬레이션으로 돌고,
-  테이블 30여 개 중 4~6개를 만든 뒤 HBase 마스터가 멈춥니다(§4).
-- **못 한 것**: Pinpoint 전부(아래), SigNoz 트레이스 수신(스키마 마이그레이션이 끝나지 않음)과 UI(계정 필요),
-  Datadog(체험판 계정 필요), SkyWalking 트레이스 화면 캡처.
+- **Pinpoint가 떴습니다**(2026-10-07, 두 번째 시도). 막은 것 일곱 개를 뚫었고, 마지막 둘은
+  **미리 쪼개는 리전 수를 줄이는 것**과 **ZooKeeper tickTime을 올리는 것**이었습니다(§4, DOC-22 §3.5).
+  서버맵에 USER → pay-api → PostgreSQL·외부기관이 **자동으로 그려집니다** — 다른 도구와 보는 단위가
+  가장 다릅니다(§6).
+- **SigNoz가 수집하지 않은 진짜 이유를 찾았습니다.** 스키마 마이그레이션이 아니라 **조직이 없어서**였습니다.
+  첫 관리자 계정이 만들어지기 전에는 OpAMP 서버가 ingester를 등록하지 못하고, ingester는 **OTLP 포트를
+  아예 열지 않습니다**(§4). 계정 생성은 사용자 몫이라 여기서 멈춥니다.
+- **못 한 것**: SigNoz 수집·UI(계정 필요), Datadog(체험판 계정 필요), SkyWalking 트레이스 화면 캡처,
+  Pinpoint 오버헤드의 **믿을 만한 수치**(§5.6 — 대조군이 한 묶음 안에서 4.7배 흔들렸습니다).
 
 ## 2. 환경
 
 | 항목 | 값 |
 |---|---|
-| 커밋 | 1차 `3e4a547`, 2차(Zipkin·Tempo 화면·Pinpoint 시도) `77c74c3` |
-| 측정 일시 | 2026-10-05 ~ 2026-10-06 |
+| 커밋 | 1차 `3e4a547`, 2차(Zipkin·Tempo 화면) `77c74c3`, 3차(Pinpoint 기동·SigNoz 원인) `9076586` |
+| 측정 일시 | 2026-10-05 ~ 2026-10-07 |
 | 기계 | Apple M1 Max, 32 GB, macOS 26.6.2, Docker Desktop 28.0.4 (**Docker 할당 7.7 GiB**) |
 | 애플리케이션 | pay-api (Java 21, `local` 프로필), 호스트 프로세스. 의존: postgres 17·Redpanda·mock-bank·mock-pg(컨테이너) |
 | 부하 | k6 v1.0.0. 오버헤드는 `payment-baseline.js`(VU 20, P-001과 같은 조건), 가시성은 `external-pg-load.js` |
@@ -73,9 +77,9 @@ Zipkin만 exporter가 OTLP가 아닙니다 — Zipkin은 자기 형식만 받습
 | Jaeger (기준선) | 1 (+컬렉터) | 메모리 | 0 | 미측정 |
 | **Zipkin** | **1** (+컬렉터) | 메모리 | **0** | **약 157 MiB**(부하 뒤 유휴) |
 | Grafana Tempo | 1 (+컬렉터) | 로컬 디스크 | 0 | 약 157 MiB(부하 뒤 유휴). **화면을 보려면 Grafana가 더 필요합니다** |
-| SigNoz | **6** | ClickHouse + Keeper + PostgreSQL | 1 (아래) | **약 970 MiB** (ClickHouse 737 MiB) |
+| SigNoz | **6** | ClickHouse + Keeper + PostgreSQL | 2 (아래, **수집은 못 염**) | **약 840 MiB** (ClickHouse 640 MiB) |
 | SkyWalking | **3** | BanyanDB(필수) | **3** (아래) | 미측정 |
-| **Pinpoint** | **5** | HBase + MySQL + ZooKeeper + Redis | **5** (아래, **끝내 실패**) | 약 3.2 GiB(기동 중) |
+| **Pinpoint** | **6** | HBase + MySQL + ZooKeeper + Redis | **7** (아래, 전부 뚫음) | 약 3.2 GiB |
 | Datadog | — | SaaS | — | **미착수**(체험판 계정 필요) |
 
 컨테이너 수와 막힌 횟수가 같이 움직입니다. 한 개짜리(Jaeger·Zipkin)는 한 번에 떴고, 다섯·여섯 개짜리는
@@ -86,14 +90,34 @@ Zipkin만 exporter가 OTLP가 아닙니다 — Zipkin은 자기 형식만 받습
 exporter만 `zipkin`으로 바꿉니다(`deploy/observability/otel/collector-zipkin.yaml`). 앱은 이 사실을
 모릅니다. Jaeger와 같은 이유로 메모리 상한(`MEM_MAX_SPANS=500000`)과 `mem_limit`을 함께 둡니다.
 
-**SigNoz에서 막힌 것.** 2025년에 docker-compose 설치가 폐기되고 전용 설치기(`foundryctl`)로 옮겼습니다.
-공식 안내는 `curl … | bash`이고, 이 실험은 같은 일을 단계로 나눠 했습니다 — 공식 GitHub 릴리스의 tarball과
-checksums를 받아 **sha256을 검증한 뒤** 설치합니다(`scripts/apm.sh`). 생성된 compose는 4317·4318·8080을
-요구해 우리 컬렉터와 부딪히므로 호스트 포트를 다시 매핑합니다. 띄운 뒤에는 **ClickHouse 분산 DDL 스키마
-마이그레이션이 10분 넘게 끝나지 않았고**, 그동안 ingester가 OTLP를 받지 않아 **트레이스가 한 건도 들어오지
-않았습니다**. 또 컨테이너를 recreate 했더니 클러스터 메타데이터에 죽은 복제본 호스트가 남아
-(`Cannot resolve host (a39b5c2f3c57)`) 마이그레이션이 영원히 끝나지 않는 상태가 됐습니다 — 볼륨까지 지우고
-한 번에 올려야 했습니다.
+**SigNoz에서 막힌 것 둘 — 그리고 두 번째가 진짜였습니다.** 2025년에 docker-compose 설치가 폐기되고
+전용 설치기(`foundryctl`)로 옮겼습니다. 공식 안내는 `curl … | bash`이고, 이 실험은 같은 일을 단계로
+나눠 했습니다 — 공식 GitHub 릴리스의 tarball과 checksums를 받아 **sha256을 검증한 뒤** 설치합니다
+(`scripts/apm.sh`). 생성된 compose는 4317·4318·8080을 요구해 우리 컬렉터와 부딪히므로 호스트 포트를
+다시 매핑합니다.
+
+*첫 번째(2026-10-06).* ClickHouse 분산 DDL 스키마 마이그레이션이 10분 넘게 끝나지 않았습니다. 컨테이너를
+recreate 했더니 클러스터 메타데이터에 죽은 복제본 호스트가 남아(`Cannot resolve host (a39b5c2f3c57)`)
+마이그레이션이 영원히 끝나지 않는 상태가 됐습니다. **볼륨까지 지우고 한 번에 올려야 합니다.**
+
+*두 번째(2026-10-07).* 볼륨을 지우고 한 번에 올렸더니 마이그레이터가 **2분 안에 `Exited (0)`**으로
+끝나고 `signoz_traces`에 테이블 36개가 생겼습니다. **그런데도 트레이스는 0건이었습니다.**
+
+```text
+우리 컬렉터 --(OTLP)--> signoz-ingester:4317   ← 아무도 듣고 있지 않음
+                             ▲ OpAMP 로 파이프라인 설정을 받아야 포트를 연다
+                        signoz-signoz-0  ← "failed to find or create agent"
+                             ▲ agent 레코드는 조직(organization)에 속한다
+                        organizations = 0   ← 첫 관리자 계정을 만들어야 생긴다
+```
+
+확인한 것은 넷입니다. ① 우리 컬렉터가 `host.docker.internal:4327`에 연결하지 못함, ② 호스트에서 그 포트가
+**닫혀 있음**, ③ ingester가 듣는 포트는 `8888`(자기 지표)뿐, ④ 메타스토어에 `organizations = 0`,
+`users = 0`이고 SigNoz 서버 로그에 `failed to find or create agent`.
+
+**SigNoz는 첫 관리자 계정이 만들어지기 전까지 아무것도 수집하지 않습니다.** 화면을 못 보는 것이 아니라
+수집 경로가 열리지 않습니다. 계정 생성은 사용자 몫이므로 여기서 멈췄습니다 — 남은 것은 UI를 열고 계정을
+만드는 한 번뿐이고, 그 순간 조직이 생기면서 ingester가 포트를 엽니다.
 
 **SkyWalking에서 막힌 것 셋.**
 
@@ -103,29 +127,26 @@ checksums를 받아 **sha256을 검증한 뒤** 설치합니다(`scripts/apm.sh`
 | OAP 10.4 + BanyanDB `0.11.1`(최신) | `Incompatible BanyanDB server API version: 0.11. But accepted versions: 0.10`으로 **종료** |
 | OAP 10.4 + BanyanDB `0.10.3` | 앞 버전이 쓴 볼륨을 읽지 못해 **종료**(`unknown field "created…"`). 볼륨을 지우고서야 기동 |
 
-**Pinpoint에서 막힌 것 다섯 — 그리고 끝내 뜨지 않았습니다.**
+**Pinpoint에서 막힌 것 일곱 — 그리고 떴습니다.** 과정은 [DOC-22 §3.5](../docs/22-apm-troubleshooting-log.md)에
+자세히 있고, 여기에는 결과만 적습니다.
 
-| # | 막은 것 | 어떻게 드러났나 | 한 일 |
-|---|---|---|---|
-| 1 | `depends_on`은 "컨테이너가 떴다"까지만 본다 | HBase가 초기화하는 2분 동안 collector·web이 **죽습니다** | 공식 compose와 같이 `restart`에 맡김 |
-| 2 | HBase 이미지에 ZooKeeper 주소가 **박혀 있다** | 이미지 안 `hbase-site.xml`에 `<value>zoo1,zoo2,zoo3</value>`. 다른 이름으로 띄우면 `zoo1: Name or service not known`으로 **테이블조차 못 만듭니다** | 컨테이너 하나에 `zoo1`·`zoo2`·`zoo3` 별칭 세 개 |
-| 3 | HBase 주소와 클러스터 조정이 **한 변수를 공유한다** | collector 설정이 `hbase.client.host=${pinpoint.zookeeper.address}`. 별도 ZooKeeper를 가리키면 `NoNode for /hbase/hbaseid` | 같은 `zoo1`을 쓰게 함 |
-| 4 | 공식 예시의 MySQL 비밀번호가 `admin/admin` | ADR-011(비밀값에 기본값을 두지 않는다)에 어긋남 | `apm.sh`가 한 번 만들어 `.apm/`에 두고, 없으면 compose가 뜨지 않게 함 |
-| 5 | **`pinpoint-hbase` 이미지가 amd64 단일 아키텍처** | collector·web은 arm64 빌드가 있는데 HBase만 없습니다. Apple Silicon에서는 에뮬레이션으로 돌고, 리전을 16개로 미리 쪼개 만드는 동안 ZooKeeper 세션이 만료되어 **마스터가 스스로 죽습니다** (`KeeperErrorCode = Session expired for /hbase/master`) | 세션 시간을 10분으로 늘린 `hbase-site.xml`을 덮어씌움 |
+| # | 막은 것 | 고친 방법 |
+|---|---|---|
+| 1 | `depends_on`은 "컨테이너가 떴다"까지만 본다. HBase 초기화 중 collector·web이 죽음 | `restart: unless-stopped` |
+| 2 | HBase 이미지에 `zoo1,zoo2,zoo3`이 **박혀 있음**. 다른 이름이면 테이블조차 못 만듦 | 컨테이너 하나에 별칭 셋 |
+| 3 | HBase 주소와 클러스터 조정이 **한 변수를 공유** (`hbase.client.host=${pinpoint.zookeeper.address}`) | 둘 다 `zoo1` |
+| 4 | 공식 예시의 MySQL 비밀번호가 `admin/admin` | `apm.sh`가 생성해 `.apm/`에 보관(ADR-011) |
+| 5 | `pinpoint-hbase`가 **amd64 단일 아키텍처**. 에뮬레이션에서 **리전 1,900개가 넘는 스키마**를 만들다 마스터가 죽음 | `NUMREGIONS => 4`, 명시적 `SPLITS` 제거 |
+| 6 | 세션 시간을 올려도 **ZooKeeper 서버가 깎음**(상한 = 20 × tickTime). 이미지에 `ZOO_MAX_SESSION_TIMEOUT` 변수가 **없음** | `ZOO_TICK_TIME=15000` + `zookeeper.session.timeout=300000` |
+| 7 | 초기화 스크립트가 스키마 파일을 `sed -i`로 고쳐 바인드 마운트가 막힘 | 다른 자리에 두고 entrypoint에서 복사 |
 
-5번은 **고치지 못했습니다.** 세션 시간을 늘리자 이번에는 죽지 않고 **멈춥니다** — `StringMetaData`의
-리전을 만들다가 13분 넘게 진척이 없고 CPU는 2.6%입니다. 테이블 30여 개 중 4개만 만들어진 상태이고,
-Pinpoint Web은 `TableNotFoundException: Application`을 돌려줍니다. 세션 만료가 사라지자 빨리 실패하던
-것이 조용히 매달리는 것으로 바뀌었을 뿐입니다.
+5번과 6번을 **함께** 고치자 테이블 22개가 약 4분 30초에 전부 만들어졌고,
+`/api/applications`가 `pay-api`를 돌려줬습니다. 5번만 고쳤을 때는 16개에서, 6번만 고쳤을 때는 4개에서
+멈췄습니다 — **둘 다 필요했습니다.**
 
-확인한 사실 하나는 분명합니다. `docker manifest inspect` 기준으로 `pinpointdocker/pinpoint-hbase:3.1.1`은
-**단일 아키텍처**이고, `pinpoint-collector`·`pinpoint-web`·`openzipkin/zipkin`·`skywalking-oap-server`는
-`linux/amd64`와 `linux/arm64`를 모두 냅니다. **이 스택에서 arm64 빌드가 없는 것은 저장소 하나뿐이고,
-막힌 것도 그 하나입니다.**
-
-에이전트 쪽은 붙었습니다. `pinpoint-bootstrap.jar`를 달면 `pinpoint agent started normally.`가 뜨고
-collector는 9991~9993을 듣습니다. 그러나 **저장이 안 되는 상태의 오버헤드를 재는 것은 의미가 없으므로**
-Pinpoint 오버헤드는 **측정하지 않았습니다**.
+줄인 것은 리전 수뿐입니다(`deploy/observability/pinpoint/hbase-create.hbase`). 테이블 이름·컬럼
+패밀리·TTL은 원본 그대로이고, 이 구성은 **한 노드 실험 스택을 띄우기 위한 것이지 성능을 재기 위한
+것이 아닙니다.**
 
 **Jaeger에서 막힌 것.** 기본 all-in-one은 메모리 저장소에 상한이 없어, 전량 샘플링 부하에서 자라다가
 컨테이너가 **OOM으로 두 번 죽었습니다**(`Exited (137)`). `MEMORY_MAX_TRACES=20000` + `mem_limit: 1g`로
@@ -219,6 +240,26 @@ Zipkin JSON으로 바꾸는 일이 끼어 있어 그럴듯하지만, **그 인�
 도구를 고르는 자리에서 비교하는 것은 보통 백엔드의 메모리입니다. 그런데 OTLP 경로에서는 **컬렉터가
 백엔드보다 큽니다** — Tempo와 Zipkin이 부하 뒤 유휴에서 157 MiB쯤일 때 컬렉터는 GiB 단위였습니다.
 
+### 5.6 Pinpoint 자체 에이전트 — 쟀지만 믿을 수 없습니다
+
+| 팔 | 승인 건수 (3회) | 중앙값 | p50 ms | p95 ms | 실패 |
+|---|---|---:|---:|---:|---:|
+| none | 43,232 / 25,397 / 9,265 | 25,397 | 39 | 96 | 0 |
+| Pinpoint 3.1.1 | 13,519 / 10,019 / 7,801 | 10,019 | 62 | 332 | 0 |
+
+중앙값끼리는 −60.6%이고 p95는 96 → 332 ms입니다. **그런데 이 숫자를 쓰지 마십시오.**
+**대조군이 한 묶음 안에서 43,232에서 9,265로 4.7배 떨어졌습니다.** 번갈아 돌렸는데도 그렇습니다.
+팔이 아니라 **시간이** 지배하고 있다는 뜻이고, 이 저장소는 그런 상태의 수치를 결론으로 쓰지
+않습니다(M-007).
+
+원인으로 짐작되는 것은 Pinpoint 백엔드 자신입니다. 컨테이너 여섯 개가 같은 기계에서 돌고, HBase가
+들어오는 스팬을 계속 쓰고 있습니다. 즉 이 측정에는 **에이전트 비용과 "백엔드를 같은 기계에 올린
+비용"이 섞여 있습니다.** 짝 비교도 −69%·−61%·−16%으로 흔들립니다.
+
+말할 수 있는 것은 방향뿐입니다. **세 쌍 모두에서 Pinpoint 쪽이 낮았고, p95가 세 자리로 올라갔습니다.**
+크기를 말하려면 백엔드를 다른 기계에 두고 다시 재야 하고, 그것은 하지 않았습니다.
+원본: `reports/data/14-apm-lab/overhead-interleaved-none-pinpoint-20261007.json`
+
 ## 6. 같은 장애에서 무엇이 보이는가 — 실측
 
 Mock PG가 승인 전에 2.5초를 붙잡는 조건에서 결제 3 rps + 잔액 조회 5 rps를 걸었습니다. 클라이언트가 본
@@ -230,8 +271,8 @@ Mock PG가 승인 전에 2.5초를 붙잡는 조건에서 결제 3 rps + 잔액 
 | **SkyWalking** | 1단계 (대시보드) | 서비스 평균 응답시간·Apdex·엔드포인트별 부하/지연이 **대시보드 첫 화면**에 바로 나옵니다. 다만 "어느 호출이 느린가"는 엔드포인트 단위이고, 스팬 수준은 트레이스 화면으로 들어가야 합니다 |
 | **Zipkin** | **2단계** (목록 → 상세) | Jaeger와 같습니다. Duration **2.525 s**, Services 1, Total Spans **20**, 자식 `post` 2.508 s. 같은 에이전트가 만든 같은 트레이스이므로 **숫자가 일치합니다** — 다른 것은 화면뿐입니다. 오른쪽에 스팬별 태그(`http.route`, `http.response.status_code=201` 등)가 함께 붙습니다 |
 | **Tempo** | **3단계** (Grafana → Explore → 트레이스) | 화면이 **없습니다**. Grafana의 Explore에서 TraceQL `{ name="POST /api/v1/payments" }`로 찾습니다. 결과는 같습니다(2.53 s, 20 spans, 201). 대신 **Grafana를 함께 운영해야 합니다** |
-| SigNoz | — | 트레이스가 들어오지 않았습니다(§4) |
-| Pinpoint | — | 저장소가 뜨지 않아 아무것도 못 봤습니다(§4) |
+| SigNoz | — | 수집 경로가 열리지 않았습니다 — 첫 관리자 계정이 필요합니다(§4) |
+| **Pinpoint** | **1단계** (서버맵) | 애플리케이션을 고르면 **USER → pay-api → PostgreSQL·외부기관**이 이미 그려져 있습니다. 호출 수와 평균 지연이 화살표에 붙고(1,527건 898 ms / DB 7,285건 4 ms / 기관 513건 2 ms), 오른쪽 산점도에 **2.5초 무리와 0 근처 무리가 갈라져** 보입니다. Apdex 0.82, Max 3.06초 |
 
 **부수 효과 하나.** SkyWalking은 자체 에이전트가 의존성까지 토폴로지에 올립니다 — `listServices`에
 `pay-api` 외에 `localhost:5435`(PostgreSQL)와 `localhost:9092`(Kafka)가 서비스로 잡혔습니다. OTel 에이전트 +
@@ -253,6 +294,8 @@ Jaeger 조합에서는 PostgreSQL·Kafka가 별도 서비스로 올라오지 않
 | `apm-lab-zipkin-search.png` | Zipkin 트레이스 목록 — 20건, 전부 2.52~2.53초 |
 | `apm-lab-zipkin-trace.png` | Zipkin 트레이스 상세 — Duration 2.525 s, Total Spans 20. **오른쪽 상세 패널은 잘라냈습니다**(호스트 이름이 그대로 나옵니다) |
 | `apm-lab-tempo-trace.png` | Grafana Explore에서 본 Tempo — 왼쪽 TraceQL 결과 목록, 오른쪽 트레이스(2.53 s, 20 spans) |
+| `apm-lab-pinpoint-servermap.png` | Pinpoint 서버맵 — USER·pay-api·PostgreSQL·외부기관 네 노드와 호출 수/지연, 산점도, Apdex 0.82 |
+| `apm-lab-signoz-signup.png` | SigNoz 첫 화면 — "Create your account". **이 화면을 넘기기 전에는 수집도 되지 않습니다**(§4) |
 
 캡처는 `load-tests/apm-capture.mjs`가 같은 창 크기(1600×1000)로 찍습니다. 손으로 찍으면 창 크기와
 조회 구간이 매번 달라져 도구끼리 비교가 안 되고, 메모리 저장소를 쓰는 도구는 보관이 수 분이라
@@ -271,7 +314,8 @@ API 키·개인정보가 없는지 확인했습니다.
 | Jaeger all-in-one | — | **메모리.** 상한 없으면 OOM, `MEMORY_MAX_TRACES=20000`에서는 이 부하에 **수 분** |
 | Zipkin | — | **메모리.** Jaeger와 같은 이유로 `MEM_MAX_SPANS=500000` (우리가 설정) |
 | Tempo | — | `block_retention: 24h` (우리가 설정) |
-| SkyWalking / SigNoz / Pinpoint | 미측정 | 미측정 |
+| Pinpoint | 기본 `profiler.sampling.counting.sampling-rate=20`(5%). 이 실험은 **1(전량)** 로 고정 | 테이블별 TTL. 트레이스 `TraceV2` 기본 60일 |
+| SkyWalking / SigNoz | 미측정 | 미측정 |
 
 ## 8. 하니스에서 틀린 것
 
@@ -294,15 +338,15 @@ API 키·개인정보가 없는지 확인했습니다.
 
 ## 9. 미측정·미착수
 
-- **Pinpoint**: 전부. 저장소(HBase)가 뜨지 않아 오버헤드도 화면도 없습니다(§4). 에이전트가 붙는 것까지만
-  확인했습니다. arm64 빌드가 있는 기계나 x86 호스트라면 다시 해 볼 값이 있습니다
-- **SigNoz**: 트레이스 수신(스키마 마이그레이션 미완료), UI 전부(관리자 계정 생성 필요 — 사용자 지시로 보류)
+- **Pinpoint 오버헤드의 크기**: 방향만 말할 수 있습니다(§5.6). 백엔드를 다른 기계에 두고 다시 재야 합니다.
+  이 측정은 **에뮬레이션으로 도는 HBase가 같은 기계에 있는 상태**라 환경이 지배합니다
+- **SigNoz**: 수집과 UI 전부. 첫 관리자 계정을 만들면 열립니다 — 계정 생성은 사용자 몫입니다(§4)
 - **Datadog**: 미착수. 체험판 계정과 API 키가 필요하고, 키는 사용자가 직접 넣습니다(`DD_API_KEY=… scripts/apm.sh up datadog`)
 - **Zipkin과 Jaeger의 3.1% 차이**: 3회로는 가릴 수 없습니다(§5.4). 횟수를 늘린 측정은 하지 않았습니다
 - 자체 에이전트(SkyWalking·Pinpoint)를 OTel 에이전트와 **한 묶음에서** 번갈아 돌린 측정
 - 메모리 사용량: Jaeger·SkyWalking(부하 중), 백엔드별 수집 한계
 - SkyWalking·SigNoz·Pinpoint의 기본 샘플링·보관
-- SkyWalking 트레이스 화면, Zipkin 의존성(Dependencies) 화면
+- SkyWalking 트레이스 화면, Zipkin 의존성(Dependencies) 화면, Pinpoint 호출 트리(Call Tree) 화면
 
 ## 10. 재실행
 
@@ -311,6 +355,7 @@ docker compose up -d postgres redpanda mock-bank mock-pg
 ./gradlew :apps:pay-api:bootJar
 
 scripts/apm.sh up jaeger          # 또는 zipkin | tempo | signoz | skywalking | pinpoint | none
+                                  # pinpoint 는 테이블 생성에 약 4분 30초가 걸립니다
 scripts/dev.sh                    # .apm/env 를 읽어 앱에 넘깁니다
 
 J=apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar
@@ -323,6 +368,7 @@ BASE_URL=http://localhost:8099 PAY_RPS=3 READ_RPS=5 DURATION=35s k6 run load-tes
 
 # 화면 캡처 (부하 직후에 돌려야 합니다 — 메모리 저장소는 보관이 수 분입니다)
 node load-tests/apm-capture.mjs zipkin --out /tmp/apm-shots
+CAPTURE_TZ=Asia/Seoul node load-tests/apm-capture.mjs pinpoint --out /tmp/apm-shots
 GRAFANA_USER=<compose 의 값> GRAFANA_PASSWORD=<compose 의 값> \
   node load-tests/apm-capture.mjs tempo --out /tmp/apm-shots
 ```
