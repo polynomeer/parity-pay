@@ -84,6 +84,32 @@ const targets = {
       await shot("trace");
     },
   },
+  skywalking: {
+    port: process.env.PARITYPAY_SKYWALKING_UI_PORT || "18080",
+    async run(page, base, shot) {
+      await page.goto(`${base}/General-Service/Services`, { waitUntil: "networkidle" });
+      await page.waitForSelector("text=/pay-api/", { timeout: 60000 });
+      // 트레이스 화면은 **왼쪽 메뉴가 아니라** 대시보드 아래 탭에 있습니다. 해시 라우트나
+      // /General-Service/Trace 같은 주소로는 못 갑니다(404). 그리고 그 탭은 화면 아래에 있어
+      // **스크롤해서 그려지기 전에는 DOM 에도 없습니다** — 먼저 끝까지 내립니다.
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await page.waitForTimeout(3000);
+      await page.getByText("Trace", { exact: true }).first().click();
+      await page.waitForSelector("text=/Run Query/", { timeout: 30000 });
+      // 기본 목록은 스케줄 작업이 채웁니다(6 ms짜리). 느린 결제만 남기려고 최소 지속시간을 겁니다.
+      await page.locator('input[type="number"]').first().fill("2000");
+      await page.getByText("Run Query").first().click();
+      await page.waitForSelector("text=/POST:\\/api\\/v1\\/payments/", { timeout: 30000 });
+      await page.waitForTimeout(2000);
+      await shot("trace-list");
+      // 결제 트레이스 한 건을 엽니다. 그 줄의 Show 를 눌러야 호출 트리가 나옵니다.
+      const row = page.locator("tr", { hasText: "POST:/api/v1/payments" }).first();
+      await row.getByText("Show").first().click();
+      await page.waitForSelector("text=/Total Spans/", { timeout: 30000 });
+      await page.waitForTimeout(3000);
+      await shot("trace");
+    },
+  },
   signoz: {
     port: process.env.PARITYPAY_SIGNOZ_PORT || "8080",
     async run(page, base, shot) {

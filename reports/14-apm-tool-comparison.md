@@ -310,9 +310,33 @@ Jaeger 조합에서는 PostgreSQL·Kafka가 별도 서비스로 올라오지 않
 부하 직후가 아니면 빈 화면이 나옵니다. 캡처는 블로그 저장소 `assets/img/posts/`에 두었고, 화면에
 API 키·개인정보가 없는지 확인했습니다.
 
-**찍었다가 버린 것 둘.** SkyWalking 트레이스 화면은 해시 라우트가 대시보드로 되돌아가 열지 못했고, 같은
-대시보드가 한 번 더 찍혔습니다. 다른 한 장은 위젯이 비어 있는 빈 대시보드(`Please add widgets.`)였습니다.
-둘 다 보여 주는 것이 없어 지웠습니다. SkyWalking 트레이스 화면은 **미캡처**로 남습니다.
+**찍었다가 버린 것 둘.** 위젯이 비어 있는 빈 대시보드(`Please add widgets.`)와, 트레이스 화면인 줄 알았던
+같은 대시보드입니다. 둘 다 보여 주는 것이 없어 지웠습니다.
+
+### 남은 캡처 둘 — 2026-10-09에 다시 시도한 결과
+
+**SkyWalking 트레이스 화면: 화면은 찾았고 캡처는 못 했습니다.** 경로부터 틀렸었습니다 — 트레이스는 왼쪽
+메뉴에도, `/General-Service/Trace` 같은 주소에도 없습니다(404). **서비스 대시보드 아래 탭**(`Service ·
+Topology · Trace · Log`)이고, 그 탭은 화면 아래에 있어 **스크롤해서 그려지기 전에는 DOM에도 없습니다.**
+탭을 눌러 최소 지속시간 2,000 ms로 조회하면 결제 트레이스가 나오고, `Show`를 누르면 호출 트리가 열립니다.
+직접 열어 확인한 내용은 이렇습니다.
+
+| 본 것 | 값 |
+|---|---|
+| 루트 | `pay-api: POST:/api/v1/payments`, Duration **2,555 ms**, Total Spans **18** |
+| 표의 열 | Method · Start Time · Exec(ms) · Exec(%) · Self(ms) · API · Service · Attached Events |
+| 눈에 띈 행 | `HikariCP/Connection/getConnection`과 `PostgreSQL/JDBC/PreparedStatement/execute`가 **각각 따로** 잡힙니다. OTel 자동계측은 이 둘을 이렇게 나누지 않습니다 |
+
+캡처하지 못한 이유는 따로입니다. 스크립트로 같은 경로를 밟으려는 동안 **OAP의 대시보드 템플릿이
+사라졌고**(대시보드 목록이 `No Data`, `/General-Service/Services` 직접 열기는 404), UI를 다시 띄워도
+돌아오지 않았습니다. 브라우저 창에 남아 있던 화면은 해상도가 다른 캡처(1600×1000)보다 낮아 **같이 쓰지
+않았습니다.** 재현 경로는 `load-tests/apm-capture.mjs`의 `skywalking` 대상에 적어 뒀습니다.
+
+**Zipkin 의존성(Dependencies) 화면: 비어 있는 것이 맞습니다.** API가 `[]`를 돌려줍니다. 의존성 그래프는
+서비스 **둘 이상** 사이의 호출로 그려지는데, 이 랩은 `pay-api` 하나만 계측합니다. 외부 기관(mock-pg)은
+계측하지 않으므로 클라이언트 스팬으로만 남고 별도 서비스가 되지 않습니다. **도구의 한계가 아니라 이 랩의
+구성이 만든 결과**이고, 기관 대역에도 에이전트를 붙이면 `pay-api → mock-pg`가 그려질 것입니다.
+그건 ADR-017의 범위를 넘어 하지 않았습니다. 빈 화면은 캡처하지 않았습니다.
 
 ## 7. 기본 샘플링과 보관
 
@@ -355,7 +379,7 @@ API 키·개인정보가 없는지 확인했습니다.
 - 자체 에이전트(SkyWalking·Pinpoint)를 OTel 에이전트와 **한 묶음에서** 번갈아 돌린 측정
 - 메모리 사용량: Jaeger·SkyWalking(부하 중), 백엔드별 수집 한계
 - SkyWalking·SigNoz·Pinpoint의 기본 샘플링·보관
-- SkyWalking 트레이스 화면, Zipkin 의존성(Dependencies) 화면, Pinpoint 호출 트리(Call Tree) 화면
+- 화면 캡처: SkyWalking 트레이스(내용은 §6에 적었고 이미지만 없음), Pinpoint 호출 트리
 
 ## 10. 재실행
 
