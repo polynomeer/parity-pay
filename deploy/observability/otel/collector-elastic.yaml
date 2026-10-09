@@ -1,0 +1,46 @@
+# 앱 → 컬렉터 → Elastic APM Server → Elasticsearch (화면은 Kibana).
+#
+# 컨테이너가 셋인데 역할이 전부 다릅니다 — 수신(APM Server)·저장(Elasticsearch)·화면(Kibana).
+# Jaeger 가 한 컨테이너에 넣은 일을 셋으로 나눠 놓은 구조이고, 설치 비용 축에서 보면
+# OpenObserve(하나)와 Pinpoint(일곱) 사이입니다. 근거: ADR-017
+#
+# **왜 elasticsearch exporter 를 쓰지 않는가.** contrib 0.119.0 에 있고 트레이스도 보냅니다
+# (stability: traces Beta — 직접 확인). 그런데 기본 색인이 `traces-generic-default` 이고 Kibana 의
+# APM 화면이 읽는 자리는 `traces-apm*` 입니다. 그 길로 가면 색인에는 들어가고 **화면에는 안
+# 나옵니다** — 이 랩이 보려는 것이 "같은 장애에서 무엇이 보이는가"이므로 화면까지 이어지는 쪽을
+# 택했습니다. ES 에 원본 문서만 넣고 Discover 로 보려면 그 exporter 가 더 짧은 길입니다.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # 실험은 전량 샘플링입니다. 도구별 기본 샘플링을 비교하려면 우리 쪽에서 먼저 버리지 않아야 합니다.
+  batch:
+    timeout: 1s
+
+exporters:
+  otlp/elastic:
+    # APM Server 는 OTLP/gRPC 와 OTLP/HTTP 를 **같은 포트(8200)** 에서 받습니다.
+    endpoint: elastic-apm-server:8200
+    tls:
+      insecure: true
+    headers:
+      # APM Server 의 secret_token 입니다. 틀리면 401 이 컬렉터 로그에 남습니다 — 조용히
+      # 사라지지 않습니다. 비밀값이라 파일에 적지 않습니다(ADR-011).
+      Authorization: Bearer ${env:PARITYPAY_ELASTIC_APM_TOKEN}
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/elastic]
+  telemetry:
+    metrics:
+      level: basic

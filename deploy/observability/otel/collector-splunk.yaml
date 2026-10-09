@@ -1,0 +1,46 @@
+# 앱 → 컬렉터 → Splunk Observability Cloud (SaaS).
+#
+# 컨테이너가 없고 이 파일 하나만 바뀝니다. 근거: ADR-017
+#
+# **아직 띄워서 확인하지 못했습니다.** 액세스 토큰과 realm 이 있어야 합니다.
+#
+# 자체 설치 쪽은 길이 막혀 있습니다. Splunk Enterprise 이미지는 **amd64 단독**이고(직접 확인),
+# 더 중요한 것은 APM 화면이 자체 설치 제품에 없다는 점입니다 — 트레이스를 보는 쪽은 Observability
+# Cloud 뿐입니다. 그래서 Splunk 는 "자체 호스팅 가능" 목록이 아니라 여기, 키 대기 쪽에 있습니다.
+#
+# 보내는 길이 둘입니다. contrib 0.119.0 의 sapm exporter 는 **Deprecated 로 표시**돼 있어(직접 확인)
+# OTLP 쪽을 씁니다. 경로가 표준이 아니라 /v2/trace/otlp 이므로 endpoint 가 아니라
+# **traces_endpoint** 로 전체 경로를 줍니다 — endpoint 를 쓰면 /v1/traces 가 뒤에 붙어 404 입니다.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 100
+    send_batch_max_size: 1000
+
+exporters:
+  otlphttp/splunk:
+    # realm 은 계정이 있는 리전입니다(us0·us1·eu0·jp0 …). 로그인 후 주소에 나옵니다.
+    # 새 도메인은 ingest.<realm>.observability.splunkcloud.com 이고 기존 signalfx.com 도 아직 받습니다.
+    traces_endpoint: ${env:SPLUNK_TRACES_ENDPOINT}
+    headers:
+      X-SF-Token: ${env:SPLUNK_ACCESS_TOKEN}
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/splunk]
+  telemetry:
+    metrics:
+      level: basic

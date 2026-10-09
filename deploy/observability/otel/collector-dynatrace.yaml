@@ -1,0 +1,45 @@
+# 앱 → 컬렉터 → Dynatrace (SaaS 또는 ActiveGate).
+#
+# 컨테이너가 없고 이 파일 하나만 바뀝니다. 근거: ADR-017
+#
+# **아직 띄워서 확인하지 못했습니다.** Dynatrace 는 다른 SaaS 보다 한 단계 더 멉니다 — 키만으로는
+# 안 되고 **환경(테넌트)이 먼저 있어야** 합니다. 주소에 테넌트 ID 가 들어가기 때문입니다.
+#
+# contrib 0.119.0 에 dynatrace exporter 가 **아예 없습니다**(직접 확인). 있던 것은 메트릭 전용이었고
+# 폐기됐습니다. 트레이스는 Dynatrace 의 OTLP 인테이크로 보냅니다.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 100
+    send_batch_max_size: 1000
+
+exporters:
+  otlphttp/dynatrace:
+    # SaaS:        https://<환경ID>.live.dynatrace.com/api/v2/otlp
+    # ActiveGate:  https://<호스트>:9999/e/<환경ID>/api/v2/otlp
+    # 뒤에 /v1/traces 는 exporter 가 붙입니다.
+    endpoint: ${env:DT_ENDPOINT}
+    headers:
+      # 토큰 종류에 따라 접두어가 다릅니다. 신형 platform token 은 `Bearer`, 기존 access token 은
+      # `Api-Token` 입니다. 필요한 권한은 "Ingest OpenTelemetry traces" 하나입니다.
+      Authorization: ${env:DT_AUTHORIZATION}
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/dynatrace]
+  telemetry:
+    metrics:
+      level: basic

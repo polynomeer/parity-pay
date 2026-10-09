@@ -1,0 +1,30 @@
+# Elastic APM Server 설정입니다. 받는 것은 **OTLP 하나**이고, 적는 곳은 Elasticsearch 입니다.
+#
+# 이 컨테이너가 있는 이유: contrib 0.119.0 의 elasticsearch exporter 도 트레이스를 보내지만
+# 기본 색인이 `traces-generic-default` 이고, Kibana 의 APM 화면이 읽는 자리는 `traces-apm*` 입니다.
+# 그 길로 가면 **색인에는 들어가고 화면에는 안 나옵니다.** APM Server 는 OTLP 를 받아 APM
+# 데이터스트림으로 적으므로 화면까지 이어집니다.
+apm-server:
+  host: "0.0.0.0:8200"
+  auth:
+    # 토큰이 없으면 아무것도 받지 않습니다. **기본값을 두지 않습니다**(ADR-011) —
+    # scripts/apm.sh 가 만들어 .apm/elastic-apm-token 에 두고 환경변수로 넘깁니다.
+    secret_token: ${PARITYPAY_ELASTIC_APM_TOKEN}
+    anonymous:
+      enabled: false
+  # 전량 샘플링 부하에서 큐가 막히면 APM Server 가 429 로 거절하고, 컬렉터 로그에 그대로 남습니다.
+  # 조용히 버리지 않는 것이 중요합니다 — 측정 중에 무엇이 유실됐는지 알 수 있어야 합니다.
+  max_event_size: 2097152
+
+output.elasticsearch:
+  hosts: ["elastic-elasticsearch:9200"]
+
+# 보안을 끈 단일 노드이므로 사용자·인증서가 없습니다(ADR-011 이 금지하는 "비밀값 기본값"이 아니라,
+# 비밀값 자체가 없는 구성입니다). 운영 형태가 아니고 실험용이라는 뜻입니다.
+logging:
+  level: warning
+  to_stderr: true
+
+# APM Server 가 자기 성능 지표를 같은 ES 에 적습니다. 실험에서는 필요 없고 색인만 늘립니다.
+monitoring:
+  enabled: false

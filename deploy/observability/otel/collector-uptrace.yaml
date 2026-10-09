@@ -1,0 +1,42 @@
+# 앱 → 컬렉터 → Uptrace.
+#
+# OTLP 네이티브이지만 **토큰을 요구합니다** — 프로젝트별 DSN 을 헤더에 넣어야 받습니다. 토큰은
+# 설정 파일(seed_data)에서 정하므로 사람이 화면에서 만들 필요가 없습니다. SigNoz 와 다른 점입니다.
+# 근거: ADR-017
+#
+# 저장소가 **셋**입니다 — ClickHouse(스팬)·PostgreSQL(사용자·프로젝트·대시보드)·Redis(캐시·작업).
+# 설치 비용 쪽에서는 SigNoz 와 같은 자리입니다.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+
+exporters:
+  otlp/uptrace:
+    endpoint: http://uptrace:4317
+    tls:
+      insecure: true
+    headers:
+      # DSN 은 "주소 + 토큰"을 한 문자열로 묶은 것입니다. 서버는 토큰만 봅니다 — 주소 부분은
+      # 클라이언트가 자기 화면 링크를 만들 때 쓰는 값입니다.
+      # 토큰은 비밀값이라 파일에 적지 않습니다. scripts/apm.sh 가 만들어 넘깁니다(ADR-011).
+      uptrace-dsn: http://${env:PARITYPAY_UPTRACE_PROJECT_TOKEN}@uptrace:80?grpc=4317
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/uptrace]
+  telemetry:
+    metrics:
+      level: basic

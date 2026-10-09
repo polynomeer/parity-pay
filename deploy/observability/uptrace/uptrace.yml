@@ -1,0 +1,89 @@
+# Uptrace 설정입니다. 벤더 예시(example/docker/uptrace.yml, v2.0.3)에서 이 랩에 필요한 부분만
+# 남기고, **비밀값은 전부 환경변수로 바꿨습니다.** 근거: ADR-011
+#
+# 벤더 예시에는 secret 이 `FIXME`, 관리자 비밀번호가 `admin`, 프로젝트 토큰이 `project1_secret` 으로
+# 적혀 있습니다. 그대로 두면 배포가 알려진 값으로 조용히 뜹니다 — Pinpoint 의 admin/admin 과 같은
+# 문제이고, 같은 방식으로 처리합니다(scripts/apm.sh 가 만들어 .apm/ 아래 둡니다).
+#
+# 여기서 중요한 성질 하나: 첫 사용자와 **수집 토큰을 설정 파일에서 정할 수 있습니다.** SigNoz 는
+# 사람이 화면에서 조직을 만들기 전까지 OTLP 포트를 열지 않았는데(DOC-22 §3), Uptrace 는 토큰을
+# 우리가 정해 두고 바로 보낼 수 있습니다.
+service:
+  env: hosted
+  secret: ${PARITYPAY_UPTRACE_SECRET}
+
+site:
+  # 화면 링크를 만드는 데 쓰는 주소입니다. 호스트 포트가 다른 프로젝트에 잡혀 밀리면 이 값도
+  # 따라가야 합니다 — 그래서 포트를 환경변수로 받습니다(ADR-013).
+  url: http://localhost:${PARITYPAY_UPTRACE_PORT}
+  ingest_url: http://localhost:${PARITYPAY_UPTRACE_PORT}?grpc=4317
+
+listen:
+  http:
+    addr: :80
+  grpc:
+    addr: :4317
+
+seed_data:
+  update: true
+  delete: true
+  users:
+    - key: user1
+      name: ParityPay
+      email: ${PARITYPAY_UPTRACE_ADMIN_EMAIL}
+      password: ${PARITYPAY_UPTRACE_ADMIN_PASSWORD}
+      email_confirmed: true
+  orgs:
+    - key: org1
+      name: ParityPay
+  org_users:
+    - key: org_user1
+      org_key: org1
+      user_key: user1
+      role: owner
+  projects:
+    - key: project1
+      name: pay-api
+      org_key: org1
+  # 이 토큰이 컬렉터가 보내는 DSN 의 뒷부분입니다. 둘이 어긋나면 Uptrace 가 스팬을 조용히
+  # 버리지 않고 거절합니다 — 컬렉터 로그에 에러가 남습니다.
+  project_tokens:
+    - key: project_token1
+      project_key: project1
+      token: ${PARITYPAY_UPTRACE_PROJECT_TOKEN}
+  project_users:
+    - key: project_user1
+      project_key: project1
+      org_user_key: org_user1
+      perm_level: admin
+
+ch_cluster:
+  cluster: uptrace1
+  replicated: false
+  distributed: false
+  shards:
+    - replicas:
+        - addr: uptrace-clickhouse:9000
+          database: uptrace
+          user: uptrace
+          password: ${PARITYPAY_UPTRACE_CH_PASSWORD}
+          dial_timeout: 3s
+          write_timeout: 5s
+          max_retries: 3
+          max_execution_time: 15s
+
+pg:
+  addr: uptrace-postgres:5432
+  user: uptrace
+  password: ${PARITYPAY_UPTRACE_PG_PASSWORD}
+  database: uptrace
+
+redis_cache:
+  addrs:
+    1: uptrace-redis:6379
+  username: ""
+  password: ""
+  db: 0
+
+certmagic:
+  enabled: false

@@ -1,0 +1,45 @@
+# 앱 → 컬렉터 → OpenObserve.
+#
+# 컨테이너 **하나**입니다. 이 랩에서 설치 비용이 가장 싼 쪽이고, 저장소를 따로 두는 SkyWalking·
+# Pinpoint·SigNoz 와 반대쪽 끝입니다. 근거: ADR-017
+#
+# 첫 관리자 계정을 **환경변수로 받습니다**(ZO_ROOT_USER_EMAIL·ZO_ROOT_USER_PASSWORD). SigNoz 는
+# 사람이 화면에서 계정을 만들기 전까지 수집 포트를 열지 않았는데(DOC-22 §3), 여기는 뜨는 즉시
+# 받습니다. 자동화에서는 이 차이가 큽니다.
+#
+# OTLP 를 받지만 **경로가 표준이 아닙니다** — 조직 이름이 경로에 들어갑니다
+# (/api/<조직>/v1/traces). exporter 가 /v1/traces 를 뒤에 붙이므로 endpoint 는 조직까지만 줍니다.
+# 루트 사용자의 조직은 `default` 이고 비밀값이 아니라 여기 적습니다.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # 실험은 전량 샘플링입니다. 도구별 기본 샘플링을 비교하려면 우리 쪽에서 먼저 버리지 않아야 합니다.
+  batch:
+    timeout: 1s
+
+exporters:
+  otlphttp/openobserve:
+    endpoint: http://openobserve:5080/api/default
+    headers:
+      # Basic 인증입니다. 뒤쪽은 base64(이메일:비밀번호)이고 **비밀값이라 파일에 적지 않습니다** —
+      # scripts/apm.sh 가 만들어 .apm/openobserve-password 에 두고 환경변수로만 넘깁니다(ADR-011).
+      # gRPC 쪽(5081)도 있지만 HTTP 를 씁니다 — 조직이 경로에 들어가는 구조라 HTTP 가 더 분명합니다.
+      Authorization: Basic ${env:PARITYPAY_OPENOBSERVE_AUTH}
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/openobserve]
+  telemetry:
+    metrics:
+      level: basic

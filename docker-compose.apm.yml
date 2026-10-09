@@ -8,7 +8,9 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.119.0
     container_name: paritypay-otel-collector
-    profiles: ["apm-jaeger", "apm-tempo", "apm-zipkin", "apm-signoz", "apm-datadog"]
+    profiles: ["apm-jaeger", "apm-tempo", "apm-zipkin", "apm-signoz", "apm-openobserve",
+      "apm-uptrace", "apm-elastic", "apm-datadog", "apm-newrelic", "apm-honeycomb",
+      "apm-dynatrace", "apm-splunk"]
     # 설정 파일만 바꿔 끼웁니다. 이것이 "APM을 바꾸는 한 곳"입니다.
     command: ["--config=/etc/otel/collector-${PARITYPAY_APM:-jaeger}.yaml"]
     # 설정 파일이 참조하는 값만 넘깁니다. 컬렉터는 백엔드 주소를 환경변수로 받고, 어떤 도구인지는
@@ -21,6 +23,24 @@ services:
       DD_API_KEY: "${DD_API_KEY:-}"
       # 사이트는 비밀값이 아니라 리전 선택입니다. 기본은 US1.
       DD_SITE: "${DD_SITE:-datadoghq.com}"
+      # 아래는 각 프로필에서만 쓰입니다. **키에 기본값을 두지 않습니다**(ADR-011) — 비어 있으면
+      # 컬렉터가 뜨지 않고, 애초에 scripts/apm.sh 가 키 없이는 진행하지 않습니다. 어느 파일에도
+      # 적히지 않고 이 환경변수로만 지나갑니다.
+      #
+      # 자체 호스팅 쪽: 비밀값을 scripts/apm.sh 가 만들어 .apm/ 아래 두고 여기로 넘깁니다.
+      PARITYPAY_OPENOBSERVE_AUTH: "${PARITYPAY_OPENOBSERVE_AUTH:-}"
+      PARITYPAY_UPTRACE_PROJECT_TOKEN: "${PARITYPAY_UPTRACE_PROJECT_TOKEN:-}"
+      PARITYPAY_ELASTIC_APM_TOKEN: "${PARITYPAY_ELASTIC_APM_TOKEN:-}"
+      # SaaS 쪽: 사용자가 직접 넣습니다. 리전·주소는 비밀값이 아니라 기본값이 있습니다.
+      NEW_RELIC_LICENSE_KEY: "${NEW_RELIC_LICENSE_KEY:-}"
+      NEW_RELIC_OTLP_ENDPOINT: "${NEW_RELIC_OTLP_ENDPOINT:-https://otlp.nr-data.net}"
+      HONEYCOMB_API_KEY: "${HONEYCOMB_API_KEY:-}"
+      HONEYCOMB_API_ENDPOINT: "${HONEYCOMB_API_ENDPOINT:-https://api.honeycomb.io}"
+      # Dynatrace 는 주소에 테넌트 ID 가 들어가 기본값을 둘 수 없습니다.
+      DT_ENDPOINT: "${DT_ENDPOINT:-}"
+      DT_AUTHORIZATION: "${DT_AUTHORIZATION:-}"
+      SPLUNK_ACCESS_TOKEN: "${SPLUNK_ACCESS_TOKEN:-}"
+      SPLUNK_TRACES_ENDPOINT: "${SPLUNK_TRACES_ENDPOINT:-}"
     volumes:
       - ./deploy/observability/otel:/etc/otel:ro
     ports:
@@ -248,8 +268,187 @@ services:
       - pinpoint-zookeeper
       - pinpoint-redis
 
+  # ---------- OpenObserve ----------
+  # 이 랩에서 **컨테이너 하나로 끝나는 유일한 백엔드**입니다. 저장소가 내장(로컬 디스크 또는 S3)이라
+  # ClickHouse·HBase·BanyanDB 를 따로 띄우지 않습니다 — 설치 비용 축의 한쪽 끝입니다.
+  #
+  # 첫 관리자 계정을 **환경변수로 받습니다.** SigNoz 는 사람이 화면에서 조직을 만들기 전까지
+  # OTLP 포트를 아예 열지 않았는데(DOC-22 §3), 여기는 뜨는 즉시 받습니다. 그래서 측정 자동화에
+  # 사람 손이 들어가지 않습니다.
+  openobserve:
+    image: openobserve/openobserve:v1.0.4
+    container_name: paritypay-openobserve
+    profiles: ["apm-openobserve"]
+    environment:
+      # 이메일은 비밀값이 아니라 식별자입니다. 비밀번호는 **기본값을 두지 않습니다**(ADR-011) —
+      # scripts/apm.sh 가 만들어 .apm/openobserve-password 에 두고 여기로 넘깁니다.
+      ZO_ROOT_USER_EMAIL: ${PARITYPAY_OPENOBSERVE_EMAIL:-paritypay@local.test}
+      ZO_ROOT_USER_PASSWORD: ${PARITYPAY_OPENOBSERVE_PASSWORD:?apm.sh up openobserve 으로 띄우십시오}
+      ZO_DATA_DIR: /data
+      # 전량 샘플링 부하에서 디스크가 계속 자랍니다. 실험에 필요한 만큼만 들고 있게 합니다.
+      ZO_COMPACT_DATA_RETENTION_DAYS: "3"
+    volumes:
+      - openobserve-data:/data
+    ports:
+      - "${PARITYPAY_OPENOBSERVE_PORT:-5080}:5080"
+    mem_limit: 1g
+
+  # ---------- Uptrace ----------
+  # OTLP 네이티브이지만 저장소가 **셋**입니다 — ClickHouse(스팬)·PostgreSQL(사용자·프로젝트)·
+  # Redis(캐시). SigNoz 와 같은 자리이고, OpenObserve 와 정반대입니다.
+  #
+  # 받는 쪽이 **토큰을 요구합니다.** 다만 토큰과 첫 사용자를 설정 파일(seed_data)에서 정할 수 있어
+  # 사람이 화면에서 만들 필요는 없습니다 — SigNoz 와 갈라지는 지점입니다.
+  uptrace-clickhouse:
+    image: clickhouse/clickhouse-server:26.3
+    container_name: paritypay-uptrace-clickhouse
+    profiles: ["apm-uptrace"]
+    environment:
+      CLICKHOUSE_USER: uptrace
+      CLICKHOUSE_DB: uptrace
+      CLICKHOUSE_PASSWORD: ${PARITYPAY_UPTRACE_CH_PASSWORD:?apm.sh up uptrace 으로 띄우십시오}
+    # 벤더 예시가 healthcheck 를 두는 이유가 있습니다 — uptrace 는 ClickHouse 가 준비되기 전에
+    # 붙으면 스키마 마이그레이션에서 죽습니다. depends_on 만으로는 "떴다"까지만 보장합니다.
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
+    volumes:
+      - uptrace-clickhouse-data:/var/lib/clickhouse
+    mem_limit: 2g
+
+  uptrace-postgres:
+    image: postgres:17-alpine
+    container_name: paritypay-uptrace-postgres
+    profiles: ["apm-uptrace"]
+    environment:
+      POSTGRES_USER: uptrace
+      POSTGRES_DB: uptrace
+      POSTGRES_PASSWORD: ${PARITYPAY_UPTRACE_PG_PASSWORD:?apm.sh up uptrace 으로 띄우십시오}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uptrace -d uptrace"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    volumes:
+      - uptrace-postgres-data:/var/lib/postgresql/data/pgdata
+    mem_limit: 512m
+
+  uptrace-redis:
+    image: redis:7.4-alpine
+    container_name: paritypay-uptrace-redis
+    profiles: ["apm-uptrace"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    mem_limit: 256m
+
+  uptrace:
+    image: uptrace/uptrace:2.0.3
+    container_name: paritypay-uptrace
+    profiles: ["apm-uptrace"]
+    # 설정 파일 안에서 ${VAR} 를 읽습니다. 비밀값은 전부 환경변수로만 들어오고 파일에는 없습니다.
+    volumes:
+      - ./deploy/observability/uptrace/uptrace.yml:/etc/uptrace/config.yml:ro
+    environment:
+      PARITYPAY_UPTRACE_SECRET: ${PARITYPAY_UPTRACE_SECRET:?apm.sh up uptrace 으로 띄우십시오}
+      PARITYPAY_UPTRACE_ADMIN_EMAIL: ${PARITYPAY_UPTRACE_ADMIN_EMAIL:-paritypay@local.test}
+      PARITYPAY_UPTRACE_ADMIN_PASSWORD: ${PARITYPAY_UPTRACE_ADMIN_PASSWORD:?apm.sh up uptrace 으로 띄우십시오}
+      PARITYPAY_UPTRACE_PROJECT_TOKEN: ${PARITYPAY_UPTRACE_PROJECT_TOKEN:?apm.sh up uptrace 으로 띄우십시오}
+      PARITYPAY_UPTRACE_CH_PASSWORD: ${PARITYPAY_UPTRACE_CH_PASSWORD:?apm.sh up uptrace 으로 띄우십시오}
+      PARITYPAY_UPTRACE_PG_PASSWORD: ${PARITYPAY_UPTRACE_PG_PASSWORD:?apm.sh up uptrace 으로 띄우십시오}
+      # 화면 링크를 만드는 데 쓰는 주소입니다. 호스트 포트가 밀리면 이 값도 따라가야 합니다.
+      PARITYPAY_UPTRACE_PORT: ${PARITYPAY_UPTRACE_PORT:-14318}
+    ports:
+      # 컨테이너 안에서 UI·OTLP/HTTP 는 80, OTLP/gRPC 는 4317 입니다.
+      - "${PARITYPAY_UPTRACE_PORT:-14318}:80"
+    depends_on:
+      uptrace-clickhouse:
+        condition: service_healthy
+      uptrace-postgres:
+        condition: service_healthy
+      uptrace-redis:
+        condition: service_healthy
+    mem_limit: 1g
+
+  # ---------- Elastic (Elasticsearch + Kibana + APM Server) ----------
+  # "로그 도구가 트레이스를 어떻게 보여주는가"를 보는 축입니다. 컨테이너가 셋인데 그중 하나는
+  # **화면 전용**(Kibana)이고 하나는 **수신 전용**(APM Server)입니다 — Jaeger 가 한 컨테이너에
+  # 넣은 일을 셋으로 나눠 놓은 구조입니다.
+  #
+  # 수신을 APM Server 로 받습니다. contrib 0.119.0 에 elasticsearch exporter 가 있고 트레이스도
+  # 보내지만(stability: traces Beta — 직접 확인), 기본 색인이 `traces-generic-default` 입니다.
+  # Kibana 의 APM 화면이 읽는 자리는 `traces-apm*` 이라 **색인에는 들어가고 화면에는 안 나옵니다.**
+  # APM Server 는 OTLP 를 받아 APM 데이터스트림으로 적으므로 화면까지 이어집니다.
+  elastic-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.1
+    container_name: paritypay-elastic-elasticsearch
+    profiles: ["apm-elastic"]
+    environment:
+      discovery.type: single-node
+      # 로컬 랩이라 보안을 끕니다. 켜면 ES·Kibana·APM Server 사이에 인증서와 비밀번호를 세 번
+      # 맞춰야 하고, 그것은 이 실험이 재는 것(트레이스가 보이는가)과 무관합니다.
+      xpack.security.enabled: "false"
+      xpack.security.enrollment.enabled: "false"
+      # 기본 힙은 호스트 메모리의 절반을 잡습니다. 셋이 같이 떠야 하므로 고정합니다 — 이 랩에서
+      # Elastic 이 가장 큰 쪽이고, 호스트에 다른 프로젝트가 떠 있으면 기본값으로는 들어가지
+      # 않습니다(실제로 Docker 7.7GiB 중 4.5GiB 가 이미 차 있어 못 띄웠습니다).
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+    ports:
+      - "${PARITYPAY_ELASTICSEARCH_PORT:-9200}:9200"
+    mem_limit: 1200m
+
+  elastic-apm-server:
+    image: docker.elastic.co/apm/apm-server:8.17.1
+    container_name: paritypay-elastic-apm-server
+    profiles: ["apm-elastic"]
+    volumes:
+      - ./deploy/observability/elastic/apm-server.yml:/usr/share/apm-server/apm-server.yml:ro
+    environment:
+      # 토큰이 없으면 APM Server 가 **아무 데이터도 받지 않습니다.** 기본값을 두지 않습니다(ADR-011).
+      PARITYPAY_ELASTIC_APM_TOKEN: ${PARITYPAY_ELASTIC_APM_TOKEN:?apm.sh up elastic 으로 띄우십시오}
+    depends_on:
+      - elastic-elasticsearch
+    # ES 가 색인 템플릿을 받을 준비가 되기 전에 뜨면 APM Server 가 종료합니다. HBase 와 같은 이유로
+    # restart 에 맡깁니다 — depends_on 은 "컨테이너가 떴다"까지만 보장합니다.
+    restart: unless-stopped
+    mem_limit: 300m
+
+  elastic-kibana:
+    image: docker.elastic.co/kibana/kibana:8.17.1
+    container_name: paritypay-elastic-kibana
+    profiles: ["apm-elastic"]
+    environment:
+      ELASTICSEARCH_HOSTS: http://elastic-elasticsearch:9200
+      # 없으면 Kibana 가 매 기동마다 임시 키를 만들고, 저장된 객체를 다음 기동에서 읽지 못합니다.
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: ${PARITYPAY_KIBANA_ENCRYPTION_KEY:?apm.sh up elastic 으로 띄우십시오}
+      XPACK_REPORTING_ENCRYPTIONKEY: ${PARITYPAY_KIBANA_ENCRYPTION_KEY:?apm.sh up elastic 으로 띄우십시오}
+      XPACK_SECURITY_ENCRYPTIONKEY: ${PARITYPAY_KIBANA_ENCRYPTION_KEY:?apm.sh up elastic 으로 띄우십시오}
+      # Kibana 의 Node 힙도 고정합니다. 기본값은 1.4GB 이고, 그대로 두면 위 ES 와 합쳐
+      # 호스트에 들어가지 않습니다.
+      NODE_OPTIONS: "--max-old-space-size=700"
+    ports:
+      - "${PARITYPAY_KIBANA_PORT:-5601}:5601"
+    depends_on:
+      - elastic-elasticsearch
+    mem_limit: 1g
+
 volumes:
   tempo-data:
   skywalking-banyandb-data:
   pinpoint-hbase-data:
   pinpoint-mysql-data:
+  openobserve-data:
+  uptrace-clickhouse-data:
+  uptrace-postgres-data:
+  elastic-data:
