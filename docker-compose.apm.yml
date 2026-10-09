@@ -15,6 +15,12 @@ services:
     # 모릅니다 — 그 선택은 어느 설정 파일을 읽느냐 하나로 끝납니다.
     environment:
       PARITYPAY_SIGNOZ_OTLP_GRPC_PORT: "${PARITYPAY_SIGNOZ_OTLP_GRPC_PORT:-4327}"
+      # Datadog 프로필에서만 쓰입니다. **키에 기본값을 두지 않습니다**(ADR-011) — 비어 있으면
+      # 컬렉터가 뜨지 않고, 애초에 scripts/apm.sh 가 키 없이는 진행하지 않습니다. 키는 어느 파일에도
+      # 적히지 않고 이 환경변수로만 지나갑니다.
+      DD_API_KEY: "${DD_API_KEY:-}"
+      # 사이트는 비밀값이 아니라 리전 선택입니다. 기본은 US1.
+      DD_SITE: "${DD_SITE:-datadoghq.com}"
     volumes:
       - ./deploy/observability/otel:/etc/otel:ro
     ports:

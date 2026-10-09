@@ -124,7 +124,7 @@ backend_services() {
     zipkin) echo "otel-collector zipkin" ;;
     tempo) echo "otel-collector tempo" ;;
     signoz) echo "otel-collector" ;;   # SigNoz 자체는 생성된 compose 로 띄웁니다
-    datadog) echo "otel-collector datadog-agent" ;;
+    datadog) echo "otel-collector" ;;   # 받는 쪽이 SaaS 라 컨테이너가 없습니다
     skywalking) echo "skywalking-banyandb skywalking-oap skywalking-ui" ;;
     pinpoint) echo "pinpoint-zookeeper pinpoint-zookeeper pinpoint-hbase pinpoint-mysql pinpoint-redis pinpoint-collector pinpoint-web" ;;
     *) echo "" ;;
@@ -331,10 +331,14 @@ up() {
   fi
   if [ "$name" = "datadog" ] && [ -z "${DD_API_KEY:-}" ]; then
     echo "DD_API_KEY 가 없습니다. 체험판 계정의 키를 직접 넣으십시오:" >&2
-    echo "  DD_API_KEY=<키> scripts/apm.sh up datadog" >&2
-    echo "이 스크립트는 키를 저장하지 않습니다." >&2
+    echo "  DD_API_KEY=<키> DD_SITE=<사이트> scripts/apm.sh up datadog" >&2
+    echo "키는 Organization Settings → API keys 에 있고, 사이트는 로그인 URL 입니다" >&2
+    echo "(datadoghq.com · datadoghq.eu · ap1.datadoghq.com …). 기본값은 datadoghq.com 입니다." >&2
+    echo "이 스크립트는 키를 저장하지 않습니다 — .apm/env 에도 적지 않습니다." >&2
     exit 2
   fi
+  # 사이트는 비밀값이 아니므로 기본값을 둡니다. 키는 두지 않습니다.
+  export DD_SITE=${DD_SITE:-datadoghq.com}
   # 앞선 백엔드를 **먼저** 내리고 그 뒤에 포트를 고릅니다. 순서를 바꾸면 아직 살아 있는 컬렉터가
   # 4317 을 쥐고 있어 다음 실행이 4319·4320 으로 밀려나고 앱 설정까지 따라 바뀝니다
   # (실제로 그렇게 한 번 깨졌습니다).
@@ -380,6 +384,7 @@ up() {
     tempo) echo "   Tempo API http://localhost:$PARITYPAY_TEMPO_PORT (화면은 Grafana 에서 봅니다)" ;;
     signoz) echo "   UI http://localhost:$PARITYPAY_SIGNOZ_PORT" ;;
     skywalking) echo "   UI http://localhost:$PARITYPAY_SKYWALKING_UI_PORT" ;;
+    datadog) echo "   UI https://app.${DD_SITE} (컨테이너 없음 — 받는 쪽이 SaaS 입니다)" ;;
     pinpoint) echo "   UI http://localhost:$PARITYPAY_PINPOINT_WEB_PORT" ;;
   esac
   echo
@@ -390,7 +395,7 @@ down() {
   local name
   name=$(cat "$ACTIVE_FILE" 2>/dev/null || echo "")
   # stop/rm 을 서비스 이름으로 합니다. `down` 은 파일 전체를 내리므로 dev.sh 의 컨테이너까지 갑니다.
-  local targets="otel-collector zipkin tempo signoz signoz-clickhouse datadog-agent skywalking-banyandb skywalking-oap skywalking-ui pinpoint-zookeeper pinpoint-hbase pinpoint-mysql pinpoint-redis pinpoint-collector pinpoint-web"
+  local targets="otel-collector zipkin tempo signoz signoz-clickhouse skywalking-banyandb skywalking-oap skywalking-ui pinpoint-zookeeper pinpoint-hbase pinpoint-mysql pinpoint-redis pinpoint-collector pinpoint-web"
   if [ -n "$name" ] && [ "$name" != "none" ]; then
     targets=$(backend_services "$name")
   fi

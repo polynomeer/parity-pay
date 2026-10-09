@@ -81,7 +81,7 @@ Zipkin만 exporter가 OTLP가 아닙니다 — Zipkin은 자기 형식만 받습
 | SigNoz | **6** | ClickHouse + Keeper + PostgreSQL | 2 (아래) | **약 1,039 MiB** (ClickHouse 914 MiB) |
 | SkyWalking | **3** | BanyanDB(필수) | **3** (아래) | 미측정 |
 | **Pinpoint** | **6** | HBase + MySQL + ZooKeeper + Redis | **7** (아래, 전부 뚫음) | 약 3.2 GiB |
-| Datadog | — | SaaS | — | **미착수**(체험판 계정 필요) |
+| Datadog | **0** | SaaS | — | — (받는 쪽이 남의 서비스입니다. **전송은 미검증** — 아래) |
 
 컨테이너 수와 막힌 횟수가 같이 움직입니다. 한 개짜리(Jaeger·Zipkin)는 한 번에 떴고, 다섯·여섯 개짜리는
 전부 막혔습니다.
@@ -374,7 +374,13 @@ Topology · Trace · Log`)이고, 그 탭은 화면 아래에 있어 **스크롤
   이 측정은 **에뮬레이션으로 도는 HBase가 같은 기계에 있는 상태**라 환경이 지배합니다
 - **SigNoz 화면**: 수집은 확인했지만 UI는 로그인이 필요해 캡처하지 않았습니다. 다른 도구의 캡처는 전부
   로그인 없이 찍은 것이라, 여기만 사용자의 자격 증명을 쓰는 것은 같은 조건이 아닙니다
-- **Datadog**: 미착수. 체험판 계정과 API 키가 필요하고, 키는 사용자가 직접 넣습니다(`DD_API_KEY=… scripts/apm.sh up datadog`)
+- **Datadog 전송**: 배선은 끝났고 **설정까지는 검증했습니다.** 컬렉터(contrib 0.119.0)가
+  `collector-datadog.yaml`로 `datadog` exporter를 올리고 `Everything is ready`까지 갑니다(더미 키로 확인).
+  실제로 Datadog에 들어가는지는 **확인하지 못했습니다** — 체험판 계정과 API 키가 필요하고 키는
+  사용자가 직접 넣습니다. 받는 쪽이 SaaS라 컨테이너가 하나도 없는 유일한 백엔드이기도 합니다.
+  참고로 Datadog의 현재 설정 문서는 contrib **v0.154.0 이상**에서 시험했다고 밝히고 OTLP 인테이크
+  경로(`https://otlp.<site>` + `dd-api-key` 헤더)를 권합니다. 우리는 핀이 낮아 오래된 `datadog`
+  exporter를 썼고, 컬렉터를 올릴 때 같이 바꿀 수 있습니다
 - **Zipkin과 Jaeger의 3.1% 차이**: 3회로는 가릴 수 없습니다(§5.4). 횟수를 늘린 측정은 하지 않았습니다
 - 자체 에이전트(SkyWalking·Pinpoint)를 OTel 에이전트와 **한 묶음에서** 번갈아 돌린 측정
 - 메모리 사용량: Jaeger·SkyWalking(부하 중), 백엔드별 수집 한계
@@ -389,6 +395,7 @@ docker compose up -d postgres redpanda mock-bank mock-pg
 
 scripts/apm.sh up jaeger          # 또는 zipkin | tempo | signoz | skywalking | pinpoint | none
                                   # pinpoint 는 테이블 생성에 약 4분 30초가 걸립니다
+DD_API_KEY=<키> DD_SITE=<사이트> scripts/apm.sh up datadog   # 키는 저장되지 않습니다
 scripts/dev.sh                    # .apm/env 를 읽어 앱에 넘깁니다
 
 J=apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar
