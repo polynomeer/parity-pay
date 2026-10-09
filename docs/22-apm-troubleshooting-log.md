@@ -145,11 +145,27 @@ ZooKeeper 서버가 쥐고 있고**, 기본값이 `20 × tickTime`입니다. 그
 
 확인한 것은 넷입니다.
 
-1. 우리 컬렉터 로그: `Exporting failed ... addrConn.createTransport failed to connect to {Addr: "host.docker.internal:4327"}`
-2. 호스트에서 그 포트가 **닫혀 있음**
-3. ingester 컨테이너가 듣고 있는 포트는 `8888`(자기 지표)뿐
+1. 우리 컬렉터 로그: `Exporting failed ... error reading server preface: EOF`
+   (처음 띄웠을 때는 `addrConn.createTransport failed to connect`)
+2. ingester 컨테이너가 **실제로 듣고 있는 포트**: `8888`(자기 지표), `13133`(헬스체크), `1777`(pprof).
+   **4317도 4318도 없습니다.**
+3. 그런데도 `docker port`는 `4317 -> 4327`을 보여 주고 호스트에서 `nc -z localhost 4327`은 **성공합니다**
 4. 메타스토어(PostgreSQL)에 `organizations = 0`, `users = 0`, 그리고 SigNoz 서버 로그에
    `failed to find or create agent`
+
+**3번은 함정입니다.** 공개한 포트는 Docker의 userland 프록시가 호스트 쪽에서 붙잡고 있어서, 컨테이너
+안에서 아무도 듣지 않아도 **TCP 연결은 받아들입니다.** 그래서 `nc -z`는 "열림"이라 답하고, 실제
+gRPC 핸드셰이크에 가서야 `error reading server preface: EOF`로 끊깁니다. 포트가 살아 있는지 보려면
+`nc`가 아니라 **컨테이너 안의 `/proc/net/tcp`**를 봐야 합니다.
+
+```bash
+# 거짓말하는 확인
+nc -z localhost 4327                      # succeeded  <- Docker 프록시
+
+# 사실대로 말하는 확인
+docker exec <ingester> sh -c 'cat /proc/net/tcp /proc/net/tcp6' \
+  | tail -n +2 | awk '{split($2,a,":"); print a[2]}' | sort -u   # 16진수 포트
+```
 
 즉 **SigNoz는 첫 관리자 계정이 만들어지기 전까지 아무것도 수집하지 않습니다.** 화면을 안 보는
 것이 아니라 수집 경로 자체가 열리지 않습니다. 설치만 자동화하고 계정 생성을 사람에게 맡기는
@@ -231,8 +247,8 @@ Apdex 0.82, Success 1,527이 나왔습니다. `CurrentGrpcStream`은 **그 순�
 1. **이미지의 아키텍처를 먼저 본다.** `docker manifest inspect <image>` — 단일 아키텍처면
    에뮬레이션이고, 저장소 계열이면 초기화에서 막힐 가능성이 큽니다.
 2. **스택을 `scripts/apm.sh`로만 띄운다.** 포트 배정과 `.apm/env` 작성이 거기서 끝납니다.
-3. **백엔드가 포트를 실제로 듣고 있는지 호스트에서 확인한다.** 컨테이너가 `Up`인 것과
-   포트가 열린 것은 다릅니다.
+3. **백엔드가 포트를 실제로 듣고 있는지 컨테이너 안에서 확인한다.** 컨테이너가 `Up`인 것과 포트가
+   열린 것은 다르고, **호스트에서 `nc -z`로 보는 것도 믿을 수 없습니다**(§3.6). `/proc/net/tcp`를 봅니다.
 4. **부하를 걸기 전에 장애 주입이 먹었는지 확인한다.** 클라이언트가 본 지연의 중앙값부터 봅니다.
 5. **조회 구간과 시간대를 의심한다.** 빈 화면의 절반은 여기서 나옵니다.
 6. **"없다"를 결론 내리기 전에 보내는 쪽 로그를 본다.**

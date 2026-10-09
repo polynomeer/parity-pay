@@ -111,9 +111,11 @@ recreate 했더니 클러스터 메타데이터에 죽은 복제본 호스트가
                         organizations = 0   ← 첫 관리자 계정을 만들어야 생긴다
 ```
 
-확인한 것은 넷입니다. ① 우리 컬렉터가 `host.docker.internal:4327`에 연결하지 못함, ② 호스트에서 그 포트가
-**닫혀 있음**, ③ ingester가 듣는 포트는 `8888`(자기 지표)뿐, ④ 메타스토어에 `organizations = 0`,
-`users = 0`이고 SigNoz 서버 로그에 `failed to find or create agent`.
+확인한 것은 넷입니다. ① 우리 컬렉터가 `host.docker.internal:4327`로 내보내지 못함
+(`error reading server preface: EOF`), ② **컨테이너 안에서** ingester가 듣는 포트는 `8888`·`13133`·`1777`뿐이고
+**4317이 없음**, ③ 그런데 호스트의 `nc -z`는 "열림"이라고 답함 — 공개 포트는 Docker 프록시가 잡고 있어
+안에서 아무도 안 들어도 TCP는 받습니다(DOC-22 §3.6), ④ 메타스토어에 `organizations = 0`, `users = 0`이고
+SigNoz 서버 로그에 `failed to find or create agent`.
 
 **SigNoz는 첫 관리자 계정이 만들어지기 전까지 아무것도 수집하지 않습니다.** 화면을 못 보는 것이 아니라
 수집 경로가 열리지 않습니다. 계정 생성은 사용자 몫이므로 여기서 멈췄습니다 — 남은 것은 UI를 열고 계정을
