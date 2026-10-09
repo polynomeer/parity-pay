@@ -122,6 +122,117 @@ const targets = {
       await shot("signup");
     },
   },
+  elastic: {
+    // 화면은 Kibana 입니다. 보안을 꺼 둔 로컬 랩이라 로그인이 없습니다 — 다른 도구와 달리
+    // 자격 증명을 넘기지 않습니다.
+    port: process.env.PARITYPAY_KIBANA_PORT || "5601",
+    async run(page, base, shot) {
+      const range = "rangeFrom=now-30m&rangeTo=now&environment=ENVIRONMENT_ALL";
+      // Kibana 는 **첫 화면을 그리는 데 오래 걸립니다**(번들을 내려받습니다). 다른 도구의
+      // 30초로는 모자라고, 힙을 700MB 로 묶어 두면 더 느립니다.
+      // **networkidle 로 기다리지 않습니다.** Kibana 는 화면을 그린 뒤에도 폴링을 계속해서
+      // 네트워크가 조용해지는 순간이 오지 않습니다 — 30초 timeout 으로 두 번에 한 번 실패했습니다.
+      // 그려졌는지는 아래 waitForSelector 가 판단합니다.
+      await page.goto(`${base}/app/apm/services?${range}`, { waitUntil: "domcontentloaded" });
+      await page.waitForSelector("text=/pay-api/", { timeout: 120000 });
+      // 사용 통계 수집 배너가 화면 위쪽을 두 줄 차지합니다. 다른 도구의 캡처와 높이를 맞추려면
+      // 먼저 치웁니다.
+      await page.getByRole("button", { name: "Dismiss" }).first().click({ timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(4000);
+      await shot("services");
+      // 느린 결제 하나를 엽니다. 트랜잭션 이름을 주소에 넣으면 목록을 거치지 않습니다.
+      const name = encodeURIComponent("POST /api/v1/payments");
+      await page.goto(
+        `${base}/app/apm/services/pay-api/transactions/view?transactionName=${name}&transactionType=request&${range}&comparisonEnabled=false`,
+        { waitUntil: "domcontentloaded" });
+      // 폭포 그림이 그려질 때까지 기다립니다. 글자가 아니라 "Trace sample" 영역을 봅니다.
+      await page.waitForSelector("text=/Trace sample|Latency distribution/i", { timeout: 120000 });
+      await page.getByRole("button", { name: "Dismiss" }).first().click({ timeout: 5000 }).catch(() => {});
+      // 폭포 그림은 **화면 아래에 있습니다.** 그냥 찍으면 지연 차트만 나오고 다른 도구의
+      // 트레이스 화면과 비교할 수 없습니다.
+      await page.getByText("Trace sample", { exact: false }).first()
+        .scrollIntoViewIfNeeded({ timeout: 20000 }).catch(() => {});
+      await page.waitForTimeout(6000);
+      await shot("transaction");
+    },
+  },
+  openobserve: {
+    port: process.env.PARITYPAY_OPENOBSERVE_PORT || "5080",
+    async run(page, base, shot) {
+      // 로그인해야 화면이 나옵니다. 자격 증명은 scripts/apm.sh 가 만든 값이고 이 파일에는
+      // 적지 않습니다 — 환경변수로만 받습니다.
+      const user = process.env.OPENOBSERVE_USER;
+      const pass = process.env.OPENOBSERVE_PASSWORD;
+      if (!user) throw new Error("OPENOBSERVE_USER / OPENOBSERVE_PASSWORD 가 필요합니다");
+      await page.goto(`${base}/web/login`, { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(2500);
+      await page.locator('input[type="email"], input[name="email"]').first().fill(user);
+      await page.locator('input[type="password"]').first().fill(pass);
+      await page.locator('button[type="submit"]').first().click();
+      await page.waitForURL(/\/web\/(?!login)/, { timeout: 30000 }).catch(() => {});
+      // 스트림 이름은 **stream** 으로 줍니다. stream_name 으로 주면 조용히 무시되고
+      // "Select a stream first" 화면에 머뭅니다 — Run query 를 눌러도 같습니다.
+      await page.goto(`${base}/web/traces?org_identifier=default&stream=default&period=30m&tab=traces`,
+                      { waitUntil: "domcontentloaded" });
+      // 조회가 끝나면 건수가 나옵니다. 서비스 이름을 기다리면 목록이 접혀 있을 때 실패합니다.
+      await page.waitForSelector("text=/Traces Found/i", { timeout: 60000 });
+      await page.waitForTimeout(3000);
+      // **느린 것만 남깁니다.** 그냥 두면 목록이 배경 작업(아웃박스 폴러)의 JDBC 스팬으로 덮입니다 —
+      // 스케줄 작업은 루트 스팬을 만들지 않아서 그 스팬 하나하나가 1-스팬 트레이스가 되고,
+      // 부하가 끝나는 순간부터 그것이 목록의 전부입니다.
+      //
+      // 질의 상자는 Monaco 입니다. 안쪽 textarea 는 숨겨져 있어 눌리지 않습니다 — 바깥 div 를
+      // 눌러야 포커스가 갑니다.
+      await page.locator(".monaco-editor").first().click();
+      await page.keyboard.type("duration > 2000000");
+      await page.waitForTimeout(800);
+      await page.getByText("Run query", { exact: false }).first().click();
+      await page.waitForTimeout(9000);
+      await shot("traces");
+      // **결제 트레이스를 골라서** 엽니다. 그냥 첫 줄을 누르면 배경 작업(아웃박스 폴러)이 만든
+      // 1-스팬 트레이스가 열립니다 — 스케줄 작업은 루트 스팬을 만들지 않아서 JDBC 스팬 하나가
+      // 그대로 트레이스가 되고, 부하가 끝난 뒤에는 목록 맨 위가 전부 그것입니다.
+      const pay = page.locator("tr", { hasText: "/api/v1/payments" }).first();
+      const row = (await pay.count()) ? pay : page.locator("table tbody tr").first();
+      await row.click({ timeout: 20000 }).catch(() => {});
+      await page.waitForTimeout(6000);
+      await shot("trace");
+    },
+  },
+  uptrace: {
+    port: process.env.PARITYPAY_UPTRACE_PORT || "14318",
+    async run(page, base, shot) {
+      const user = process.env.UPTRACE_USER;
+      const pass = process.env.UPTRACE_PASSWORD;
+      if (!user) throw new Error("UPTRACE_USER / UPTRACE_PASSWORD 가 필요합니다");
+      // 로그인 주소는 /login 이 아니라 **/auth/login** 입니다. 그리고 이메일 칸에
+      // type="email" 이 없어서 선택자로 잡히지 않습니다 — 첫 input 이 이메일입니다.
+      await page.goto(`${base}/auth/login`, { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(2500);
+      await page.locator("input").first().fill(user);
+      await page.locator('input[type="password"]').first().fill(pass);
+      await page.locator('button[type="submit"]').first().click();
+      await page.waitForURL(/overview/, { timeout: 30000 }).catch(() => {});
+      await page.waitForTimeout(6000);
+      // 개요 화면이 이 도구의 특징입니다 — 트레이스 목록이 아니라 **시스템별 RED 지표**가
+      // 첫 화면이고, 느린 외부 호출이 httpclient 행의 p50 으로 바로 드러납니다.
+      await shot("overview");
+      // 시스템을 지정합니다. 주지 않으면 배경 작업(아웃박스 폴러)의 JDBC 스팬이 목록을 덮습니다.
+      await page.goto(`${base}/spans/1?time_dur=1800&system=httpserver%3Apay-api`,
+                      { waitUntil: "domcontentloaded" });
+      await page.waitForSelector("text=/POST \\/api\\/v1\\/payments/", { timeout: 60000 });
+      await page.waitForTimeout(4000);
+      await shot("groups");
+      // 묶음 → 개별 스팬. **행이 아니라 행 안의 링크**를 눌러야 합니다 — 행을 누르면 아무 일도
+      // 일어나지 않습니다(주소가 그대로입니다).
+      await page.locator("tr", { hasText: "POST /api/v1/payments" }).first()
+        .locator("a").first().click({ timeout: 20000 });
+      await page.waitForTimeout(8000);
+      await page.locator("table tbody tr a").first().click({ timeout: 20000 }).catch(() => {});
+      await page.waitForTimeout(8000);
+      await shot("trace");
+    },
+  },
   pinpoint: {
     port: process.env.PARITYPAY_PINPOINT_WEB_PORT || "8081",
     async run(page, base, shot) {
