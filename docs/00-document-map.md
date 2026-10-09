@@ -11,7 +11,7 @@
 
 ### 처음 읽는 사람을 위한 경로
 
-문서가 많습니다(설계·안내 20편, ADR 14편, 보고서 3편). 전부 읽을 필요는 없고, 목적에 따라 아래 순서면 충분합니다.
+문서가 많습니다(설계·안내 21편, ADR 17편, 보고서 4편). 전부 읽을 필요는 없고, 목적에 따라 아래 순서면 충분합니다.
 
 | 목적 | 순서 | 걸리는 시간 |
 |---|---|---|
@@ -21,8 +21,9 @@
 | 코드를 읽으려면 | [DOC-17 용어](17-domain-glossary.md) → [DOC-18 기술 안내서](18-technical-handbook.md) → [DOC-05 기술 설계서](05-technical-design.md) → [DOC-09 정합성·복구](09-consistency-recovery.md) → [DOC-06](06-domain-state-design.md)·[DOC-07](07-ledger-journal-catalog.md) | 반나절 |
 | 내 기계에서 돌려 보려면 | [DOC-21 실행·데모 안내서](21-quickstart-and-demo.md) → [DOC-19 실험 실행 안내서](19-experiment-runbook.md) → [DOC-20 결과 해석](20-experiment-result-interpretation.md) | 30분 |
 | 화면과 클라이언트 계약 | [DOC-14 프론트엔드 설계서](14-frontend-design.md) → [DOC-15 화면 계획](15-ui-screen-plan.md) → [ADR-012](adr/012-frontend-design-system.md) | 1시간 |
+| APM 도구를 고르거나 바꿔 끼우려면 | [ADR-017 교체 구조](adr/017-swappable-apm-backend.md) → [RPT-04 도구 비교 실측](../reports/14-apm-tool-comparison.md) → 띄우다 막히면 [DOC-22](22-apm-troubleshooting-log.md) | 40분 |
 
-DOC-01~16은 구현 **전에** 쓴 기준안이고, 구현과 달라진 곳은 문서를 사실로 교체했습니다. DOC-17~21은 구현 **후에** 쓴
+DOC-01~16은 구현 **전에** 쓴 기준안이고, 구현과 달라진 곳은 문서를 사실로 교체했습니다. DOC-17~22는 구현 **후에** 쓴
 안내 문서로, 아무 정책도 정하지 않고 기준 문서를 가리킵니다. 보고서의 수치는 전부 실측값이며 재지 않은 것은 `TBD` 또는
 "미측정"으로 남아 있습니다.
 

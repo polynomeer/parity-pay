@@ -190,6 +190,13 @@ PostgreSQL·Redpanda를 띄우고, 외부기관도 별도 Spring 컨텍스트로
 **운영 콘솔의 장애 시뮬레이터** 9개 시나리오는 브라우저에서 직접 적용해 볼 수 있고, 실측은
 [reports/13](reports/13-failure-scenario-matrix.md)에 있습니다.
 
+**APM 도구 비교** — 같은 애플리케이션·같은 부하에 백엔드만 바꿔 가며 여섯 개를 붙여 봤습니다(Jaeger·Zipkin·
+Tempo·SkyWalking·Pinpoint·SigNoz). 애플리케이션 코드는 한 줄도 바뀌지 않습니다 — 계측은 자동계측 에이전트가 하고
+바뀌는 것은 컬렉터 설정 하나이거나 `-javaagent` 한 줄입니다([ADR-017](docs/adr/017-swappable-apm-backend.md)).
+에이전트를 켜는 값, 도구별 설치 비용, 같은 장애에서 각 도구가 보여 주는 것은
+[reports/14](reports/14-apm-tool-comparison.md)에, 띄우다 막힌 지점과 원인은
+[DOC-22](docs/22-apm-troubleshooting-log.md)에 있습니다.
+
 ## 기술 스택
 
 | 층 | 선택 | 비고 |
@@ -202,8 +209,8 @@ PostgreSQL·Redpanda를 띄우고, 외부기관도 별도 Spring 컨텍스트로
 | 프론트엔드 | React 19 · TypeScript 5.9 · Vite · 순수 CSS 토큰 패키지 | 생성된 API 타입, 멱등 키·폴링 계약을 클라이언트 라이브러리가 강제 |
 | 테스트 | JUnit 5 · Testcontainers · ArchUnit · Vitest · Playwright | 모듈 의존 규칙과 "금액에 float 금지"를 ArchUnit이 검사 |
 | 품질 | Spotless(palantir) · Error Prone · GitHub Actions | 린트 위반은 경고가 아니라 빌드 실패 |
-| 관측 | Micrometer · Prometheus · Grafana · OpenTelemetry · Jaeger | 불변조건 지표는 임계치 0 |
-| 실험 | k6 스크립트 · 파이썬 하니스 (load-tests/ 23개) | 프로세스 `SIGKILL`/`SIGSTOP`, 컨테이너 `kill`, 기관 장애 모드 |
+| 관측 | Micrometer · Prometheus · Grafana · OpenTelemetry · Jaeger | 불변조건 지표는 임계치 0. **APM 백엔드는 설정 하나로 바꿔 낍니다**(ADR-017) |
+| 실험 | k6 스크립트 · 파이썬 하니스 (load-tests/ 25개) | 프로세스 `SIGKILL`/`SIGSTOP`, 컨테이너 `kill`, 기관 장애 모드 |
 | 형식 검증 | TLA+ · TLC (`formal/`) | 복구 규칙을 전수 검사. 반례는 실행 추적으로 나옵니다 |
 
 ## 저장소 구조
@@ -223,7 +230,7 @@ apps/web-ops            운영 콘솔 (거래 검색 · 원장 · 대사 · 장�
 apps/e2e                Playwright — 목 없이 실제 스택을 도는 유일한 시험
 packages/api-client     생성된 API 타입 + 멱등 키·토큰·폴링 계약
 packages/ui             두 앱이 공유하는 CSS 토큰·프리미티브
-load-tests/             k6 스크립트와 실험 하니스 — 43종의 실행·측정
+load-tests/             k6 스크립트와 실험 하니스 — 43종의 실행·측정, APM 비교·화면 캡처
 formal/                 TLA+ 명세와 TLC 설정 — 복구 규칙의 모델 검사 (M-030)
 deploy/                 배포 형태(두 오리진, TLS, 관측성 스택)
 docs/                   설계 문서 20편, ADR 14편, 생성된 OpenAPI
@@ -251,6 +258,7 @@ scripts/dev.sh down
 ./gradlew test            # 백엔드 전체 — docker compose 없이도 됩니다 (Testcontainers)
 pnpm -r test              # 프론트엔드
 load-tests/run-e2e.sh     # 실제 스택 E2E (약 1분)
+scripts/apm.sh up jaeger  # APM 백엔드 교체 — zipkin | tempo | signoz | skywalking | pinpoint | none
 ```
 
 손으로 한 단계씩 띄우는 순서, API로 충전·결제·취소를 한 바퀴 도는 curl, 응답 유실을 손으로 재현하고 복구를 지켜보는
@@ -263,10 +271,11 @@ load-tests/run-e2e.sh     # 실제 스택 E2E (약 1분)
 | 프로젝트를 평가하려는 분 | 이 README → [reports/12 포트폴리오 기술 보고서](reports/12-portfolio-technical-report.md) → [reports/11](reports/11-performance-failure-report.md)에서 관심 있는 실험 하나 → 관련 [ADR](docs/adr/README.md) |
 | 코드를 읽으려는 분 | [도메인 용어](docs/17-domain-glossary.md) → [기술 안내서](docs/18-technical-handbook.md) → [기술 설계서](docs/05-technical-design.md) · [정합성·복구 설계서](docs/09-consistency-recovery.md) |
 | 실험을 재현하려는 분 | [실행·데모 안내서](docs/21-quickstart-and-demo.md) → [실험 실행 안내서](docs/19-experiment-runbook.md) → [결과 해석 안내서](docs/20-experiment-result-interpretation.md) |
+| APM 도구를 고르려는 분 | [ADR-017 교체 구조](docs/adr/017-swappable-apm-backend.md) → [reports/14 실측 비교](reports/14-apm-tool-comparison.md) → 막히면 [DOC-22](docs/22-apm-troubleshooting-log.md) |
 | AI 에이전트로 작업하려는 분 | [CLAUDE.md](CLAUDE.md) — 매 작업의 규칙과 어떤 문서를 언제 읽는지 |
 
 전체 문서의 역할 분담과 "어느 문서가 어느 정보의 기준인가"는 [문서 지도](docs/00-document-map.md)에 있습니다.
-설계 문서(DOC-01~16)는 구현 **전에** 쓰였고, 구현과 달라진 곳은 문서를 사실로 교체했습니다 — 이상적인 상태로
+설계 문서(DOC-01~16)는 구현 **전에** 쓰였고(DOC-17~22는 구현 후의 안내 문서), 구현과 달라진 곳은 문서를 사실로 교체했습니다 — 이상적인 상태로
 남겨 두지 않았습니다.
 
 ## 알려진 한계

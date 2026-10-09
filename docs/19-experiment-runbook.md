@@ -18,7 +18,8 @@
 | 측정 (API 폴링, DB 읽기, `/actuator/prometheus`, `pg_stat_*`, 로그 카운트) | 자동 | 실험 스크립트 |
 | 판정 (원장 1회인가, 불변조건 0인가, 증명했는가) | 자동 | 스크립트가 `PASS/FAIL`, `proved`, 기대 상태 비교를 출력 |
 | 원본 결과 파일 (`raw.json`, `summary.json`, `report.txt`, k6 JSON, 로그) | 자동 | `/tmp/<실험>/…` |
-| **보고서 문장·표·해석** ([reports/11](../reports/11-performance-failure-report.md), [reports/13](../reports/13-failure-scenario-matrix.md)) | **수동** | 사람이 원본 파일을 읽고 §7의 절차로 씀 |
+| APM 화면 캡처 (§6.6) | 자동 | `load-tests/apm-capture.mjs` — 창 크기와 조회 구간을 고정해 도구끼리 비교 가능하게 찍습니다 |
+| **보고서 문장·표·해석** ([reports/11](../reports/11-performance-failure-report.md), [reports/13](../reports/13-failure-scenario-matrix.md), [reports/14](../reports/14-apm-tool-comparison.md)) | **수동** | 사람이 원본 파일을 읽고 §7의 절차로 씀 |
 | 보고서 생성기 | **없음** | 만들지 않았습니다. 이유는 §7 끝에 있습니다 |
 
 그러니 "시나리오를 실행하고 결과를 리포트로 받는다"는 문장에서 **"리포트"가 원본 결과 파일과 콘솔 요약이면 예,
@@ -40,6 +41,10 @@ Markdown 보고서면 아니오**입니다.
 Jaeger(16686)가 함께 뜨고, `deploy/observability/rules/invariants.yml`의 경보 규칙이 A·B 어느 층에서 만든 장애든 같은
 눈으로 봅니다. 실험 대부분은 관측 스택 없이 `/actuator/prometheus`를 직접 긁으므로 필수는 아닙니다.
 
+**APM 백엔드는 따로 바꿔 낍니다.** `scripts/apm.sh up <name>`이 Jaeger·Zipkin·Tempo·SigNoz·SkyWalking·Pinpoint 중
+하나를 띄우고 애플리케이션에 넘길 환경변수를 `.apm/env`에 적습니다(ADR-017). 이것은 위의 관측 스택과 **다른 것**이고,
+결함을 찾는 실험도 아닙니다 — 도구를 고르기 위한 비교이며 §6.6에 있습니다.
+
 ## 3. 준비물
 
 | 도구 | 왜 | 확인 |
@@ -49,7 +54,8 @@ Jaeger(16686)가 함께 뜨고, `deploy/observability/rules/invariants.yml`의 �
 | k6 | HTTP 부하 (P-001~P-004, M-007, M-009, M-013, M-019~M-023) | `brew install k6; k6 version` |
 | Python 3 | 실험 하니스. **표준 라이브러리만** 씁니다 — pip 설치 없음 | `python3 --version` |
 | TLC (`formal/tla2tools.jar`) | 모델 검사(M-030). 커밋하지 않으므로 처음 한 번 받습니다 | `curl -sL -o formal/tla2tools.jar https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar` |
-| pnpm + Playwright | E2E(D 층)만 | `pnpm install; pnpm --filter @paritypay/e2e exec playwright install chromium` |
+| pnpm + Playwright | E2E(D 층)와 APM 화면 캡처(§6.6) | `pnpm install; pnpm --filter @paritypay/e2e exec playwright install chromium` |
+| Docker 메모리 여유 | APM 비교(§6.6)만. Pinpoint는 컨테이너 6개, SigNoz는 6개를 띄웁니다 | Docker Desktop 설정에서 8 GiB 이상 |
 
 모든 실험은 **한 노트북에서 부하 도구·앱·DB가 CPU를 나눠 쓰는** 구성으로 실행됐습니다(reports/11 §2). 다른 것을
 같이 돌리면 수치가 흔들립니다. M-013은 실행 중에 누군가 `docker compose down`을 해서 한 번 처음부터 다시
@@ -100,6 +106,8 @@ deploy/run.sh down
 | DB 호스트 포트가 5432가 아님 | 스크립트 기본 `--db-url`이 5432입니다 | `PARITYPAY_DB_PORT=<n>`을 넘기거나 `--db-url`을 명시합니다 |
 | `docker compose down`을 실험 중에 함 | 실험이 중간에 죽고, 그때까지의 `raw.json`만 남습니다 | 실험 중에는 손대지 않습니다 |
 | 이전 실험이 기관 모드를 `TIMEOUT_*`로 남김 | 다음 실험의 "정상" 결과가 전부 202 | 스크립트는 끝에 `NORMAL`로 되돌립니다. 중간에 죽였다면 `POST /api/v1/admin/mock-bank/mode`로 직접 되돌립니다 |
+| APM 비교를 `apm.sh`를 거치지 않고 `docker compose up`으로 띄움 | 포트 배정이 돌지 않아 UI가 스크립트가 알려 준 포트가 아니라 기본 포트에 붙습니다. "UI가 안 뜬다"로 한참 헤맵니다 | **반드시 `scripts/apm.sh up <name>`으로** 띄웁니다 |
+| `.apm/env`를 `set -a; . .apm/env`로 읽음 | Pinpoint의 `JAVA_TOOL_OPTIONS`에는 공백이 있어 셸이 쪼갭니다 (`-Dpinpoint.agentId=…: command not found`) | `dev.sh`·하니스처럼 **한 줄씩 읽어 `env`에 넘깁니다** |
 | 이전 실험이 남긴 이벤트·적체 | 소비자가 그것부터 읽어 이번 실험의 정산 항목이 늦게 생김 | Outbox·Kafka 실험은 `TRUNCATE outbox_event, consumed_event`와 토픽 삭제를 스스로 합니다. 다른 실험 앞에는 `docker compose down -v`가 가장 확실합니다 |
 
 ## 5. 처음이라면 이 순서로 (약 30분)
@@ -237,6 +245,41 @@ java -cp tla2tools.jar tlc2.TLC -config MC-window.cfg UnknownResolutionWindow.tl
 | 배포 형태로 같은 것 | `deploy/run.sh` 후 `E2E_CUSTOMER_URL=https://app.localhost:8181 E2E_OPS_URL=https://ops.localhost:8182 E2E_API_URL=https://localhost:8182 E2E_MAILPIT_URL=http://localhost:8125 pnpm --filter @paritypay/e2e e2e` | 약 2분 + 이미지 빌드 |
 | CI | `.github/workflows/e2e.yml` — 주간 + 수동 (`gh workflow run e2e.yml`) | 약 10분 |
 
+### 6.6 APM 도구 비교 (T12)
+
+결함을 찾는 실험이 아닙니다. **도구를 고르기 위한 비교**이고 기록은 [RPT-04](../reports/14-apm-tool-comparison.md)에
+있습니다. 애플리케이션은 어떤 도구가 붙었는지 모르며, 바뀌는 것은 컬렉터 설정 하나이거나 `-javaagent` 한 줄입니다
+(ADR-017).
+
+| 무엇 | 실행 | 사전 조건 | 소요 | 결과 |
+|---|---|---|---|---|
+| 에이전트를 켜면 처리량·지연이 얼마나 달라지나 | `python3 load-tests/apm-overhead-experiment.py --jar $J --arms none,jaeger,zipkin --runs 3` | 4.1 + k6. **스크립트가 팔마다 앱을 띄우고 내립니다** | 팔·회당 약 110초 | `/tmp/t12-apm-overhead/results.json` |
+| 같은 장애에서 도구가 보여 주는 것 | 아래 "가시성 조건" | 4.1 + 해당 백엔드 | 약 1분 | 화면 |
+| 화면 캡처(도구끼리 비교 가능하게) | `node load-tests/apm-capture.mjs <zipkin\|tempo\|pinpoint\|signoz> --out <dir>` | 위 부하 **직후** | 초 단위 | PNG |
+
+```bash
+# 백엔드 교체 — 이것 말고 다른 방법으로 띄우지 않습니다 (§4.4)
+scripts/apm.sh up jaeger      # 또는 zipkin | tempo | signoz | skywalking | pinpoint | none
+scripts/apm.sh status
+scripts/apm.sh down
+
+# 가시성 조건: 기관이 승인 직전에 2.5초를 붙잡게 합니다 (읽기 타임아웃 3초 아래 — 타임아웃이 아니라 "느린 성공")
+curl -X POST localhost:8091/mock-pg/admin/behavior -H 'Content-Type: application/json' \
+  -d '{"approvalMode":"HANG_BEFORE_PROCESSING","hangForMillis":2500}'
+BASE_URL=http://localhost:8099 PAY_RPS=3 READ_RPS=5 DURATION=35s k6 run load-tests/external-pg-load.js
+```
+
+**팔을 번갈아 돌립니다.** 하니스의 기본값이 그렇고, `--grouped`를 주면 몰아서 돕니다. 몰아서 돌리면 기계 상태 변화가
+전부 뒤쪽 팔의 성과로 보입니다 — §8 첫 줄과 같은 함정이고, 이 실험에서도 −15.9%와 −18.7%로 갈렸습니다(RPT-04 §5.2).
+
+**기동 시간이 도구마다 다릅니다.** Jaeger·Zipkin·Tempo는 수 초, SkyWalking은 BanyanDB까지 1~2분, SigNoz는 스키마
+마이그레이션에 약 2분, Pinpoint는 **HBase 테이블 생성에만 약 4분 30초**입니다. 띄우자마자 부하를 걸면 백엔드가
+아직 받지 못합니다.
+
+**막히면 [DOC-22](22-apm-troubleshooting-log.md)를 봅니다.** 빈 화면의 원인 다섯 가지와 도구별로 막힌 자리가
+거기에 있습니다. SigNoz는 **첫 관리자 계정을 만들기 전까지 수집 경로가 열리지 않습니다** — 설치만 끝내고 부하를
+걸면 트레이스가 0건입니다.
+
 ## 7. 결과를 보고서로 옮기는 절차
 
 스크립트는 파일을 남기고 끝납니다. 그 뒤는 다음 순서입니다. reports/11 §1의 강제 규칙("측정하지 않은 값을
@@ -258,7 +301,8 @@ java -cp tla2tools.jar tlc2.TLC -config MC-window.cfg UnknownResolutionWindow.tl
 5. **결함을 찾았으면** 다음 문자(현재 A~N)를 붙여 "M-0xx가 찾아낸 결함 X" 절을 만들고, 고친 커밋과 **고친 뒤 재측정**을
    같은 절에 적습니다. 결함 K·L·M·N 절이 본보기입니다. 고치기 전 수치를 지우지 않습니다 — 전후 비교가 곧 증거입니다.
 6. **다른 문서에 파급을 반영합니다.** 상수가 바뀌면(복구 주기, 폴링 상한) DOC-14·DOC-09를, 결정이 확정되면 ADR의
-   Outcome을, 요약 수치(실험 수·결함 수)가 바뀌면 CLAUDE.md §1·README·reports/12를 고칩니다.
+   Outcome을, 요약 수치(실험 수·결함 수)가 바뀌면 CLAUDE.md §1·README·reports/12를 고칩니다. APM 비교(§6.6)는
+   reports/11이 아니라 **RPT-04**에 쌓고, 구조 판단은 ADR-017의 Outcome에, 띄우다 막힌 것은 DOC-22에 적습니다.
 7. `python3 scripts/check-docs-links.py`로 링크를 확인하고 `docs:` 커밋으로 남깁니다.
 
 **보고서 생성기를 만들지 않은 이유.** 스크립트 출력은 실험마다 다른 모양이고, 값 표는 이미 스크립트가 만듭니다
@@ -282,6 +326,9 @@ java -cp tla2tools.jar tlc2.TLC -config MC-window.cfg UnknownResolutionWindow.tl
 | 캐시된 테스트 결과 보고 | `FROM-CACHE`는 실행이 아님 | CLAUDE.md §7 |
 | macOS `ps %cpu`는 수명 평균 | CPU 곡선이 평평하게 보임 | M-013 (`cputime` 차분으로 바꿈) |
 | 첫 확인이 `localhost:8181`·`:8182` | 쿠키는 포트를 구분하지 않아 세션 분리를 확인 못 함 | ADR-011 |
+| 기관 장애 모드의 필드 이름을 추측 | 관리 API가 모르는 필드를 무시하고 **204를 돌려줍니다**. 부하는 정상 속도로 끝나고 "도구가 못 본 것"으로 읽기 쉬움 | RPT-04 §8 (실제 필드는 `approvalMode`) |
+| 계수기 하나로 "데이터가 없다"를 결론 | `grpcSpanReceiver CurrentGrpcStream:0`은 **그 순간 열린 스트림 수**입니다. 배치 전송은 열고 닫습니다 | DOC-22 §6 |
+| 헤드리스 브라우저로 Pinpoint 캡처 | 조회 구간을 브라우저 시간대(UTC)로 만들어 서버가 KST로 읽으면 9시간 어긋난 빈 화면 | DOC-22 §5 |
 
 ## 9. 정리
 
@@ -292,3 +339,5 @@ java -cp tla2tools.jar tlc2.TLC -config MC-window.cfg UnknownResolutionWindow.tl
 - 컨테이너는 **자기가 띄운 것만** 내립니다. `docker compose down -v`는 데이터까지 지웁니다 — 다음 실험 전에 빈 스키마가
   필요할 때만.
 - `/tmp/<실험>/`은 보고서에 옮긴 뒤에는 지워도 됩니다. 옮기기 전에는 지우지 않습니다.
+- APM 백엔드는 `scripts/apm.sh down`이 내립니다. 자기가 띄운 컬렉터·백엔드만 건드리고 `dev.sh`의 postgres·기관은
+  그대로 둡니다.
