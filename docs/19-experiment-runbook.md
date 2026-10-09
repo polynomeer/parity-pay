@@ -41,8 +41,9 @@ Markdown 보고서면 아니오**입니다.
 Jaeger(16686)가 함께 뜨고, `deploy/observability/rules/invariants.yml`의 경보 규칙이 A·B 어느 층에서 만든 장애든 같은
 눈으로 봅니다. 실험 대부분은 관측 스택 없이 `/actuator/prometheus`를 직접 긁으므로 필수는 아닙니다.
 
-**APM 백엔드는 따로 바꿔 낍니다.** `scripts/apm.sh up <name>`이 Jaeger·Zipkin·Tempo·SigNoz·SkyWalking·Pinpoint 중
-하나를 띄우고 애플리케이션에 넘길 환경변수를 `.apm/env`에 적습니다(ADR-017). 이것은 위의 관측 스택과 **다른 것**이고,
+**APM 백엔드는 따로 바꿔 낍니다.** `scripts/apm.sh up <name>`이 자체 호스팅 아홉(Jaeger·Zipkin·Tempo·SigNoz·
+OpenObserve·Uptrace·Elastic·SkyWalking·Pinpoint) 중 하나를 띄우거나 SaaS 다섯(Datadog·New Relic·Honeycomb·
+Dynatrace·Splunk) 중 하나로 보내도록 컬렉터만 띄우고 애플리케이션에 넘길 환경변수를 `.apm/env`에 적습니다(ADR-017). 이것은 위의 관측 스택과 **다른 것**이고,
 결함을 찾는 실험도 아닙니다 — 도구를 고르기 위한 비교이며 §6.6에 있습니다.
 
 ## 3. 준비물
@@ -255,11 +256,13 @@ java -cp tla2tools.jar tlc2.TLC -config MC-window.cfg UnknownResolutionWindow.tl
 |---|---|---|---|---|
 | 에이전트를 켜면 처리량·지연이 얼마나 달라지나 | `python3 load-tests/apm-overhead-experiment.py --jar $J --arms none,jaeger,zipkin --runs 3` | 4.1 + k6. **스크립트가 팔마다 앱을 띄우고 내립니다** | 팔·회당 약 110초 | `/tmp/t12-apm-overhead/results.json` |
 | 같은 장애에서 도구가 보여 주는 것 | 아래 "가시성 조건" | 4.1 + 해당 백엔드 | 약 1분 | 화면 |
-| 화면 캡처(도구끼리 비교 가능하게) | `node load-tests/apm-capture.mjs <zipkin\|tempo\|pinpoint\|signoz> --out <dir>` | 위 부하 **직후** | 초 단위 | PNG |
+| 화면 캡처(도구끼리 비교 가능하게) | `node load-tests/apm-capture.mjs <zipkin\|tempo\|pinpoint\|signoz\|skywalking\|openobserve\|uptrace\|elastic> --out <dir>` | 위 부하 **직후** | 초 단위 | PNG |
 
 ```bash
 # 백엔드 교체 — 이것 말고 다른 방법으로 띄우지 않습니다 (§4.4)
-scripts/apm.sh up jaeger      # 또는 zipkin | tempo | signoz | skywalking | pinpoint | none
+scripts/apm.sh up jaeger      # 자체 호스팅: jaeger zipkin tempo signoz openobserve uptrace
+                              #              elastic skywalking pinpoint / 대조군 none
+                              # SaaS(키 필요): datadog newrelic honeycomb dynatrace splunk
 scripts/apm.sh status
 scripts/apm.sh down
 
@@ -272,9 +275,17 @@ BASE_URL=http://localhost:8099 PAY_RPS=3 READ_RPS=5 DURATION=35s k6 run load-tes
 **팔을 번갈아 돌립니다.** 하니스의 기본값이 그렇고, `--grouped`를 주면 몰아서 돕니다. 몰아서 돌리면 기계 상태 변화가
 전부 뒤쪽 팔의 성과로 보입니다 — §8 첫 줄과 같은 함정이고, 이 실험에서도 −15.9%와 −18.7%로 갈렸습니다(RPT-04 §5.2).
 
-**기동 시간이 도구마다 다릅니다.** Jaeger·Zipkin·Tempo는 수 초, SkyWalking은 BanyanDB까지 1~2분, SigNoz는 스키마
-마이그레이션에 약 2분, Pinpoint는 **HBase 테이블 생성에만 약 4분 30초**입니다. 띄우자마자 부하를 걸면 백엔드가
-아직 받지 못합니다.
+**기동 시간이 도구마다 다릅니다.** Jaeger·Zipkin·Tempo·OpenObserve는 수 초, Uptrace는 ClickHouse 준비까지
+30초쯤, SkyWalking은 BanyanDB까지 1~2분, SigNoz는 스키마 마이그레이션에 약 2분, Elastic은 **Elasticsearch가
+green까지 약 2분 + Kibana 화면이 그려지기까지 1분 더**, Pinpoint는 **HBase 테이블 생성에만 약 4분 30초**입니다.
+띄우자마자 부하를 걸면 백엔드가 아직 받지 못합니다.
+
+**캡처는 부하가 끝나고 1분 안에 찍습니다.** 이 애플리케이션의 스케줄 작업은 루트 스팬을 만들지 않아
+JDBC 스팬 하나하나가 1-스팬 트레이스가 됩니다. 부하가 끝나면 **목록이 그것으로 덮입니다.** OpenObserve
+대상이 `duration > 2000000` 필터를 거는 이유입니다(DOC-22 §5).
+
+**SaaS 다섯은 키가 없으면 `apm.sh`가 시작하지 않습니다.** 띄워 놓고 조용히 아무것도 안 보내면 측정했다고
+믿은 뒤에 데이터가 없다는 것을 알게 되기 때문입니다. 키는 저장되지 않습니다(ADR-011).
 
 **막히면 [DOC-22](22-apm-troubleshooting-log.md)를 봅니다.** 빈 화면의 원인 다섯 가지와 도구별로 막힌 자리가
 거기에 있습니다. SigNoz는 **첫 관리자 계정을 만들기 전까지 수집 경로가 열리지 않습니다** — 설치만 끝내고 부하를

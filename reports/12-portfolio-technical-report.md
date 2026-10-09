@@ -443,9 +443,11 @@ Jaeger, Zipkin, Grafana Tempo, Apache SkyWalking, Pinpoint, SigNoz입니다. **`
 같은 방식으로 42.7%였습니다. Pinpoint도 쟀지만 **대조군이 한 묶음 안에서 4.7배 흔들려 수치를 쓰지
 않았습니다**(RPT-04 §5.6).
 
-설치 비용은 자릿수가 달랐습니다. Jaeger·Zipkin·Tempo는 컨테이너 하나에 한 번에 떴고, Pinpoint는
-여섯 개에 일곱 군데에서 막혔으며, SigNoz는 **첫 관리자 계정을 만들기 전까지 수집 경로 자체가 열리지
-않습니다**(조직이 없으면 수집기가 OTLP 포트를 열지 않습니다). 막힌 자리와 원인, 그리고 제가 틀리게
+설치 비용은 자릿수가 달랐습니다. Jaeger·Zipkin·Tempo·OpenObserve는 컨테이너 하나에 한 번에 떴고,
+Pinpoint는 여섯 개에 일곱 군데에서 막혔으며, SigNoz는 **첫 관리자 계정을 만들기 전까지 수집 경로
+자체가 열리지 않습니다**(조직이 없으면 수집기가 OTLP 포트를 열지 않습니다). 뒤에 "Datadog 대안"으로
+꼽히는 열 개를 같은 배선에 대 봤고, 셋을 더 띄웠습니다(OpenObserve·Uptrace·Elastic). 받는 쪽이
+SaaS인 다섯은 키만 넣으면 되는 상태까지만 가 있고 **전송은 미검증**입니다. 막힌 자리와 원인, 그리고 제가 틀리게
 진단했던 셋은 [DOC-22](../docs/22-apm-troubleshooting-log.md)에 지우지 않고 남겼습니다. 전체 측정은
 [RPT-04](14-apm-tool-comparison.md)에 있습니다.
 

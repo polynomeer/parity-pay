@@ -31,23 +31,41 @@
 - **SigNoz도 떴습니다**(2026-10-09). 수집하지 않은 이유는 스키마 마이그레이션이 아니라 **조직이 없어서**였고,
   사용자가 첫 관리자 계정을 만들자 ingester가 **그 자리에서 OTLP 포트를 열고** 트레이스가 들어왔습니다 — 계정
   생성 전후로 컨테이너 안의 listen 포트가 `8888·13133·1777`에서 `4317·4318`이 더해진 것으로 바뀝니다(§4).
-  이제 여섯 도구가 전부 떴고, **어느 쪽도 애플리케이션 코드를 바꾸지 않았습니다.**
-- **못 한 것**: Datadog(체험판 계정 필요), SigNoz·SkyWalking 화면 캡처,
-  Pinpoint 오버헤드의 **믿을 만한 수치**(§5.6 — 대조군이 한 묶음 안에서 4.7배 흔들렸습니다).
+  이로써 **그때까지의 여섯**이 전부 떴고, 어느 쪽도 애플리케이션 코드를 바꾸지 않았습니다.
+- **"Datadog 대안 10선" 글에 나온 열 개를 전부 우리 배선에 대 봤습니다**(2026-10-09~10, §4.9).
+  셋이 실제로 떴고(**OpenObserve·Uptrace·Elastic**), 넷은 Datadog과 같은 자리(키만 있으면 되는 상태)로
+  배선했고(New Relic·Honeycomb·Dynatrace·Splunk), 하나는 이미 들어가 있었고(Grafana Stack = Tempo),
+  둘은 넣지 않았습니다 — AppDynamics는 **로컬 기동 경로가 없고**, Zabbix는 **트레이스라는 개념 자체가
+  없습니다.**
+- **설치 비용의 양 끝이 더 벌어졌습니다.** OpenObserve는 **컨테이너 하나**에 저장소도 내장이고 첫 계정을
+  환경변수로 받습니다 — SigNoz가 사람 손을 요구한 바로 그 자리를 자동으로 지납니다. 반대쪽 Pinpoint는
+  여전히 여섯 개입니다.
+- **같은 트레이스를 가장 잘 설명한 화면은 Uptrace의 것이었습니다.** 트레이스 하나를
+  `httpclient 68% · db:postgresql 19% · httpserver 12%`로 쪼개 보여 주고, 느린 자식이
+  `POST /mock-pg/approvals` **3,035 ms**라고 이름으로 적습니다(§6).
+- **못 한 것**: SaaS 다섯 곳(Datadog·New Relic·Honeycomb·Dynatrace·Splunk)의 **전송 검증** — 전부 키가
+  필요하고 키는 사용자가 직접 넣습니다. 그리고 SigNoz·SkyWalking 화면 캡처,
+  Pinpoint 오버헤드의 **믿을 만한 수치**(§5.6 — 대조군이 한 묶음 안에서 4.7배 흔들렸습니다),
+  새로 넣은 세 도구의 **에이전트 오버헤드**(§9).
 
 ## 2. 환경
 
 | 항목 | 값 |
 |---|---|
-| 커밋 | 1차 `3e4a547`, 2차(Zipkin·Tempo 화면) `77c74c3`, 3차(Pinpoint 기동·SigNoz 원인) `9076586`, 4차(SigNoz 수집 확인) `0d6553c` |
-| 측정 일시 | 2026-10-05 ~ 2026-10-07 |
+| 커밋 | 1차 `3e4a547`, 2차(Zipkin·Tempo 화면) `77c74c3`, 3차(Pinpoint 기동·SigNoz 원인) `9076586`, 4차(SigNoz 수집 확인) `0d6553c`, 5차(열 개 점검·세 도구 추가) `416c532` |
+| 측정 일시 | 2026-10-05 ~ 2026-10-07, 5차 2026-10-09 ~ 10 |
 | 기계 | Apple M1 Max, 32 GB, macOS 26.6.2, Docker Desktop 28.0.4 (**Docker 할당 7.7 GiB**) |
 | 애플리케이션 | pay-api (Java 21, `local` 프로필), 호스트 프로세스. 의존: postgres 17·Redpanda·mock-bank·mock-pg(컨테이너) |
 | 부하 | k6 v1.0.0. 오버헤드는 `payment-baseline.js`(VU 20, P-001과 같은 조건), 가시성은 `external-pg-load.js` |
 | 계측 | OpenTelemetry Java agent **2.12.0**, SkyWalking Java agent **9.7.0**, Pinpoint Java agent **3.1.1**, OTel Collector **0.119.0** |
-| 백엔드 | Jaeger all-in-one **1.65.0**, Zipkin **3.6.1**, Grafana Tempo **2.7.0**(화면은 Grafana **11.5.1**), SigNoz(foundryctl **v0.3.0**이 생성), SkyWalking OAP·UI **10.4.0-java21** + BanyanDB **0.10.3**, Pinpoint **3.1.1**(HBase·Collector·Web) |
+| 백엔드 | Jaeger all-in-one **1.65.0**, Zipkin **3.6.1**, Grafana Tempo **2.7.0**(화면은 Grafana **11.5.1**), SigNoz(foundryctl **v0.3.0**이 생성), SkyWalking OAP·UI **10.4.0-java21** + BanyanDB **0.10.3**, Pinpoint **3.1.1**(HBase·Collector·Web), OpenObserve **v1.0.4**, Uptrace **2.0.3**(ClickHouse 26.3 · PostgreSQL 17 · Redis 7.4), Elastic **8.17.1**(Elasticsearch · APM Server · Kibana) |
 | 잡음 | **이 기계에는 다른 프로젝트의 컨테이너가 20여 개 떠 있습니다.** 절대값이 아니라 같은 실행 안의 상대 비교만 씁니다 |
 
+> **5차 중 Docker 데몬이 한 번 죽었습니다.** Elastic 셋(Elasticsearch·Kibana·APM Server)을 다른 프로젝트의
+> 컨테이너 20여 개와 함께 띄운 상태에서 7.7 GiB를 넘겼고, 데몬이 내려가면서 **이 스택의 컨테이너가 전부
+> `Exited (255)`** 가 됐습니다. 그래서 Elastic의 힙을 ES 512 MB · Kibana 700 MB로 묶었습니다 —
+> 설치 비용 표의 Elastic 행은 **이 기계에 맞춰 줄인 값**이지 권장값이 아닙니다.
+>
 > 측정 중 이 기계의 Docker Hub 이미지 내려받기가 매우 느렸습니다 — SkyWalking OAP+UI 약 19분,
 > BanyanDB 0.10.3은 8분 넘게 진척이 없었고, SigNoz 이미지 중 하나는 `lease does not exist`로 실패해
 > `docker builder prune -af`(16 GB 회수) 뒤에 받았습니다. 소요 시간 수치에는 이 조건이 섞여 있습니다.
@@ -55,10 +73,15 @@
 ## 3. 방법
 
 ```text
-                                   ┌─ collector-jaeger.yaml  → Jaeger   (OTLP)
-                                   ├─ collector-zipkin.yaml  → Zipkin   (Zipkin 형식)
-pay-api ──(OTLP 4317)──▶ Collector ─┼─ collector-tempo.yaml   → Tempo    (OTLP) → 화면은 Grafana
-   ▲ -javaagent (OTel)              └─ collector-signoz.yaml  → SigNoz   (OTLP)
+                                   ┌─ collector-jaeger.yaml      → Jaeger      (OTLP)
+                                   ├─ collector-zipkin.yaml      → Zipkin      (Zipkin 형식)
+                                   ├─ collector-tempo.yaml       → Tempo       (OTLP) → 화면은 Grafana
+pay-api ──(OTLP 4317)──▶ Collector ─┼─ collector-signoz.yaml      → SigNoz      (OTLP)
+   ▲ -javaagent (OTel)             ├─ collector-openobserve.yaml → OpenObserve (OTLP/HTTP + Basic)
+   │                               ├─ collector-uptrace.yaml     → Uptrace     (OTLP + DSN 헤더)
+   │                               ├─ collector-elastic.yaml     → APM Server  (OTLP + Bearer) → ES → Kibana
+   │                               └─ 키만 넣으면 되는 SaaS 다섯 (컨테이너 없음)
+   │                                    datadog · newrelic · honeycomb · dynatrace · splunk
    └── 자체 에이전트 계열은 이 자리를 바꿔 끼움 (SkyWalking · Pinpoint)
 ```
 
@@ -81,10 +104,16 @@ Zipkin만 exporter가 OTLP가 아닙니다 — Zipkin은 자기 형식만 받습
 | SigNoz | **6** | ClickHouse + Keeper + PostgreSQL | 2 (아래) | **약 1,039 MiB** (ClickHouse 914 MiB) |
 | SkyWalking | **3** | BanyanDB(필수) | **3** (아래) | 미측정 |
 | **Pinpoint** | **6** | HBase + MySQL + ZooKeeper + Redis | **7** (아래, 전부 뚫음) | 약 3.2 GiB |
-| Datadog | **0** | SaaS | — | — (받는 쪽이 남의 서비스입니다. **전송은 미검증** — 아래) |
+| **OpenObserve** | **1** (+컬렉터) | **내장**(로컬 디스크) | **1** (아래) | 미측정 |
+| **Uptrace** | **4** (+컬렉터) | ClickHouse + PostgreSQL + Redis | **0** | **약 710 MiB** (ClickHouse 461 · Uptrace 198 · PG 45 · Redis 6) |
+| **Elastic** | **3** (+컬렉터) | Elasticsearch | **1** (아래) | 힙을 ES 512 MB · Kibana 700 MB로 **묶어야** 들어갔습니다 (Kibana 실사용 537 MiB) |
+| Datadog · New Relic · Honeycomb · Dynatrace · Splunk | **0** | SaaS | — | — (받는 쪽이 남의 서비스입니다. **전송은 전부 미검증** — §9) |
 
-컨테이너 수와 막힌 횟수가 같이 움직입니다. 한 개짜리(Jaeger·Zipkin)는 한 번에 떴고, 다섯·여섯 개짜리는
-전부 막혔습니다.
+컨테이너 수와 막힌 횟수가 **대체로** 같이 움직입니다. 한 개짜리(Jaeger·Zipkin)는 한 번에 떴고,
+다섯·여섯 개짜리(SigNoz·SkyWalking·Pinpoint)는 전부 막혔습니다. **Uptrace가 그 규칙을 깼습니다** —
+컨테이너가 넷인데 한 번에 떴습니다. 차이는 개수가 아니라 **벤더가 자기 compose를 유지보수하는가**였습니다.
+Uptrace는 ClickHouse·PostgreSQL·Redis의 버전과 healthcheck를 자기 예시에 박아 두고 같이 올립니다.
+Pinpoint의 예시는 HBase 스키마가 이 기계에서 돌지 않는 상태로 남아 있었습니다.
 
 **Zipkin에서 막힌 것 — 없습니다.** 비교에서 가장 쉬웠습니다. 컨테이너 하나(`openzipkin/zipkin:3.6.1`)에
 저장소는 메모리이고, 받자마자 조회됩니다. 다만 **OTLP를 받지 않습니다** — 자기 형식만 받으므로 컬렉터의
@@ -160,6 +189,97 @@ collector 서비스를 다시 띄우면서(`Config has not changed` 직전) **�
 컨테이너가 **OOM으로 두 번 죽었습니다**(`Exited (137)`). `MEMORY_MAX_TRACES=20000` + `mem_limit: 1g`로
 묶었습니다. 그러고 나면 이번에는 **보관이 수 분**입니다 — 1시간 조회가 0건이고 방금 넣은 부하만 보입니다.
 배경 작업(Outbox 발행기·복구·불변조건 지표)이 쉬지 않고 1-스팬 트레이스를 만들어 링버퍼를 밀어내기 때문입니다.
+
+**OpenObserve에서 막힌 것 하나 — 그리고 그것이 버전 사이에서 생겼습니다.** 컨테이너 하나이고 저장소가
+내장이라 이 랩에서 가장 짧은 설치입니다. 막은 것은 비밀번호였습니다. `apm.sh`가 만드는 24자 영숫자를
+`v1.0.4`가 거절하고 **기동 중에 패닉합니다.**
+
+```text
+panicked at src/jobs/src/job/mod.rs:355:13:
+ZO_ROOT_USER_PASSWORD is too weak: Password must be 8-128 characters and contain
+at least one lowercase letter, one uppercase letter, one digit, and one special character.
+```
+
+같은 값을 `v0.14.4`는 받았습니다 — 1.0에서 생긴 규칙입니다. 생성기에 "종류별로 하나씩"을 만족할 때까지
+다시 뽑는 길을 더했습니다(`ensure_secret … complex`). 고정 접미사를 붙이는 쪽이 짧지만 그러면 모든
+설치의 비밀번호가 같은 꼬리를 갖습니다.
+
+**중요한 성질이 하나 있습니다.** OpenObserve는 첫 관리자 계정을 `ZO_ROOT_USER_EMAIL`·`ZO_ROOT_USER_PASSWORD`
+**환경변수로 받습니다.** SigNoz가 사람이 화면에서 조직을 만들기 전까지 OTLP 포트를 열지 않았던 바로 그
+자리를, 뜨는 즉시 지납니다. 측정 자동화에 사람 손이 들어가지 않는다는 뜻입니다.
+
+받는 경로는 OTLP이지만 **주소가 표준이 아닙니다** — 조직 이름이 경로에 들어갑니다(`/api/<조직>/v1/traces`).
+exporter가 `/v1/traces`를 뒤에 붙이므로 endpoint는 조직까지만 줍니다. 인증은 Basic이고, 값은
+`base64(이메일:비밀번호)`입니다.
+
+**Uptrace에서 막힌 것 — 없습니다.** 컨테이너 넷(ClickHouse·PostgreSQL·Redis·Uptrace)인데 한 번에 떴습니다.
+벤더 예시에 healthcheck와 `condition: service_healthy`가 이미 있고, 스키마 마이그레이션도
+`migrated to group #1 (13 migrations …)`로 수십 초에 끝납니다.
+
+벤더 예시에서 **고쳐야 했던 것은 비밀값뿐**입니다. `service.secret: FIXME`, 관리자 비밀번호 `admin`,
+프로젝트 토큰 `project1_secret`이 그대로 적혀 있습니다. Pinpoint의 `admin/admin`과 같은 문제이고 같은
+방식으로 처리했습니다(ADR-011). 다만 2.x는 `FIXME`를 보면 **뜨지 않습니다** — 벤더가 그 자리만은 막아
+뒀습니다.
+
+**SigNoz와 갈라지는 지점이 여기입니다.** Uptrace도 수집에 토큰을 요구하지만, 그 토큰과 첫 사용자를
+**설정 파일에서 정할 수 있습니다**(`seed_data`). 사람이 화면에서 만들 필요가 없습니다. 같은 "토큰이
+필요한 백엔드"인데 자동화 가능 여부가 갈립니다.
+
+**Elastic에서 막힌 것 하나 — 그리고 그것은 메모리였습니다.** 컨테이너 셋인데 역할이 전부 다릅니다:
+수신(APM Server)·저장(Elasticsearch)·화면(Kibana). Jaeger가 한 컨테이너에 넣은 일을 셋으로 나눈 구조입니다.
+
+기본 힙으로는 이 기계에서 **띄울 수 없었습니다.** 다른 프로젝트 컨테이너가 이미 4.5 GiB를 쓰고 있었고,
+Elastic 셋을 더하자 Docker 데몬 자체가 내려갔습니다(§2). ES 512 MB · Kibana 700 MB로 묶고서야 들어갔습니다.
+
+**수신을 APM Server로 받는 이유.** contrib 0.119.0에 `elasticsearch` exporter가 있고 트레이스도 보냅니다
+(stability: traces **Beta** — 직접 확인). 그런데 기본 색인이 `traces-generic-default`이고, Kibana의 APM
+화면이 읽는 자리는 `traces-apm*`입니다. 그 길로 가면 **색인에는 들어가고 화면에는 안 나옵니다.** 이 랩이
+보려는 것이 "같은 장애에서 무엇이 보이는가"이므로 화면까지 이어지는 쪽을 택했습니다. ES에 원본 문서만
+넣고 Discover로 보려면 그 exporter가 더 짧은 길입니다.
+
+APM Server로 보낸 뒤 확인한 것은 둘입니다. ① `traces-apm*`에 문서가 쌓이고
+(`service.name=pay-api`, `agent.name=otlp`, `transaction.duration.us`), ② **Kibana의 APM API가 그 서비스를
+돌려줍니다** — `/internal/apm/services`가 `pay-api | latency 37000 | agent otlp`. 화면이 그린다는 것을
+화면의 API로 확인한 것입니다.
+
+### 4.9 "Datadog 대안 10선"의 열 개를 어디에 두었는가
+
+출발은 외부 글 하나였습니다. 거기 적힌 열 개를 **마케팅이 아니라 우리가 이미 핀으로 박아 둔 컬렉터에**
+대 봤습니다. 판정 기준은 둘입니다 — (가) 받는 길이 있는가, (나) 이 기계에서 뜨는가.
+
+먼저 컬렉터가 무엇을 가지고 있는지부터 뽑았습니다(`docker run --rm otel/opentelemetry-collector-contrib:0.119.0
+components`). 짐작과 다른 것이 셋 있었습니다.
+
+| exporter | 0.119.0에서 | 뜻 |
+|---|---|---|
+| `datadog` | 있음 (traces **Beta**) | 전용 경로가 있습니다 |
+| `elasticsearch` | 있음 (traces **Beta**) | 있지만 색인이 APM 화면과 다릅니다(위) |
+| `splunk_hec` | 있음 (traces Beta) / `sapm`은 **Deprecated** | 보낼 수는 있습니다 |
+| `dynatrace` | **없습니다** | 있던 것은 메트릭 전용이었고 폐기됐습니다 |
+| New Relic 전용 | **없습니다** | 2022년에 폐기하고 OTLP로 옮겼습니다 |
+| Honeycomb 전용 | **없습니다** (`honeycombmarker`는 **로그**를 마커로 바꾸는 것) | 표준 OTLP로 보냅니다 |
+
+이미지 아키텍처도 먼저 봤습니다. Pinpoint HBase에서 amd64 단일 아키텍처에 당한 적이 있기 때문입니다
+(§4, 막은 것 5번). **`splunk/splunk:9.4`가 amd64 단독**이고, OpenObserve·Uptrace·Elasticsearch·Kibana·
+Zabbix는 arm64가 있습니다.
+
+| # | 도구 | 판정 | 근거 |
+|---|---|---|---|
+| 1 | **OpenObserve** | **띄웠습니다** | 컨테이너 1개. 계정이 환경변수. 수집·조회·캡처까지 확인 |
+| 2 | Grafana Stack | **이미 있습니다** | Tempo로 들어가 있습니다(§4·§6). Loki·Prometheus는 로그·메트릭이라 이 비교의 축이 아닙니다 |
+| 3 | **New Relic** | 키 대기 | 전용 exporter 없이 `otlphttp` + `api-key` 헤더. **Datadog과 같은 상태** |
+| 4 | **Dynatrace** | 키 대기 (한 단계 더) | exporter가 없고, 주소에 **테넌트 ID**가 들어가 키만으로는 안 됩니다 |
+| 5 | **Elastic** | **띄웠습니다** | ES + APM Server + Kibana. APM 화면까지 확인 |
+| 6 | **Splunk** | 키 대기 (자체 설치는 불가) | 이미지가 amd64 단독이고, 더 중요한 것은 **APM 화면이 자체 설치 제품에 없다는 점**입니다. 받는 쪽은 Observability Cloud입니다 |
+| 7 | **Honeycomb** | 키 대기 | `otlphttp` + `x-honeycomb-team`. 데이터셋 헤더는 Classic 계정에서만 씁니다 |
+| 8 | AppDynamics | **넣지 않았습니다** | 자체 에이전트 + SaaS 컨트롤러. 로컬 기동 경로가 없습니다 |
+| 9 | Zabbix | **넣지 않았습니다** | 인프라 모니터링이고 **트레이스라는 개념이 없습니다.** 떠도 이 비교에서 볼 화면이 없습니다 |
+| 10 | **Uptrace** | **띄웠습니다** | OTLP 네이티브. 토큰이 필요하지만 설정 파일에서 정합니다 |
+
+**키 대기 넷은 Datadog과 똑같이 배선했습니다** — 설정 파일 하나(`collector-<name>.yaml`), 컨테이너 0개,
+`scripts/apm.sh`가 키 없이는 **시작하지 않습니다**. 띄워 놓고 조용히 아무것도 안 보내는 것이 최악이기
+때문입니다. 키는 어느 파일에도 저장되지 않고 환경변수로만 지나갑니다(ADR-011).
+
 
 ## 5. 에이전트 오버헤드 — 실측
 
@@ -280,6 +400,9 @@ Mock PG가 승인 전에 2.5초를 붙잡는 조건에서 결제 3 rps + 잔액 
 | **Zipkin** | **2단계** (목록 → 상세) | Jaeger와 같습니다. Duration **2.525 s**, Services 1, Total Spans **20**, 자식 `post` 2.508 s. 같은 에이전트가 만든 같은 트레이스이므로 **숫자가 일치합니다** — 다른 것은 화면뿐입니다. 오른쪽에 스팬별 태그(`http.route`, `http.response.status_code=201` 등)가 함께 붙습니다 |
 | **Tempo** | **3단계** (Grafana → Explore → 트레이스) | 화면이 **없습니다**. Grafana의 Explore에서 TraceQL `{ name="POST /api/v1/payments" }`로 찾습니다. 결과는 같습니다(2.53 s, 20 spans, 201). 대신 **Grafana를 함께 운영해야 합니다** |
 | SigNoz | 미측정(화면) | 수집은 확인했습니다 — 같은 조건에서 `POST /api/v1/payments` p50 2,608 ms, 외부 호출 2,524 ms, 스팬 7,902개. **화면은 로그인이 필요해 캡처하지 않았습니다** |
+| **OpenObserve** | **3단계** (스트림 선택 → 조회 → 상세) | 트레이스 상세는 Jaeger·Zipkin과 같은 폭포이고 숫자도 같습니다 — `POST /api/v1/payments` **2.53 s**, **21 스팬**, 외부 호출 `localhost POST` **2.51 s**. 다만 목록에 닿는 데 한 단계가 더 듭니다(아래) |
+| **Uptrace** | **1단계** (개요) | 로그인하면 바로 **시스템별 RED 표**입니다. `httpclient:pay-api` 행이 p50 61 ms / **p90 3,021 ms** / error_rate 24%로 떠 있어, 트레이스를 열기 전에 "밖으로 나가는 호출이 느리다"가 읽힙니다. 트레이스를 열면 **`httpclient 68% · db:postgresql 19% · httpserver 12%`** 로 쪼개 주고 느린 자식을 `POST /mock-pg/approvals` **3,035 ms**로 이름까지 적습니다 |
+| **Elastic** | **2단계** (서비스 → 트랜잭션) | 서비스 목록에 `pay-api` 한 줄(지연 690 ms, 12.0 tpm, 실패 0%). 트랜잭션 화면의 **지연 분포 히스토그램**이 이 랩에서 유일합니다 — 90 ms 부근의 조회와 2~4초의 결제가 **두 무리로 갈라져** 보이고, 95p 표시가 느린 쪽에 걸립니다. 거기서 고른 Trace sample이 2,679 ms |
 | **Pinpoint** | **1단계** (서버맵) | 애플리케이션을 고르면 **USER → pay-api → PostgreSQL·외부기관**이 이미 그려져 있습니다. 호출 수와 평균 지연이 화살표에 붙고(1,527건 898 ms / DB 7,285건 4 ms / 기관 513건 2 ms), 오른쪽 산점도에 **2.5초 무리와 0 근처 무리가 갈라져** 보입니다. Apdex 0.82, Max 3.06초 |
 
 **부수 효과 하나.** SkyWalking은 자체 에이전트가 의존성까지 토폴로지에 올립니다 — `listServices`에
@@ -304,11 +427,26 @@ Jaeger 조합에서는 PostgreSQL·Kafka가 별도 서비스로 올라오지 않
 | `apm-lab-tempo-trace.png` | Grafana Explore에서 본 Tempo — 왼쪽 TraceQL 결과 목록, 오른쪽 트레이스(2.53 s, 20 spans) |
 | `apm-lab-pinpoint-servermap.png` | Pinpoint 서버맵 — USER·pay-api·PostgreSQL·외부기관 네 노드와 호출 수/지연, 산점도, Apdex 0.82 |
 | `apm-lab-signoz-signup.png` | SigNoz 첫 화면 — "Create your account". **이 화면을 넘기기 전에는 수집도 되지 않습니다**(§4) |
+| `apm-lab-openobserve-traces.png` | OpenObserve 트레이스 목록 — `duration > 2000000` 필터, 오른쪽 Duration 산점도에 2~3초 무리가 모여 있음 |
+| `apm-lab-openobserve-trace.png` | OpenObserve 트레이스 상세 — `POST /api/v1/payments` 2.53 s, **21 spans**, 외부 호출 `localhost POST` 2.51 s가 초록 막대로 전체를 차지 |
+| `apm-lab-uptrace-overview.png` | Uptrace 개요 — 시스템별 RED 표. `httpclient:pay-api` p90 **3,021 ms**, error_rate 24% |
+| `apm-lab-uptrace-groups.png` | Uptrace 묶음 목록 — `POST /api/v1/payments` 3.5/min, p50 914 ms, p90 4,990 ms |
+| `apm-lab-uptrace-trace.png` | Uptrace 트레이스 — 4,447 ms **22 spans**, 상단에 `httpclient 68% / db:postgresql 19% / httpserver 12%`, 느린 자식 `POST /mock-pg/approvals` 3,035 ms |
+| `apm-lab-elastic-services.png` | Kibana APM 서비스 목록 — `pay-api` 지연 690 ms, 12.0 tpm, 실패율 0% |
+| `apm-lab-elastic-transaction.png` | Kibana APM 트랜잭션 — 지연 분포가 **두 무리로 갈라짐**, 106 transactions, Trace sample 2,679 ms |
 
 캡처는 `load-tests/apm-capture.mjs`가 같은 창 크기(1600×1000)로 찍습니다. 손으로 찍으면 창 크기와
 조회 구간이 매번 달라져 도구끼리 비교가 안 되고, 메모리 저장소를 쓰는 도구는 보관이 수 분이라
 부하 직후가 아니면 빈 화면이 나옵니다. 캡처는 블로그 저장소 `assets/img/posts/`에 두었고, 화면에
 API 키·개인정보가 없는지 확인했습니다.
+
+**새 도구 셋에서 캡처가 한 번씩 더 걸렸습니다.** 셋 다 "부하 직후에 찍는다"만으로는 부족했습니다.
+
+| 도구 | 걸린 자리 |
+|---|---|
+| OpenObserve | 스트림 이름을 `stream_name`으로 주면 **조용히 무시**되고 "Select a stream first"에 머뭅니다. 맞는 이름은 `stream`입니다. 그리고 목록이 배경 작업의 **1-스팬 트레이스**로 덮입니다 — 스케줄 작업은 루트 스팬을 만들지 않아 JDBC 스팬 하나하나가 트레이스가 되고, 부하가 끝나는 순간부터 목록의 전부가 그것입니다. `duration > 2000000`을 질의 상자(Monaco)에 넣어야 결제가 돌아옵니다 |
+| Uptrace | 로그인이 `/login`이 아니라 **`/auth/login`**, 이메일 칸에 `type="email"`이 없습니다. 그리고 목록에서 **행을 누르면 아무 일도 일어나지 않습니다** — 행 안의 링크를 눌러야 합니다 |
+| Elastic | Kibana는 화면을 그린 뒤에도 폴링을 계속해서 **`networkidle`이 오지 않습니다.** 그걸로 기다리면 두 번에 한 번 30초 timeout입니다 |
 
 **찍었다가 버린 것 둘.** 위젯이 비어 있는 빈 대시보드(`Please add widgets.`)와, 트레이스 화면인 줄 알았던
 같은 대시보드입니다. 둘 다 보여 주는 것이 없어 지웠습니다.
@@ -374,6 +512,15 @@ Topology · Trace · Log`)이고, 그 탭은 화면 아래에 있어 **스크롤
   이 측정은 **에뮬레이션으로 도는 HBase가 같은 기계에 있는 상태**라 환경이 지배합니다
 - **SigNoz 화면**: 수집은 확인했지만 UI는 로그인이 필요해 캡처하지 않았습니다. 다른 도구의 캡처는 전부
   로그인 없이 찍은 것이라, 여기만 사용자의 자격 증명을 쓰는 것은 같은 조건이 아닙니다
+- **SaaS 네 곳(New Relic·Honeycomb·Dynatrace·Splunk) 전송**: Datadog과 같은 상태입니다. 설정 파일·
+  compose 환경변수·`apm.sh` 가드까지 들어갔고, **전송은 전부 미검증**입니다. 각각 필요한 것은 다릅니다 —
+  New Relic은 **INGEST-LICENSE** 종류의 키(USER 키가 아닙니다), Honeycomb은 Send events 권한의 API 키,
+  Dynatrace는 키에 더해 **환경(테넌트)** 주소, Splunk은 액세스 토큰과 realm입니다
+- **새로 넣은 세 도구의 에이전트 오버헤드**: 재지 않았습니다. 계측하는 쪽(OTel 에이전트)이 같으므로
+  앱 쪽 비용은 Jaeger·Zipkin과 같아야 하지만, **같아야 한다는 것은 측정이 아닙니다.** 받는 쪽이 느려
+  컬렉터가 밀리면 앱까지 영향이 옵니다 —
+  `python3 load-tests/apm-overhead-experiment.py --jar $J --arms none,openobserve,uptrace,elastic --runs 3`
+- **OpenObserve·Uptrace·Elastic의 부하 중 메모리**: 유휴 또는 캡처 직후 값만 적었습니다(§4)
 - **Datadog 전송**: 배선은 끝났고 **설정까지는 검증했습니다.** 컬렉터(contrib 0.119.0)가
   `collector-datadog.yaml`로 `datadog` exporter를 올리고 `Everything is ready`까지 갑니다(더미 키로 확인).
   실제로 Datadog에 들어가는지는 **확인하지 못했습니다** — 체험판 계정과 API 키가 필요하고 키는
@@ -393,9 +540,16 @@ Topology · Trace · Log`)이고, 그 탭은 화면 아래에 있어 **스크롤
 docker compose up -d postgres redpanda mock-bank mock-pg
 ./gradlew :apps:pay-api:bootJar
 
-scripts/apm.sh up jaeger          # 또는 zipkin | tempo | signoz | skywalking | pinpoint | none
-                                  # pinpoint 는 테이블 생성에 약 4분 30초가 걸립니다
-DD_API_KEY=<키> DD_SITE=<사이트> scripts/apm.sh up datadog   # 키는 저장되지 않습니다
+scripts/apm.sh up jaeger          # 자체 호스팅: jaeger zipkin tempo signoz openobserve uptrace
+                                  #              elastic skywalking pinpoint / 대조군 none
+                                  # pinpoint 는 테이블 생성에 약 4분 30초, elastic 은 Kibana 가 1분 넘게 걸립니다
+
+# SaaS — 키는 어느 파일에도 저장되지 않습니다
+DD_API_KEY=<키> DD_SITE=<사이트>            scripts/apm.sh up datadog
+NEW_RELIC_LICENSE_KEY=<키>                  scripts/apm.sh up newrelic
+HONEYCOMB_API_KEY=<키>                      scripts/apm.sh up honeycomb
+DT_ENDPOINT=<…/api/v2/otlp> DT_API_TOKEN=<토큰>  scripts/apm.sh up dynatrace
+SPLUNK_ACCESS_TOKEN=<토큰> SPLUNK_REALM=us1 scripts/apm.sh up splunk
 scripts/dev.sh                    # .apm/env 를 읽어 앱에 넘깁니다
 
 J=apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar
@@ -408,7 +562,12 @@ BASE_URL=http://localhost:8099 PAY_RPS=3 READ_RPS=5 DURATION=35s k6 run load-tes
 
 # 화면 캡처 (부하 직후에 돌려야 합니다 — 메모리 저장소는 보관이 수 분입니다)
 node load-tests/apm-capture.mjs zipkin --out /tmp/apm-shots
+node load-tests/apm-capture.mjs elastic --out /tmp/apm-shots          # Kibana 는 로그인이 없습니다
 CAPTURE_TZ=Asia/Seoul node load-tests/apm-capture.mjs pinpoint --out /tmp/apm-shots
 GRAFANA_USER=<compose 의 값> GRAFANA_PASSWORD=<compose 의 값> \
   node load-tests/apm-capture.mjs tempo --out /tmp/apm-shots
+OPENOBSERVE_USER=paritypay@local.test OPENOBSERVE_PASSWORD=$(cat .apm/openobserve-password) \
+  node load-tests/apm-capture.mjs openobserve --out /tmp/apm-shots
+UPTRACE_USER=paritypay@local.test UPTRACE_PASSWORD=$(cat .apm/uptrace-admin-password) \
+  node load-tests/apm-capture.mjs uptrace --out /tmp/apm-shots
 ```

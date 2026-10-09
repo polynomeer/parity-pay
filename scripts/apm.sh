@@ -446,9 +446,11 @@ check_saas() {
   esac
 }
 
+# 조사가 이름에 따라 달라지므로(은/는, 이/가) 변수 뒤에 조사를 붙이지 않습니다.
 saas_hint() {
   local name=$1 what=$2; shift 2
-  echo "$name 은 받는 쪽이 SaaS 입니다. $what 가 없어 진행하지 않습니다." >&2
+  echo "받는 쪽이 SaaS 인 백엔드입니다: $name" >&2
+  echo "필요한 값이 없어 진행하지 않습니다 — $what" >&2
   echo >&2
   echo "  $1" >&2; shift
   echo >&2

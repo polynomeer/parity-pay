@@ -29,10 +29,14 @@ APM 도구를 종류별로 붙여 보고 같은 장애에서 무엇이 보이는
 **앱 → OTel 자동 계측 에이전트 → OTel Collector → 백엔드.** 컬렉터를 반드시 사이에 둡니다.
 
 ```text
-                                   ┌─ collector-jaeger.yaml  → Jaeger
-pay-api ──(OTLP 4317)──▶ Collector ─┼─ collector-tempo.yaml   → Grafana Tempo
-   ▲ -javaagent (OTel)              ├─ collector-signoz.yaml  → SigNoz
-   │                                └─ collector-datadog.yaml → Datadog Agent
+                                   ┌─ collector-jaeger.yaml      → Jaeger
+                                   ├─ collector-tempo.yaml       → Grafana Tempo
+pay-api ──(OTLP 4317)──▶ Collector ─┼─ collector-signoz.yaml      → SigNoz
+   ▲ -javaagent (OTel)             ├─ collector-openobserve.yaml → OpenObserve
+   │                               ├─ collector-uptrace.yaml     → Uptrace
+   │                               ├─ collector-elastic.yaml     → Elastic APM Server
+   │                               └─ 받는 쪽이 SaaS 인 것들 (컨테이너 0개)
+   │                                    datadog · newrelic · honeycomb · dynatrace · splunk
    └── 자체 에이전트 도구는 이 자리의 -javaagent 를 바꿔 끼움 (SkyWalking·Pinpoint)
 ```
 
@@ -49,6 +53,12 @@ pay-api ──(OTLP 4317)──▶ Collector ─┼─ collector-tempo.yaml   �
   읽어 앱에 넘깁니다. 그래서 전환은 `apm.sh up <name>` → `dev.sh` 두 줄입니다.
 - **`apm.sh`는 자기 서비스만 띄우고 내립니다.** 프로필만 주고 `docker compose up`을 하면 기본 파일의 모든
   서비스(postgres·기관 대역 등)가 함께 뜹니다. 그 스택은 `dev.sh`의 것입니다.
+- **받는 쪽이 SaaS인 백엔드는 키가 없으면 시작하지 않습니다.** 띄워 놓고 조용히 아무것도 보내지 않는 것이
+  최악입니다 — 측정했다고 믿은 뒤에 데이터가 없다는 것을 알게 됩니다. 키는 **어느 파일에도 저장하지
+  않습니다**(`.apm/env`에도 적지 않습니다). 비밀값이 아닌 것(리전·주소)에만 기본값을 둡니다(ADR-011).
+- **자체 호스팅 백엔드의 비밀값은 생성합니다.** 벤더 예시는 거의 모두 알려진 값을 적어 둡니다 —
+  Pinpoint `admin/admin`, Uptrace `secret: FIXME`·`project1_secret`. 그대로 두면 배포가 알려진 값으로
+  조용히 뜹니다(ADR-011). `apm.sh`가 만들어 `.apm/` 아래 600으로 두고 환경변수로만 넘깁니다.
 
 ## Alternatives
 
@@ -93,7 +103,19 @@ pay-api ──(OTLP 4317)──▶ Collector ─┼─ collector-tempo.yaml   �
 | Tempo 화면 | Tempo에는 UI가 없습니다. Grafana Explore에서 TraceQL로 같은 트레이스를 봤습니다(캡처 있음). **백엔드를 바꾸는 비용에 "그 백엔드를 볼 도구"가 들어갈 수 있습니다** |
 | Pinpoint 경로 | **떴습니다.** 자체 에이전트 + HBase 계열이고 컨테이너가 여섯입니다. 일곱 군데에서 막혔고 전부 뚫었습니다 — [DOC-22 §3.5](../22-apm-troubleshooting-log.md) |
 | SigNoz 경로 | 스택은 뜨고 스키마도 2분 안에 끝납니다. 그러나 **첫 관리자 계정이 없으면 ingester가 OTLP 포트를 열지 않습니다**(조직이 없어 OpAMP 등록이 실패). 계정 생성은 사용자 몫이라 여기서 멈춥니다 |
-| 남은 백엔드 | Datadog은 프로필과 전환 경로만 있고 **아직 띄워 보지 않았습니다**(체험판 계정 필요, reports/14 §9) |
+| OpenObserve 경로 | **떴습니다**(2026-10-09, 컨테이너 1개). 첫 계정을 환경변수로 받아 **사람 손 없이** 수집이 열립니다 — SigNoz와 정반대입니다. 수신 주소에 조직 이름이 들어가 exporter 설정만 다릅니다 |
+| Uptrace 경로 | **떴습니다**(컨테이너 4개, 한 번에). 수집에 토큰이 필요하지만 토큰과 첫 사용자를 설정 파일(`seed_data`)이 정하므로 자동화됩니다 |
+| Elastic 경로 | **떴습니다**(ES·APM Server·Kibana). `elasticsearch` exporter가 아니라 **APM Server로 받습니다** — 그 exporter는 `traces-generic-default`에 적고 Kibana의 APM 화면은 `traces-apm*`을 읽어서, 색인에는 들어가고 화면에는 안 나옵니다 |
+| 남은 백엔드 | SaaS 다섯(Datadog·New Relic·Honeycomb·Dynatrace·Splunk)은 설정·가드까지 들어갔고 **전송은 미검증**입니다 — 전부 키가 필요하고 키는 사용자가 넣습니다(reports/14 §9) |
+
+**열두 번째 백엔드에서도 앱은 바뀌지 않았습니다.** 2026-10-09에 외부 글의 "Datadog 대안 10선"을 전부
+이 배선에 대 봤고(reports/14 §4.9), 셋을 더 띄우고 넷을 키 대기 상태로 배선했습니다. 그중 어느 것도
+`apps/`·`modules/` 자바 코드를 건드리지 않았습니다. 새로 생긴 파일은 `collector-<name>.yaml` 일곱 개와
+compose 서비스뿐입니다.
+
+**다만 "설정 하나"라는 말이 모든 도구에 똑같이 맞지는 않습니다.** OpenObserve는 정말 설정 파일 하나로
+끝났지만, Elastic은 받는 쪽을 **고르는 판단**이 필요했습니다 — exporter가 둘이고 하나는 화면까지
+이어지지 않습니다. 교체가 싼 것은 애플리케이션 쪽이고, 백엔드 쪽은 여전히 그 도구를 알아야 합니다.
 
 **이 ADR이 실제로 값을 한 자리.** Zipkin은 OTLP를 받지 않는 유일한 백엔드였고, SkyWalking과 Pinpoint는
 에이전트 자체가 다릅니다. Pinpoint는 HBase·ZooKeeper·MySQL·Redis까지 끌고 들어왔습니다. 그런데도

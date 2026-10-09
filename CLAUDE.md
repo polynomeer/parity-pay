@@ -17,9 +17,11 @@ ParityPay는 플랫폼 내장형 페이머니 결제·원장 서비스입니다.
 
 APM 도구는 백엔드만 바꿔 끼울 수 있게 해 두었고(ADR-017, `scripts/apm.sh`), 도구별 설치 비용·에이전트
 오버헤드·같은 장애에서 보이는 것은 [reports/14](reports/14-apm-tool-comparison.md)에 있습니다.
-여섯 도구(Jaeger·Zipkin·Tempo·SkyWalking·Pinpoint·SigNoz)가 전부 떴고, **어느 쪽도 애플리케이션
-코드를 바꾸지 않았습니다.** SigNoz는 첫 관리자 계정을 만들기 전까지 수집 경로가 열리지 않는다는 것도
-확인했습니다. 띄우면서 막힌 지점과 원인은 [DOC-22](docs/22-apm-troubleshooting-log.md)에 있습니다.
+**자체 호스팅 아홉**(Jaeger·Zipkin·Tempo·SigNoz·OpenObserve·Uptrace·Elastic·SkyWalking·Pinpoint)이 전부
+떴고, **SaaS 다섯**(Datadog·New Relic·Honeycomb·Dynatrace·Splunk)은 키만 넣으면 되는 상태로 배선돼
+있습니다 — 전송은 **미검증**입니다. **어느 쪽도 애플리케이션 코드를 바꾸지 않았습니다.** SigNoz는 첫
+관리자 계정을 만들기 전까지 수집 경로가 열리지 않고, OpenObserve·Uptrace는 같은 자리를 설정 파일로
+지납니다. 띄우면서 막힌 지점과 원인은 [DOC-22](docs/22-apm-troubleshooting-log.md)에 있습니다.
 
 ## 2. 절대 규칙 (INV) — 어떤 코드도 이것을 깰 수 없습니다
 
@@ -162,7 +164,9 @@ pnpm typecheck
 pnpm --filter @paritypay/web-customer dev    # 고객 앱 (5173)
 pnpm --filter @paritypay/web-ops dev         # 운영 콘솔 (5174)
 scripts/dev.sh [up|down|status|logs] # 로컬 스택 전부 (컨테이너·기관·pay-api·앱 둘). 잡힌 포트는 우회합니다
-scripts/apm.sh up <name>             # APM 백엔드 교체 (jaeger·zipkin·tempo·signoz·skywalking·pinpoint·datadog·none). ADR-017
+scripts/apm.sh up <name>             # APM 백엔드 교체. 자체 호스팅 jaeger·zipkin·tempo·signoz·openobserve·
+                                     # uptrace·elastic·skywalking·pinpoint / SaaS(키 필요) datadog·newrelic·
+                                     # honeycomb·dynatrace·splunk / 대조군 none. ADR-017
 load-tests/run-e2e.sh                # 실제 스택 E2E. 스택을 띄우고 돌리고 정리합니다 (약 1분)
 deploy/run.sh                        # 배포 형태로 띄웁니다 (이미지 빌드 포함). down으로 정리
 ```

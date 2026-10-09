@@ -190,8 +190,10 @@ PostgreSQL·Redpanda를 띄우고, 외부기관도 별도 Spring 컨텍스트로
 **운영 콘솔의 장애 시뮬레이터** 9개 시나리오는 브라우저에서 직접 적용해 볼 수 있고, 실측은
 [reports/13](reports/13-failure-scenario-matrix.md)에 있습니다.
 
-**APM 도구 비교** — 같은 애플리케이션·같은 부하에 백엔드만 바꿔 가며 여섯 개를 붙여 봤습니다(Jaeger·Zipkin·
-Tempo·SkyWalking·Pinpoint·SigNoz). 애플리케이션 코드는 한 줄도 바뀌지 않습니다 — 계측은 자동계측 에이전트가 하고
+**APM 도구 비교** — 같은 애플리케이션·같은 부하에 백엔드만 바꿔 가며 **아홉 개**를 붙여 봤습니다(Jaeger·Zipkin·
+Tempo·SigNoz·OpenObserve·Uptrace·Elastic·SkyWalking·Pinpoint). 받는 쪽이 SaaS인 다섯(Datadog·New Relic·
+Honeycomb·Dynatrace·Splunk)은 키만 넣으면 되는 상태까지 배선했고 **전송은 미검증**입니다.
+애플리케이션 코드는 한 줄도 바뀌지 않습니다 — 계측은 자동계측 에이전트가 하고
 바뀌는 것은 컬렉터 설정 하나이거나 `-javaagent` 한 줄입니다([ADR-017](docs/adr/017-swappable-apm-backend.md)).
 에이전트를 켜는 값, 도구별 설치 비용, 같은 장애에서 각 도구가 보여 주는 것은
 [reports/14](reports/14-apm-tool-comparison.md)에, 띄우다 막힌 지점과 원인은
@@ -258,7 +260,8 @@ scripts/dev.sh down
 ./gradlew test            # 백엔드 전체 — docker compose 없이도 됩니다 (Testcontainers)
 pnpm -r test              # 프론트엔드
 load-tests/run-e2e.sh     # 실제 스택 E2E (약 1분)
-scripts/apm.sh up jaeger  # APM 백엔드 교체 — zipkin | tempo | signoz | skywalking | pinpoint | none
+scripts/apm.sh up jaeger  # APM 백엔드 교체 — zipkin | tempo | signoz | openobserve | uptrace |
+                          # elastic | skywalking | pinpoint | none, SaaS 는 키가 필요합니다
 ```
 
 손으로 한 단계씩 띄우는 순서, API로 충전·결제·취소를 한 바퀴 도는 curl, 응답 유실을 손으로 재현하고 복구를 지켜보는
