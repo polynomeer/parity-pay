@@ -463,15 +463,15 @@ saas_hint() {
 up() {
   local name=${1:-}
   [ -n "$name" ] || { usage; exit 2; }
-  if [ "$name" = "none" ]; then
-    write_env none
-    echo "== 에이전트 없음(대조군)으로 설정했습니다. scripts/dev.sh 로 앱을 다시 띄우십시오."
-    return
-  fi
-  check_saas "$name"
+  [ "$name" = "none" ] || check_saas "$name"
   # 앞선 백엔드를 **먼저** 내리고 그 뒤에 포트를 고릅니다. 순서를 바꾸면 아직 살아 있는 컬렉터가
   # 4317 을 쥐고 있어 다음 실행이 4319·4320 으로 밀려나고 앱 설정까지 따라 바뀝니다
   # (실제로 그렇게 한 번 깨졌습니다).
+  #
+  # **`none` 도 같은 길을 지납니다.** 예전에는 `none` 이 아무것도 내리지 않고 바로 돌아갔습니다.
+  # 그러면 두 가지가 깨집니다 — ① 대조군을 재는 동안 앞 도구의 컨테이너가 계속 떠 있고,
+  # ② `.apm/active` 가 `none` 이 되어 **그다음 팔의 정리까지 건너뜁니다**(previous=none 이므로).
+  # 번갈아 측정하면 2라운드부터 백엔드 두 개가 같이 떠 있게 됩니다. reports/14 §5.7
   local previous
   previous=$(cat "$ACTIVE_FILE" 2>/dev/null || echo "")
   # 같은 이름으로 다시 올리는 경우에도 내립니다. 살려 두면 그 컨테이너가 4317 을 쥐고 있어 포트가
@@ -487,6 +487,12 @@ up() {
       "${COMPOSE[@]}" rm -sf $(backend_services "$previous") >/dev/null 2>&1 || true
       [ "$previous" = "signoz" ] && signoz_down
     fi
+  fi
+  if [ "$name" = "none" ]; then
+    write_env none
+    echo "== 에이전트 없음(대조군)으로 설정했습니다. 앞선 백엔드도 내렸습니다."
+    echo "   scripts/dev.sh 로 앱을 다시 띄우십시오."
+    return
   fi
   assign_ports
   write_env "$name"

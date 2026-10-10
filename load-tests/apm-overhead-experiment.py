@@ -4,11 +4,18 @@
 문장을 우리 부하에서 확인합니다. 비교 대상은 **에이전트의 종류**이고, 바뀌지 않는 것은 애플리케이션,
 부하, 기관 대역, 데이터베이스입니다 (ADR-017이 그 조건을 만듭니다).
 
-    none        에이전트 없음 — 대조군
-    jaeger      OTel 자동계측 에이전트 → 컬렉터 → Jaeger
-    tempo       같은 에이전트, 백엔드만 Tempo (같은 값이 나와야 맞습니다 — 에이전트가 같으므로)
-    skywalking  SkyWalking 자체 에이전트 → OAP
-    pinpoint    Pinpoint 자체 에이전트 → Collector
+    none         에이전트 없음 — 대조군
+    jaeger       OTel 자동계측 에이전트 → 컬렉터 → Jaeger
+    tempo        같은 에이전트, 백엔드만 Tempo (같은 값이 나와야 맞습니다 — 에이전트가 같으므로)
+    openobserve  같은 에이전트, 백엔드만 OpenObserve
+    uptrace      같은 에이전트, 백엔드만 Uptrace
+    elastic      같은 에이전트, 백엔드만 Elastic APM Server
+    skywalking   SkyWalking 자체 에이전트 → OAP
+    pinpoint     Pinpoint 자체 에이전트 → Collector
+
+**에이전트가 같은 팔끼리는 같은 값이 나와야 맞습니다.** 이 하니스가 재는 것은 백엔드가 아니라
+애플리케이션 안의 에이전트 비용이기 때문입니다. 그래도 재는 이유는, 받는 쪽이 느려 컬렉터가 밀리면
+앱까지 영향이 오기 때문입니다 — "같아야 한다"는 측정이 아닙니다.
 
 **앱은 이 스크립트가 띄웁니다.** dev.sh 의 인스턴스가 살아 있으면 같은 기계에서 CPU를 나눠 쓰고,
 같은 토픽을 소비해 측정이 오염됩니다 — 먼저 내리십시오.
@@ -54,10 +61,52 @@ def read_apm_env():
     return env
 
 
+# 백엔드가 수신을 시작하기 전에 부하를 걸면 에이전트가 재시도 큐에 쌓으며 다른 일을 합니다. 그러면
+# 재는 것이 에이전트 비용이 아니라 "받는 쪽이 아직 없을 때의 에이전트"가 됩니다.
+#
+# **기동 시간이 도구마다 자릿수가 다릅니다.** 10초로 충분한 것도 있고 Elasticsearch 처럼 green 까지
+# 2분이 걸리는 것도 있습니다. 그래서 고정 대기 대신 도구마다 확인할 것을 둡니다.
+#
+# 확인은 **호스트에서** 합니다. 컨테이너 안에 curl·wget 이 있다는 보장이 없고(OpenObserve 이미지에는
+# 없습니다), 포트는 다른 프로젝트에 잡혀 밀리므로 `docker port` 로 읽습니다(DOC-22 §7의 3번).
+BACKEND_READY = {
+    "openobserve": ("paritypay-openobserve", 5080, "/healthz"),
+    "uptrace": ("paritypay-uptrace", 80, "/"),
+    # APM Server 는 ES 가 준비되기 전에는 아무것도 받지 않고 precondition 실패로 재시도합니다.
+    # 그래서 ES 쪽을 봅니다.
+    "elastic": ("paritypay-elastic-elasticsearch", 9200, "/_cluster/health"),
+}
+
+
+def host_port(container, container_port):
+    out = subprocess.run(["docker", "port", container, f"{container_port}/tcp"],
+                         capture_output=True, text=True).stdout.strip()
+    return out.splitlines()[0].rsplit(":", 1)[-1] if out else None
+
+
+def wait_backend(arm, timeout=300):
+    probe = BACKEND_READY.get(arm)
+    if probe is None:
+        time.sleep(10)
+        return
+    container, container_port, path = probe
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        port = host_port(container, container_port)
+        if port:
+            done = subprocess.run(["curl", "-sf", "-m", "5", f"http://localhost:{port}{path}"],
+                                  capture_output=True, text=True)
+            if done.returncode == 0:
+                # 준비됐다고 답한 뒤에도 수집 경로가 완전히 열리는 데 몇 초가 더 걸립니다.
+                time.sleep(15)
+                return
+        time.sleep(5)
+    raise RuntimeError(f"{arm} 백엔드가 {timeout}초 안에 준비되지 않았습니다")
+
+
 def switch_apm(arm):
     subprocess.run([str(ROOT / "scripts" / "apm.sh"), "up", arm], cwd=ROOT, check=True)
-    # 백엔드가 수신을 시작하기 전에 부하를 걸면 에이전트가 재시도 큐에 쌓으며 다른 일을 합니다.
-    time.sleep(10)
+    wait_backend(arm)
 
 
 def start_app(jar, port, log_path, extra_env):
@@ -115,14 +164,22 @@ def run_k6(port, out_json, vus):
 
 
 def container_memory():
-    """APM 컨테이너가 쓰는 메모리입니다. 도구를 고르는 사람에게 설치 비용의 일부입니다."""
+    """APM 컨테이너가 쓰는 메모리입니다. 도구를 고르는 사람에게 설치 비용의 일부입니다.
+
+    **도구 이름으로 거르지 않습니다.** 이 호스트에는 다른 프로젝트의 elasticsearch·jaeger·clickhouse 가
+    떠 있고, 이름으로 거르면 그것들이 우리 백엔드의 메모리인 것처럼 섞입니다(DOC-22 §4의 10번).
+    우리가 띄우는 것은 `paritypay-` 또는 (SigNoz 생성 compose 의) `signoz-` 로 시작합니다.
+    """
     out = subprocess.run(["docker", "stats", "--no-stream", "--format", "{{.Name}}\t{{.MemUsage}}"],
                          capture_output=True, text=True).stdout
     rows = {}
     for line in out.splitlines():
         name, _, usage = line.partition("\t")
-        if any(k in name for k in ("otel-collector", "jaeger", "tempo", "signoz", "clickhouse",
-                                   "keeper", "skywalking", "pinpoint", "hbase")):
+        if name.startswith("paritypay-") or name.startswith("signoz-"):
+            # dev.sh 의 의존 컨테이너는 APM 비용이 아닙니다.
+            if any(k in name for k in ("postgres", "redpanda", "mock-", "mailpit")) \
+                    and "uptrace" not in name:
+                continue
             rows[name] = usage.split("/")[0].strip()
     return rows
 
