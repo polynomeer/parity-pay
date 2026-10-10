@@ -37,6 +37,10 @@
   배선했고(New Relic·Honeycomb·Dynatrace·Splunk), 하나는 이미 들어가 있었고(Grafana Stack = Tempo),
   둘은 넣지 않았습니다 — AppDynamics는 **로컬 기동 경로가 없고**, Zabbix는 **트레이스라는 개념 자체가
   없습니다.**
+- **그 셋의 오버헤드는 재지 못했습니다**(§5.7). 준비하다 하니스 결함 셋을 찾았고, 그중 하나는
+  `apm.sh up none`이 앞 백엔드를 내리지 않아 **대조군을 재는 동안 앞 도구가 떠 있던 것**입니다.
+  **이 보고서의 앞선 측정에도 해당합니다.** 섞인 것은 트래픽이 아니라 유휴 컨테이너라 숫자를 무효로
+  돌리지는 않지만, "대조군은 아무것도 떠 있지 않은 상태"라는 설명은 틀렸습니다.
 - **설치 비용의 양 끝이 더 벌어졌습니다.** OpenObserve는 **컨테이너 하나**에 저장소도 내장이고 첫 계정을
   환경변수로 받습니다 — SigNoz가 사람 손을 요구한 바로 그 자리를 자동으로 지납니다. 반대쪽 Pinpoint는
   여전히 여섯 개입니다.
@@ -105,7 +109,7 @@ Zipkin만 exporter가 OTLP가 아닙니다 — Zipkin은 자기 형식만 받습
 | SkyWalking | **3** | BanyanDB(필수) | **3** (아래) | 미측정 |
 | **Pinpoint** | **6** | HBase + MySQL + ZooKeeper + Redis | **7** (아래, 전부 뚫음) | 약 3.2 GiB |
 | **OpenObserve** | **1** (+컬렉터) | **내장**(로컬 디스크) | **1** (아래) | 미측정 |
-| **Uptrace** | **4** (+컬렉터) | ClickHouse + PostgreSQL + Redis | **0** | **약 710 MiB** (ClickHouse 461 · Uptrace 198 · PG 45 · Redis 6) |
+| **Uptrace** | **4** (+컬렉터) | ClickHouse + PostgreSQL + Redis | **0** | 유휴 **약 710 MiB** (ClickHouse 461 · Uptrace 198 · PG 45 · Redis 6). **부하 중에는 1 GiB 상한으로 부족합니다** — OOM으로 죽었습니다(§5.7). 지금은 2 GiB |
 | **Elastic** | **3** (+컬렉터) | Elasticsearch | **1** (아래) | 힙을 ES 512 MB · Kibana 700 MB로 **묶어야** 들어갔습니다 (Kibana 실사용 537 MiB) |
 | Datadog · New Relic · Honeycomb · Dynatrace · Splunk | **0** | SaaS | — | — (받는 쪽이 남의 서비스입니다. **전송은 전부 미검증** — §9) |
 
@@ -388,6 +392,69 @@ Zipkin JSON으로 바꾸는 일이 끼어 있어 그럴듯하지만, **그 인�
 크기를 말하려면 백엔드를 다른 기계에 두고 다시 재야 하고, 그것은 하지 않았습니다.
 원본: `reports/data/14-apm-lab/overhead-interleaved-none-pinpoint-20261007.json`
 
+### 5.7 새로 넣은 셋 — 두 번 시도했고 두 번 다 쓸 수 없습니다 (2026-10-10)
+
+OpenObserve·Uptrace·Elastic의 에이전트 오버헤드를 재려고 했습니다. **숫자를 내지 못했습니다.**
+과정에서 나온 것이 숫자보다 값이 있어 그대로 적습니다.
+
+**준비하다 하니스 결함을 셋 찾았습니다.**
+
+| # | 결함 | 영향 |
+|---|---|---|
+| 1 | `apm.sh up none`이 앞 백엔드를 **내리지 않고** 바로 돌아감 | 대조군을 재는 동안 앞 도구의 컨테이너가 계속 떠 있습니다. 게다가 `.apm/active`가 `none`이 되어 **그다음 팔의 정리까지 건너뜁니다** — 번갈아 측정하면 2라운드부터 백엔드 둘이 같이 떠 있습니다 |
+| 2 | 백엔드 전환 뒤 **10초 고정 대기** | Elasticsearch는 green까지 이 기계에서 128초입니다. 받는 쪽이 아직 없는 상태의 에이전트를 재게 됩니다 |
+| 3 | 메모리 열을 **도구 이름으로** 수집 | 다른 프로젝트의 `elasticsearch`·`clickhouse`가 우리 백엔드의 메모리로 섞입니다(DOC-22 §4의 10번과 같은 실수) |
+
+1번은 **이 보고서의 앞선 측정에도 해당합니다.** §5.1·§5.3·§5.4는 같은 경로로 쟀습니다. 다만 섞인 것은
+*트래픽이 아니라 유휴 컨테이너*입니다 — 컬렉터는 한 번에 하나의 백엔드로만 내보내고, 남아 있던 쪽은
+받는 것이 없습니다. 크기는 Jaeger·Zipkin 기준 150~160 MiB 수준입니다(§4). **앞선 숫자를 무효로
+돌리지는 않지만, "대조군은 아무것도 떠 있지 않은 상태"라는 설명은 틀렸습니다.** 고친 뒤의 재측정은
+아래 이유로 아직 못 했습니다. 셋 다 `fdeb2f3`에서 고쳤습니다.
+
+**1차 (none·jaeger·openobserve·uptrace·elastic, 번갈아 3회) — 중단.**
+
+| 팔 | 라운드 1 | 라운드 2 |
+|---|---:|---:|
+| none | 57,551 | 64,700 |
+| jaeger | 57,800 | 27,082 |
+| openobserve | 48,183 | 13,045 |
+| uptrace | 44,026 | (중단) |
+| elastic | 34,820 | — |
+
+라운드 2의 uptrace에서 **Uptrace와 ClickHouse가 OOM으로 죽었고**(`Exited (137)`) 그 역압이 앱의 요청
+실패로 돌아와 k6 임계치를 넘겼습니다. 죽기 직전 `paritypay-uptrace`는 `1022MiB / 1GiB`로 상한에
+붙어 있었습니다. **전량 샘플링(승인 약 600/초)에서 1 GiB는 부족합니다.** 상한을 2 GiB로 올렸지만,
+그 상태로 다섯 팔을 한 묶음에 넣을 메모리가 이 기계에 없습니다(Docker 7.7 GiB 중 다른 프로젝트가
+4.2 GiB).
+
+라운드 1만 보면 none → elastic 방향으로 단조 감소합니다. 그런데 **라운드마다 팔의 순서가 같습니다.**
+번갈아 돌리는 것은 라운드 사이의 변화를 드러내지만, 라운드 *안*의 자리 효과는 드러내지 않습니다.
+라운드 2에서 none이 64,700으로 올라가고 jaeger가 27,082로 떨어진 것은 자리 효과만으로 설명되지
+않으므로, 라운드 1의 단조 감소를 "도구 비용"으로 읽으면 안 됩니다.
+
+**2차 (none·jaeger·openobserve로 줄여서) — 규칙에 걸려 버렸습니다.**
+
+| 팔 | 라운드 1 | 라운드 2 |
+|---|---:|---:|
+| none | 17,185 | **6,318** |
+| jaeger | 12,710 | 6,179 |
+| openobserve | 7,642 | 8,407 |
+
+대조군이 한 묶음 안에서 **2.7배** 흔들렸습니다(17,185 → 6,318). [DOC-20 §4.17](../docs/20-experiment-result-interpretation.md)의
+판정 1번이 "2배를 넘으면 그 묶음 전체를 버린다"이고, 그대로 버렸습니다. 1차의 57,551과 비교하면
+같은 대조군이 **9배** 떨어진 셈입니다.
+
+원인은 도구가 아니라 기계였습니다. 측정 중 이 노트북의 **load average가 55**였고, 다른 프로젝트의
+Gradle 테스트 워커가 70~125% CPU를 쓰고 있었으며 스왑이 3.1 GB 사용 중이었습니다.
+
+**그래서 결론은 "재지 못했다"입니다.** 필요한 것은 조용한 기계이고, 명령은 §10에 있습니다. 원본 두
+개는 버린 것이라는 표시와 함께 `reports/data/14-apm-lab/`에 남겼습니다
+(`...-ABORTED-20261010.json`, `...-DISCARDED-20261010.json`).
+
+**판정 규칙에 한 줄이 빠져 있었습니다.** 지금까지는 대조군의 흔들림만 봤습니다. 1차 라운드 2에서
+대조군은 1.12배로 멀쩡한데(57,551 → 64,700) jaeger가 2.1배, openobserve가 3.7배 흔들렸습니다.
+**대조군이 안정적이어도 다른 팔이 흔들리면 그 팔의 값은 쓸 수 없습니다.** DOC-20 §4.17에 더했습니다.
+
 ## 6. 같은 장애에서 무엇이 보이는가 — 실측
 
 Mock PG가 승인 전에 2.5초를 붙잡는 조건에서 결제 3 rps + 잔액 조회 5 rps를 걸었습니다. 클라이언트가 본
@@ -516,10 +583,10 @@ Topology · Trace · Log`)이고, 그 탭은 화면 아래에 있어 **스크롤
   compose 환경변수·`apm.sh` 가드까지 들어갔고, **전송은 전부 미검증**입니다. 각각 필요한 것은 다릅니다 —
   New Relic은 **INGEST-LICENSE** 종류의 키(USER 키가 아닙니다), Honeycomb은 Send events 권한의 API 키,
   Dynatrace는 키에 더해 **환경(테넌트)** 주소, Splunk은 액세스 토큰과 realm입니다
-- **새로 넣은 세 도구의 에이전트 오버헤드**: 재지 않았습니다. 계측하는 쪽(OTel 에이전트)이 같으므로
-  앱 쪽 비용은 Jaeger·Zipkin과 같아야 하지만, **같아야 한다는 것은 측정이 아닙니다.** 받는 쪽이 느려
-  컬렉터가 밀리면 앱까지 영향이 옵니다 —
-  `python3 load-tests/apm-overhead-experiment.py --jar $J --arms none,openobserve,uptrace,elastic --runs 3`
+- **새로 넣은 세 도구의 에이전트 오버헤드**: **두 번 시도했고 두 번 다 버렸습니다**(§5.7). 1차는
+  Uptrace와 ClickHouse가 OOM으로 죽어 중단됐고, 2차는 대조군이 한 묶음 안에서 2.7배 흔들려
+  판정 규칙에 걸렸습니다. 필요한 것은 조용한 기계입니다 — 측정 중 이 노트북의 load average가 55였고
+  다른 프로젝트의 테스트가 돌고 있었습니다. 명령은 §10에 있습니다
 - **OpenObserve·Uptrace·Elastic의 부하 중 메모리**: 유휴 또는 캡처 직후 값만 적었습니다(§4)
 - **Datadog 전송**: 배선은 끝났고 **설정까지는 검증했습니다.** 컬렉터(contrib 0.119.0)가
   `collector-datadog.yaml`로 `datadog` exporter를 올리고 `Everything is ready`까지 갑니다(더미 키로 확인).
@@ -554,6 +621,12 @@ scripts/dev.sh                    # .apm/env 를 읽어 앱에 넘깁니다
 
 J=apps/pay-api/build/libs/pay-api-0.1.0-SNAPSHOT.jar
 python3 load-tests/apm-overhead-experiment.py --jar $J --arms none,jaeger,zipkin --runs 3
+
+# 새로 넣은 셋. **한 묶음에 다 넣지 마십시오** — 이 기계에서는 메모리가 모자라 Uptrace 가 죽었습니다.
+# 그리고 돌리기 전에 기계가 조용한지 봅니다 (uptime 의 load average, sysctl vm.swapusage).
+python3 load-tests/apm-overhead-experiment.py --jar $J --arms none,jaeger,openobserve --runs 3
+python3 load-tests/apm-overhead-experiment.py --jar $J --arms none,uptrace --runs 3
+python3 load-tests/apm-overhead-experiment.py --jar $J --arms none,elastic --runs 3
 
 # 가시성 조건
 curl -X POST localhost:8091/mock-pg/admin/behavior -H 'Content-Type: application/json' \

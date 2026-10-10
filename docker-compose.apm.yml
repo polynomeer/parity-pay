@@ -373,7 +373,10 @@ services:
         condition: service_healthy
       uptrace-redis:
         condition: service_healthy
-    mem_limit: 1g
+    # 1g 로는 **부족합니다.** 전량 샘플링 부하(승인 약 600/초)에서 상한에 붙었고, 같은 묶음의
+    # ClickHouse 와 함께 OOM 으로 죽었습니다(`Exited (137)`). 그 역압이 앱의 요청 실패로 돌아와
+    # 오버헤드 측정 자체가 중단됐습니다. reports/14 §5.7
+    mem_limit: 2g
 
   # ---------- Elastic (Elasticsearch + Kibana + APM Server) ----------
   # "로그 도구가 트레이스를 어떻게 보여주는가"를 보는 축입니다. 컨테이너가 셋인데 그중 하나는
