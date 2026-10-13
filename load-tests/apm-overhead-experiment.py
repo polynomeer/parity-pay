@@ -35,9 +35,11 @@
 import argparse
 import json
 import os
+import re
 import shutil
 import statistics
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -184,6 +186,41 @@ def container_memory():
     return rows
 
 
+# 측정 전에 **기계를 먼저 봅니다.** 이 실험은 노트북 한 대에서 돌고, 호스트가 바쁘면 재는 것이
+# 에이전트가 아니라 그날의 기계가 됩니다. 2026-10-10과 10-13에 세 묶음을 통째로 버렸고, 버린 이유가
+# 매번 같았습니다 — 대조군이 한 묶음 안에서 2배 넘게 흔들렸습니다(RPT-04 §5.7).
+#
+# 한 시간을 쓰고 나서 버리는 대신 **시작 전에 거부합니다.** 임계값은 그때 실제로 본 값입니다:
+# load 44~178, 빈 물리 메모리 133 MB, 압축 14~15 GB, 스왑 3.1~3.4 GB.
+def host_problems():
+    problems = []
+    try:
+        load1 = os.getloadavg()[0]
+        cpus = os.cpu_count() or 1
+        if load1 > cpus * 2:
+            problems.append(f"load average {load1:.0f} (코어 {cpus}개 — 2배를 넘습니다)")
+    except (OSError, AttributeError):
+        pass
+    if sys.platform != "darwin":
+        return problems
+    swap = subprocess.run(["sysctl", "-n", "vm.swapusage"], capture_output=True, text=True).stdout
+    m = re.search(r"used = ([0-9.]+)M", swap)
+    if m and float(m.group(1)) > 1024:
+        problems.append(f"스왑 {float(m.group(1)) / 1024:.1f} GB 사용 중")
+    top = subprocess.run(["top", "-l", "1", "-n", "0"], capture_output=True, text=True).stdout
+    m = re.search(r"PhysMem:.*?([0-9.]+)([MG]) unused", top)
+    if m:
+        unused = float(m.group(1)) * (1024 if m.group(2) == "G" else 1)
+        if unused < 2048:
+            problems.append(f"빈 물리 메모리 {unused:.0f} MB (2 GB 미만)")
+    m = re.search(r"PhysMem:.*?([0-9.]+)([MG]) compressor", top)
+    if m:
+        comp = float(m.group(1)) * (1024 if m.group(2) == "G" else 1)
+        if comp > 4096:
+            problems.append(f"압축된 메모리 {comp / 1024:.0f} GB (4 GB 초과)")
+    return problems
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -195,10 +232,25 @@ def main():
     parser.add_argument("--out", default="/tmp/t12-apm-overhead")
     parser.add_argument("--grouped", action="store_true",
                         help="팔별로 몰아서 돕니다. 기계 상태 변화가 결과에 섞이므로 기본은 번갈아입니다")
+    parser.add_argument("--ignore-host", action="store_true",
+                        help="기계가 바빠도 그냥 돕니다. 결과를 쓸 수 없을 가능성이 큽니다")
     args = parser.parse_args()
 
     if shutil.which("k6") is None:
         raise SystemExit("k6 가 없습니다. brew install k6")
+
+    problems = host_problems()
+    if problems and not args.ignore_host:
+        print("이 기계는 지금 측정할 상태가 아닙니다:", file=sys.stderr)
+        for line in problems:
+            print(f"  - {line}", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("한 묶음에 한 시간 가까이 걸리고, 이 상태에서는 대조군이 2배 넘게 흔들려", file=sys.stderr)
+        print("묶음 전체를 버리게 됩니다(RPT-04 §5.7에 세 번 기록돼 있습니다).", file=sys.stderr)
+        print("다른 작업을 정리하고 다시 돌리거나, 그래도 돌리려면 --ignore-host 를 줍니다.", file=sys.stderr)
+        raise SystemExit(2)
+    if problems:
+        print("!! 기계가 바쁩니다(--ignore-host 로 진행):", ", ".join(problems), flush=True)
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
